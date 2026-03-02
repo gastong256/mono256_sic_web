@@ -21,7 +21,7 @@ function makeWrapper(initialPath = '/login') {
     return createElement(
       MemoryRouter,
       { initialEntries: [initialPath] },
-      createElement(QueryClientProvider, { client: queryClient }, children),
+      createElement(QueryClientProvider, { client: queryClient }, children)
     )
   }
 
@@ -46,7 +46,7 @@ describe('useLogin', () => {
     const { result } = renderHook(() => useLogin(), { wrapper: Wrapper })
 
     act(() => {
-      result.current.mutate({ email: 'user@example.com', password: 'password' })
+      result.current.mutate({ username: 'admin', password: 'password' })
     })
 
     await waitFor(() => {
@@ -63,7 +63,7 @@ describe('useLogin', () => {
     const { result } = renderHook(() => useLogin(), { wrapper: Wrapper })
 
     act(() => {
-      result.current.mutate({ email: 'user@example.com', password: 'password' })
+      result.current.mutate({ username: 'admin', password: 'password' })
     })
 
     await waitFor(() => {
@@ -72,7 +72,7 @@ describe('useLogin', () => {
 
     const { user } = useAuthStore.getState()
     expect(user).not.toBeNull()
-    expect(user?.email).toBe('user@example.com')
+    expect(user?.username).toBe('admin')
   })
 
   it('returns an error for invalid credentials', async () => {
@@ -80,7 +80,7 @@ describe('useLogin', () => {
     const { result } = renderHook(() => useLogin(), { wrapper: Wrapper })
 
     act(() => {
-      result.current.mutate({ email: 'bad@example.com', password: 'wrong' })
+      result.current.mutate({ username: 'wrong', password: 'wrong' })
     })
 
     await waitFor(() => {
@@ -96,7 +96,7 @@ describe('useLogin', () => {
 
     // Call mutate without act() so the pending state is observable via waitFor
     // (act() flushes the full promise cycle immediately, skipping the pending state)
-    result.current.mutate({ email: 'user@example.com', password: 'password' })
+    result.current.mutate({ username: 'admin', password: 'password' })
 
     await waitFor(() => {
       expect(result.current.isPending).toBe(true)
@@ -108,11 +108,11 @@ describe('useLogin', () => {
   })
 
   it('redirects to returnTo path after successful login', async () => {
-    const { Wrapper } = makeWrapper('/login?returnTo=%2Fitems')
+    const { Wrapper } = makeWrapper('/login?returnTo=%2Fcompanies')
     const { result } = renderHook(() => useLogin(), { wrapper: Wrapper })
 
     act(() => {
-      result.current.mutate({ email: 'user@example.com', password: 'password' })
+      result.current.mutate({ username: 'admin', password: 'password' })
     })
 
     await waitFor(() => {

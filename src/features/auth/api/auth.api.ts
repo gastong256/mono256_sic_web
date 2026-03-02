@@ -4,18 +4,16 @@ import type { User } from '@/shared/types'
 // ── Request / Response types ──────────────────────────────────────────────────
 
 export interface LoginCredentials {
-  email: string
+  username: string
   password: string
 }
 
 export interface AuthTokens {
-  access_token: string
-  refresh_token: string
+  access: string
+  refresh: string
 }
 
-export interface LoginResponse extends AuthTokens {
-  user: User
-}
+export type LoginResponse = AuthTokens
 
 export interface MeResponse {
   user: User
@@ -29,20 +27,20 @@ export interface MeResponse {
  */
 export const authApi = {
   /**
-   * POST /auth/login
-   * Returns access token, refresh token, and the authenticated user.
+   * POST /auth/token/
+   * Returns access and refresh tokens (DRF SimpleJWT).
    */
   login: (credentials: LoginCredentials): Promise<LoginResponse> =>
-    httpClient.post<LoginResponse>('/auth/login', credentials).then((r) => r.data),
+    httpClient.post<LoginResponse>('/auth/token/', credentials).then((r) => r.data),
 
   /**
-   * POST /auth/refresh
+   * POST /auth/token/refresh/
    * Called directly by the http.ts interceptor using bare axios.
    * Exposed here as well for explicit use if needed.
    */
   refresh: (refreshToken: string): Promise<AuthTokens> =>
     httpClient
-      .post<AuthTokens>('/auth/refresh', { refresh_token: refreshToken })
+      .post<AuthTokens>('/auth/token/refresh/', { refresh: refreshToken })
       .then((r) => r.data),
 
   /**

@@ -25,6 +25,7 @@ export interface TokenProvider {
   getRefreshToken: () => string | null
   setTokens: (accessToken: string, refreshToken: string) => void
   logout: () => void
+  onTokensRefreshed?: (accessToken: string) => void
 }
 
 let _tokenProvider: TokenProvider | null = null
@@ -106,7 +107,7 @@ httpClient.interceptors.response.use(
     // Auth endpoints return 401 for "wrong credentials" or "expired refresh token" —
     // not for "access token expired". Skip the refresh flow and let the error
     // propagate directly to the caller (e.g. LoginForm's onError handler).
-    const isAuthEndpoint = /\/auth\/(login|refresh)/.test(originalRequest.url ?? '')
+    const isAuthEndpoint = /\/auth\/token/.test(originalRequest.url ?? '')
     if (isAuthEndpoint) return Promise.reject(error)
 
     // Only handle 401 Unauthorized — not already-retried requests
@@ -149,27 +150,30 @@ httpClient.interceptors.response.use(
       // Use bare axios (NOT httpClient) to bypass our own interceptors
       // and avoid an infinite retry loop.
       const { data } = await axios.post<{
-        access_token: string
-        refresh_token: string
-      }>(`${env.VITE_API_BASE_URL}/auth/refresh`, {
-        refresh_token: refreshToken,
+        access: string
+        refresh: string
+      }>(`${env.VITE_API_BASE_URL}/auth/token/refresh/`, {
+        refresh: refreshToken,
       })
 
-      _tokenProvider?.setTokens(data.access_token, data.refresh_token)
+      _tokenProvider?.setTokens(data.access, data.refresh)
       logger.info({ message: 'Token refresh successful' })
+      _tokenProvider?.onTokensRefreshed?.(data.access)
 
-      processQueue(null, data.access_token)
+      processQueue(null, data.access)
 
-      originalRequest.headers.Authorization = `Bearer ${data.access_token}`
+      originalRequest.headers.Authorization = `Bearer ${data.access}`
       return httpClient(originalRequest)
     } catch (refreshError) {
       logger.error({ message: 'Token refresh failed — logging out', error: String(refreshError) })
       processQueue(refreshError, null)
       _tokenProvider?.logout()
       window.location.href = '/login'
-      return Promise.reject(refreshError instanceof Error ? refreshError : new Error(String(refreshError)))
+      return Promise.reject(
+        refreshError instanceof Error ? refreshError : new Error(String(refreshError))
+      )
     } finally {
       isRefreshing = false
     }
-  },
+  }
 )

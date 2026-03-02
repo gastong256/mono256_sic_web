@@ -8,11 +8,8 @@ import { Input } from '@/shared/ui/Input'
 // ── Validation schema ─────────────────────────────────────────────────────────
 
 const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'Email is required')
-    .email('Enter a valid email address'),
-  password: z.string().min(1, 'Password is required'),
+  username: z.string().min(1, 'El usuario es obligatorio'),
+  password: z.string().min(1, 'La contraseña es obligatoria'),
 })
 
 type LoginFormValues = z.infer<typeof loginSchema>
@@ -20,7 +17,7 @@ type LoginFormValues = z.infer<typeof loginSchema>
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function LoginForm() {
-  const { mutate: login, isPending, error, isError } = useLogin()
+  const { mutate: login, isPending, isError } = useLogin()
 
   const {
     register,
@@ -29,7 +26,7 @@ export function LoginForm() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
+      username: '',
       password: '',
     },
   })
@@ -38,38 +35,34 @@ export function LoginForm() {
     login(values)
   }
 
-  const apiErrorMessage =
-    isError && error instanceof Error ? error.message : isError ? 'Login failed. Please try again.' : null
-
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
       noValidate
       className="space-y-5"
-      aria-label="Login form"
+      aria-label="Formulario de inicio de sesión"
     >
       {/* API-level error */}
-      {apiErrorMessage && (
+      {isError && (
         <div
           role="alert"
           className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
         >
-          {apiErrorMessage}
+          Usuario o contraseña incorrectos.
         </div>
       )}
 
       <Input
-        label="Email address"
-        type="email"
-        autoComplete="email"
+        label="Usuario"
+        type="text"
+        autoComplete="username"
         autoFocus
-        placeholder="user@example.com"
-        error={errors.email?.message}
-        {...register('email')}
+        error={errors.username?.message}
+        {...register('username')}
       />
 
       <Input
-        label="Password"
+        label="Contraseña"
         type="password"
         autoComplete="current-password"
         placeholder="••••••••"
@@ -78,7 +71,7 @@ export function LoginForm() {
       />
 
       <Button type="submit" isLoading={isPending} className="w-full">
-        {isPending ? 'Signing in…' : 'Sign in'}
+        {isPending ? 'Ingresando…' : 'Ingresar'}
       </Button>
     </form>
   )

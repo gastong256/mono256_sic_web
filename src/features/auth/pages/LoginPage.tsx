@@ -26,8 +26,8 @@ export function LoginPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
           {/* Header */}
           <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-            <p className="mt-1 text-sm text-gray-500">Sign in to your account</p>
+            <h1 className="text-2xl font-bold text-gray-900">Bienvenido</h1>
+            <p className="mt-1 text-sm text-gray-500">Iniciá sesión en tu cuenta</p>
           </div>
 
           <LoginForm />
@@ -35,8 +35,7 @@ export function LoginPage() {
           {/* Mock hint */}
           {import.meta.env.VITE_USE_MOCK_API === 'true' && (
             <p className="mt-6 rounded-md bg-blue-50 px-3 py-2 text-center text-xs text-blue-600">
-              Mock mode — use{' '}
-              <strong className="font-medium">user@example.com</strong> /{' '}
+              Modo mock — usá <strong className="font-medium">admin</strong> /{' '}
               <strong className="font-medium">password</strong>
             </p>
           )}

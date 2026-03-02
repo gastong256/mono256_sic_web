@@ -33,22 +33,22 @@ export function Layout() {
             {accessToken ? (
               <>
                 <Link
-                  to="/items"
+                  to="/companies"
                   className="text-sm text-gray-600 transition-colors hover:text-gray-900"
                 >
-                  Items
+                  Empresas
                 </Link>
                 <Link
                   to="/profile"
                   className="text-sm text-gray-600 transition-colors hover:text-gray-900"
                 >
-                  Profile
+                  Perfil
                 </Link>
                 <button
                   onClick={handleLogout}
                   className="rounded-md bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-red-50 hover:text-red-700"
                 >
-                  Logout
+                  Cerrar sesión
                 </button>
               </>
             ) : (
@@ -56,7 +56,7 @@ export function Layout() {
                 to="/login"
                 className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
               >
-                Login
+                Iniciar sesión
               </Link>
             )}
           </div>

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router'
 import { authApi } from '@/features/auth/api/auth.api'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { decodeJwtPayload } from '@/shared/lib/jwt'
 import { logger } from '@/shared/lib/logger'
 
 export function useLogin() {
@@ -14,16 +15,25 @@ export function useLogin() {
     mutationFn: authApi.login,
 
     onSuccess: async (data) => {
-      // 1. Persist tokens and user in store
-      setTokens(data.access_token, data.refresh_token)
-      setUser(data.user)
+      // 1. Persist tokens in store
+      setTokens(data.access, data.refresh)
 
-      logger.info({ message: 'User logged in', userId: data.user.id })
+      // 2. Decode is_staff and username from the SimpleJWT access token payload
+      const payload = decodeJwtPayload(data.access)
+      setUser({
+        id: String(payload?.user_id ?? ''),
+        username: payload?.username ?? '',
+        email: '',
+        name: payload?.username ?? '',
+        is_staff: payload?.is_staff ?? false,
+      })
 
-      // 2. Invalidate all stale queries so protected pages refetch with new token
+      logger.info({ message: 'User logged in', userId: String(payload?.user_id) })
+
+      // 3. Invalidate all stale queries so protected pages refetch with new token
       await queryClient.invalidateQueries()
 
-      // 3. Redirect: honour ?returnTo=, fall back to home
+      // 4. Redirect: honour ?returnTo=, fall back to home
       const returnTo = searchParams.get('returnTo') ?? '/'
       // Sanitise: only allow internal paths (prevent open redirect)
       const safePath = returnTo.startsWith('/') ? returnTo : '/'

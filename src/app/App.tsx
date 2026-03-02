@@ -4,6 +4,7 @@ import { router } from '@/app/router'
 import { ErrorBoundary } from '@/shared/ui/ErrorBoundary'
 import { registerTokenProvider } from '@/shared/lib/http'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { decodeJwtPayload } from '@/shared/lib/jwt'
 
 /**
  * Wire the auth store into the HTTP client at module-load time.
@@ -19,6 +20,18 @@ registerTokenProvider({
   getRefreshToken: () => useAuthStore.getState().refreshToken,
   setTokens: (access, refresh) => useAuthStore.getState().setTokens(access, refresh),
   logout: () => useAuthStore.getState().logout(),
+  onTokensRefreshed: (access) => {
+    const payload = decodeJwtPayload(access)
+    if (payload) {
+      useAuthStore.getState().setUser({
+        id: String(payload.user_id ?? ''),
+        username: payload.username ?? '',
+        email: '',
+        name: payload.username ?? '',
+        is_staff: payload.is_staff ?? false,
+      })
+    }
+  },
 })
 
 export function App() {

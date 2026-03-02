@@ -16,6 +16,8 @@ export const TEST_USER = {
   id: 'usr_test',
   email: 'user@example.com',
   name: 'Test User',
+  username: 'admin',
+  is_staff: false,
 }
 
 export const TEST_ACCESS_TOKEN = 'mock-access-token'

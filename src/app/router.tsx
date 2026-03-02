@@ -7,24 +7,32 @@ import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute'
 
 // ── Lazy-loaded pages — enables code splitting per route ──────────────────────
 
-const HomePage = lazy(() =>
-  import('@/pages/HomePage').then((m) => ({ default: m.HomePage })),
-)
+const HomePage = lazy(() => import('@/pages/HomePage').then((m) => ({ default: m.HomePage })))
 
 const LoginPage = lazy(() =>
-  import('@/features/auth/pages/LoginPage').then((m) => ({ default: m.LoginPage })),
+  import('@/features/auth/pages/LoginPage').then((m) => ({ default: m.LoginPage }))
 )
 
 const ItemsPage = lazy(() =>
-  import('@/features/items/pages/ItemsPage').then((m) => ({ default: m.ItemsPage })),
+  import('@/features/items/pages/ItemsPage').then((m) => ({ default: m.ItemsPage }))
 )
 
 const ProfilePage = lazy(() =>
-  import('@/pages/ProfilePage').then((m) => ({ default: m.ProfilePage })),
+  import('@/pages/ProfilePage').then((m) => ({ default: m.ProfilePage }))
+)
+
+const CompaniesPage = lazy(() =>
+  import('@/features/companies/pages/CompaniesPage').then((m) => ({ default: m.CompaniesPage }))
+)
+
+const CompanyDetailPage = lazy(() =>
+  import('@/features/accounts/pages/CompanyDetailPage').then((m) => ({
+    default: m.CompanyDetailPage,
+  }))
 )
 
 const NotFoundPage = lazy(() =>
-  import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
+  import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
 )
 
 // ── Page wrapper with Suspense ────────────────────────────────────────────────
@@ -54,6 +62,14 @@ export const router = createBrowserRouter([
       {
         element: <ProtectedRoute />,
         children: [
+          {
+            path: 'companies',
+            element: page(<CompaniesPage />),
+          },
+          {
+            path: 'companies/:companyId',
+            element: page(<CompanyDetailPage />),
+          },
           {
             path: 'items',
             element: page(<ItemsPage />),

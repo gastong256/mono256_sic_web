@@ -26,22 +26,24 @@ export function HomePage() {
             {env.VITE_APP_NAME}
           </h1>
           <p className="mt-4 text-lg text-gray-600">
-            A production-ready React template. Feature-first architecture, strict TypeScript,
-            full auth flow, and a complete test suite — ready to ship.
+            A production-ready React template. Feature-first architecture, strict TypeScript, full
+            auth flow, and a complete test suite — ready to ship.
           </p>
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             {accessToken ? (
               <>
                 <p className="text-sm text-gray-500">
-                  Signed in as{' '}
-                  <strong className="font-medium text-gray-700">{user?.name ?? 'User'}</strong>
+                  Sesión iniciada como{' '}
+                  <strong className="font-medium text-gray-700">
+                    {user?.username ?? 'Usuario'}
+                  </strong>
                 </p>
                 <Link
-                  to="/items"
+                  to="/companies"
                   className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
                 >
-                  View items →
+                  Ver empresas →
                 </Link>
               </>
             ) : (
@@ -50,13 +52,7 @@ export function HomePage() {
                   to="/login"
                   className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
                 >
-                  Get started
-                </Link>
-                <Link
-                  to="/items"
-                  className="rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
-                >
-                  View demo
+                  Iniciar sesión
                 </Link>
               </>
             )}
@@ -64,8 +60,7 @@ export function HomePage() {
 
           {env.VITE_USE_MOCK_API && (
             <p className="mt-4 text-xs text-blue-500">
-              Running with mock API —{' '}
-              <strong>user@example.com</strong> / <strong>password</strong>
+              Modo mock — usá <strong>admin</strong> / <strong>password</strong>
             </p>
           )}
         </div>
