@@ -1,5 +1,12 @@
 ## 1.0.0 (2026-03-02)
 
+* feat: build sic frontend — auth adapter, companies, and accounts ([3ad4351](https://github.com/gastong256/mono256_sic_web/commit/3ad4351))
+* chore: add pnpm lock ([6c1f97a](https://github.com/gastong256/mono256_sic_web/commit/6c1f97a))
+* chore: initialize project from template ([769b84f](https://github.com/gastong256/mono256_sic_web/commit/769b84f))
+* Initial commit ([8791bb5](https://github.com/gastong256/mono256_sic_web/commit/8791bb5))
+
+## 1.0.0 (2026-03-02)
+
 * fix: commit lockfile, fix pnpm cache key, and harden e2e timeouts ([0d8f971](https://github.com/gastong256/react-vite-ts-tailwind-base/commit/0d8f971))
 * fix: disable husky hooks during semantic-release commit ([360fab0](https://github.com/gastong256/react-vite-ts-tailwind-base/commit/360fab0))
 * fix: use exact match for items heading to avoid strict mode violation ([ea3c37d](https://github.com/gastong256/react-vite-ts-tailwind-base/commit/ea3c37d))
