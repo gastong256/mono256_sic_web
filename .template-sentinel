@@ -1,7 +1,0 @@
-TEMPLATE_NOT_INITIALIZED
-
-This file is automatically removed by `pnpm run init`.
-If this file is present, the template has not been initialized yet.
-
-Run:
-  pnpm run init

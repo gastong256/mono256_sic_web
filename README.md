@@ -1,8 +1,8 @@
-# __PROJECT_NAME__
+# SIC (Angrisani)
 
-> __DESCRIPTION__
+> Accounting system that implements SIC (Angrisani) concepts. Web application.
 
-A production-ready React application bootstrapped from [react-vite-ts-tailwind-base](https://github.com/__OWNER__/react-vite-ts-tailwind-base).
+A production-ready React application bootstrapped from [react-vite-ts-tailwind-base](https://github.com/gastong256/react-vite-ts-tailwind-base).
 
 ---
 
@@ -68,8 +68,8 @@ Copy `.env.example` to `.env` (done automatically by `pnpm run init`):
 
 | Variable | Default | Description |
 |---|---|---|
-| `VITE_APP_NAME` | `__PROJECT_NAME__` | Application display name |
-| `VITE_API_BASE_URL` | `__API_BASE_URL__` | Real backend base URL |
+| `VITE_APP_NAME` | `SIC (Angrisani)` | Application display name |
+| `VITE_API_BASE_URL` | `http://localhost:8000/api` | Real backend base URL |
 | `VITE_USE_MOCK_API` | `true` | Use MSW mocks instead of real API |
 | `VITE_SENTRY_ENABLED` | `false` | Enable Sentry error tracking |
 | `VITE_SENTRY_DSN` | — | Sentry DSN (required if enabled) |
@@ -203,4 +203,4 @@ All commits are linted by `commitlint`. The `pre-commit` hook runs `lint-staged`
 
 ## License
 
-MIT © __OWNER__
+MIT © gastong256

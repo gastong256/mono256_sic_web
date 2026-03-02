@@ -80,14 +80,14 @@ done
 # ── Replace placeholders ──────────────────────────────────────
 # Using perl for cross-platform compatibility (macOS + Linux)
 while IFS= read -r -d '' file; do
-  perl -pi \
-    -e "s|__PROJECT_NAME__|${PROJECT_NAME}|g" \
-    -e "s|__PROJECT_SLUG__|${PROJECT_SLUG}|g" \
-    -e "s|__OWNER__|${OWNER}|g" \
-    -e "s|__DESCRIPTION__|${DESCRIPTION}|g" \
-    -e "s|__API_BASE_URL__|${API_BASE_URL}|g" \
-    -e "s|__SENTRY_DSN__|${SENTRY_DSN}|g" \
-    "$file" 2>/dev/null || true
+  perl -pi -e "
+    s|__PROJECT_NAME__|${PROJECT_NAME}|g;
+    s|__PROJECT_SLUG__|${PROJECT_SLUG}|g;
+    s|__OWNER__|${OWNER}|g;
+    s|__DESCRIPTION__|${DESCRIPTION}|g;
+    s|__API_BASE_URL__|${API_BASE_URL}|g;
+    s|__SENTRY_DSN__|${SENTRY_DSN}|g;
+  " "$file" 2>/dev/null || true
 done < <(find . \
   -type f \
   \( "${FIND_ARGS[@]}" \) \
@@ -97,6 +97,7 @@ done < <(find . \
   ! -path "./coverage/*" \
   ! -path "./playwright-report/*" \
   ! -path "./${SENTINEL}" \
+  ! -path "./scripts/init.sh" \
   -print0)
 
 # ── Create .env from .env.example if missing ──────────────────

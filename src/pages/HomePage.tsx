@@ -98,7 +98,7 @@ export function HomePage() {
       <section className="rounded-xl border border-gray-200 bg-gray-50 p-6">
         <h2 className="mb-3 font-semibold text-gray-800">Quick start</h2>
         <pre className="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-green-400">
-          <code>{`git clone https://github.com/__OWNER__/react-vite-ts-tailwind-base
+          <code>{`git clone https://github.com/gastong256/react-vite-ts-tailwind-base
 cd react-vite-ts-tailwind-base
 pnpm run init   # replace placeholders
 pnpm install
