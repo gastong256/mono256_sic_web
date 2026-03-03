@@ -85,6 +85,18 @@ const users: MockUserRecord[] = [
     date_joined: '2024-02-03T09:30:00Z',
     password: 'password',
   },
+  {
+    id: 5,
+    username: 'student3',
+    email: 'student3@example.com',
+    first_name: 'Lucia',
+    last_name: 'Student',
+    is_staff: false,
+    role: 'student',
+    course_id: null,
+    date_joined: '2024-02-05T09:30:00Z',
+    password: 'password',
+  },
 ]
 
 const courses: Course[] = [
@@ -100,7 +112,7 @@ const courses: Course[] = [
   },
 ]
 
-let nextUserId = 5
+let nextUserId = 6
 const REGISTER_RATE_LIMIT_MAX_ATTEMPTS = 5
 const REGISTER_RATE_LIMIT_WINDOW_MS = 60_000
 let registerAttemptsTimestamps: number[] = []
@@ -724,6 +736,13 @@ function canAccessCourse(user: User, course: Course): boolean {
   return false
 }
 
+function findAccessibleCourse(user: User, courseId: number): Course | null {
+  const course = courses.find((candidate) => candidate.id === courseId)
+  if (!course) return null
+  if (!canAccessCourse(user, course)) return null
+  return course
+}
+
 export function listCoursesForUser(user: User): Array<{
   id: number
   name: string
@@ -766,9 +785,8 @@ export function listTeacherCourseCompanies(
     }>
   }>
 } | null {
-  const course = courses.find((candidate) => candidate.id === courseId)
+  const course = findAccessibleCourse(user, courseId)
   if (!course) return null
-  if (!canAccessCourse(user, course)) return null
 
   return {
     course_id: course.id,
@@ -822,9 +840,8 @@ export function listTeacherCourseJournalEntries(
     lines: JournalLine[]
   }>
 } | null {
-  const course = courses.find((candidate) => candidate.id === courseId)
+  const course = findAccessibleCourse(user, courseId)
   if (!course) return null
-  if (!canAccessCourse(user, course)) return null
 
   const courseStudentSet = new Set(course.student_usernames)
   const allowedCompanies = companies
@@ -896,6 +913,112 @@ export function listTeacherCourseJournalEntries(
     previous: null,
     results,
   }
+}
+
+export function listAvailableStudentsForCourse(
+  user: User,
+  courseId: number,
+  filters: {
+    search?: string
+    page?: number
+    pageSize?: number
+  }
+): {
+  count: number
+  next: string | null
+  previous: string | null
+  results: Array<{
+    id: number
+    username: string
+    first_name: string
+    last_name: string
+    email: string
+  }>
+} | null {
+  const course = findAccessibleCourse(user, courseId)
+  if (!course) return null
+
+  const search = (filters.search ?? '').trim().toLowerCase()
+  const pageSize = Math.max(1, filters.pageSize ?? 8)
+  const page = Math.max(1, filters.page ?? 1)
+
+  let available = users.filter(
+    (candidate) =>
+      candidate.role === 'student' && !course.student_usernames.includes(candidate.username)
+  )
+
+  if (search.length > 0) {
+    available = available.filter((candidate) => {
+      const fullName = `${candidate.first_name} ${candidate.last_name}`.toLowerCase()
+      return candidate.username.toLowerCase().includes(search) || fullName.includes(search)
+    })
+  }
+
+  const count = available.length
+  const start = (page - 1) * pageSize
+  const end = start + pageSize
+  const paged = available.slice(start, end)
+
+  return {
+    count,
+    next: end < count ? String(page + 1) : null,
+    previous: page > 1 ? String(page - 1) : null,
+    results: paged.map((student) => ({
+      id: student.id,
+      username: student.username,
+      first_name: student.first_name,
+      last_name: student.last_name,
+      email: student.email,
+    })),
+  }
+}
+
+export function enrollStudentInCourse(
+  user: User,
+  courseId: number,
+  studentId: number
+): { ok: true } | { ok: false; status: number; detail: string } {
+  const course = findAccessibleCourse(user, courseId)
+  if (!course) return { ok: false, status: 403, detail: 'Forbidden' }
+
+  const student = users.find((candidate) => candidate.id === studentId)
+  if (!student || student.role !== 'student') {
+    return { ok: false, status: 404, detail: 'Student not found' }
+  }
+
+  if (!course.student_usernames.includes(student.username)) {
+    course.student_usernames.push(student.username)
+  }
+  student.course_id = course.id
+  course.updated_at = new Date().toISOString()
+
+  return { ok: true }
+}
+
+export function unenrollStudentFromCourse(
+  user: User,
+  courseId: number,
+  studentId: number
+): { ok: true } | { ok: false; status: number; detail: string } {
+  const course = findAccessibleCourse(user, courseId)
+  if (!course) return { ok: false, status: 403, detail: 'Forbidden' }
+
+  const student = users.find((candidate) => candidate.id === studentId)
+  if (!student || student.role !== 'student') {
+    return { ok: false, status: 404, detail: 'Student not found' }
+  }
+
+  const idx = course.student_usernames.indexOf(student.username)
+  if (idx === -1) {
+    return { ok: false, status: 404, detail: 'Enrollment not found' }
+  }
+  course.student_usernames.splice(idx, 1)
+  if (student.course_id === course.id) {
+    student.course_id = null
+  }
+  course.updated_at = new Date().toISOString()
+
+  return { ok: true }
 }
 
 export function buildTeacherDashboard(user: User): TeacherDashboardResponse | null {

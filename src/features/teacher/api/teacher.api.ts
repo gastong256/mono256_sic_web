@@ -1,6 +1,8 @@
 import { httpClient } from '@/shared/lib/http'
 import type { TeacherDashboardResponse } from '@/shared/types'
 import type {
+  TeacherAvailableStudent,
+  TeacherAvailableStudentsResponse,
   TeacherCompanyItem,
   TeacherCourseCompaniesResponse,
   TeacherCourseJournalEntriesResponse,
@@ -11,6 +13,27 @@ type Course = {
   id: number
   name: string
   teacher_username?: string
+}
+
+type AvailableStudentsPayload = TeacherAvailableStudentsResponse | TeacherAvailableStudent[]
+
+function normalizeAvailableStudents(
+  payload: AvailableStudentsPayload
+): TeacherAvailableStudentsResponse {
+  if (Array.isArray(payload)) {
+    return {
+      count: payload.length,
+      next: null,
+      previous: null,
+      results: payload,
+    }
+  }
+  return {
+    count: payload.count ?? payload.results.length,
+    next: payload.next ?? null,
+    previous: payload.previous ?? null,
+    results: payload.results ?? [],
+  }
 }
 
 function extractCount(payload: TeacherCourseJournalEntriesResponse): number {
@@ -81,4 +104,24 @@ export const teacherApi = {
         params: { student_id: studentId, company_id: companyId },
       })
       .then((r) => r.data.results.map((entry) => ({ ...entry, lines: entry.lines ?? [] }))),
+
+  availableStudents: (
+    courseId: number,
+    params?: { search?: string; page?: number }
+  ): Promise<TeacherAvailableStudentsResponse> =>
+    httpClient
+      .get<AvailableStudentsPayload>('/teacher/students/available/', {
+        params: {
+          course_id: courseId,
+          ...(params?.search ? { search: params.search } : null),
+          ...(params?.page ? { page: params.page } : null),
+        },
+      })
+      .then((r) => normalizeAvailableStudents(r.data)),
+
+  enrollStudent: (courseId: number, studentId: number): Promise<void> =>
+    httpClient.post(`/courses/${courseId}/enrollments/`, { student_id: studentId }).then(() => {}),
+
+  unenrollStudent: (courseId: number, studentId: number): Promise<void> =>
+    httpClient.delete(`/courses/${courseId}/enrollments/${studentId}/`).then(() => {}),
 }

@@ -43,3 +43,18 @@ export interface TeacherCourseJournalEntriesResponse {
   previous: string | null
   results: TeacherCourseJournalEntry[]
 }
+
+export interface TeacherAvailableStudent {
+  id: number
+  username: string
+  first_name: string
+  last_name: string
+  email: string
+}
+
+export interface TeacherAvailableStudentsResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: TeacherAvailableStudent[]
+}
