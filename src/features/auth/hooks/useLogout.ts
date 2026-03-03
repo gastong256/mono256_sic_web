@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
 import { logger } from '@/shared/lib/logger'
 
 /**
@@ -11,12 +12,14 @@ import { logger } from '@/shared/lib/logger'
  */
 export function useLogout() {
   const { logout } = useAuthStore()
+  const { setActiveCompanyId } = useActiveCompanyStore()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
   return function handleLogout() {
     logger.info({ message: 'User logged out' })
     logout()
+    setActiveCompanyId(null)
     queryClient.clear()
     void navigate('/login', { replace: true })
   }

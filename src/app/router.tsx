@@ -7,14 +7,12 @@ import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute'
 
 // ── Lazy-loaded pages — enables code splitting per route ──────────────────────
 
-const HomePage = lazy(() => import('@/pages/HomePage').then((m) => ({ default: m.HomePage })))
+const JournalPage = lazy(() =>
+  import('@/features/journal/pages/JournalPage').then((m) => ({ default: m.JournalPage }))
+)
 
 const LoginPage = lazy(() =>
   import('@/features/auth/pages/LoginPage').then((m) => ({ default: m.LoginPage }))
-)
-
-const ItemsPage = lazy(() =>
-  import('@/features/items/pages/ItemsPage').then((m) => ({ default: m.ItemsPage }))
 )
 
 const ProfilePage = lazy(() =>
@@ -51,7 +49,7 @@ export const router = createBrowserRouter([
       // ── Public routes ──────────────────────────────────────
       {
         index: true,
-        element: page(<HomePage />),
+        element: page(<JournalPage />),
       },
       {
         path: 'login',
@@ -69,10 +67,6 @@ export const router = createBrowserRouter([
           {
             path: 'companies/:companyId',
             element: page(<CompanyDetailPage />),
-          },
-          {
-            path: 'items',
-            element: page(<ItemsPage />),
           },
           {
             path: 'profile',

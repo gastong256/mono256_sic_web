@@ -3,9 +3,15 @@ import { companiesApi } from '@/features/companies/api/companies.api'
 
 export const COMPANIES_QUERY_KEY = ['companies'] as const
 
-export function useCompanies() {
+interface UseCompaniesOptions {
+  enabled?: boolean
+}
+
+export function useCompanies(options?: UseCompaniesOptions) {
   return useQuery({
     queryKey: COMPANIES_QUERY_KEY,
     queryFn: companiesApi.list,
+    enabled: options?.enabled ?? true,
+    staleTime: 5 * 60 * 1000,
   })
 }

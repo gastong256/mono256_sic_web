@@ -9,10 +9,10 @@ test.describe('Authentication', () => {
 
   // ── Access control ──────────────────────────────────────────────────────────
 
-  test('unauthenticated user visiting /items is redirected to /login', async ({ page }) => {
-    await page.goto('/items')
+  test('unauthenticated user visiting /companies is redirected to /login', async ({ page }) => {
+    await page.goto('/companies')
 
-    await expect(page).toHaveURL(/\/login\?returnTo=%2Fitems/)
+    await expect(page).toHaveURL(/\/login\?returnTo=%2Fcompanies/)
     await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible()
   })
 
@@ -91,7 +91,7 @@ test.describe('Authentication', () => {
 
     await page.waitForURL('/', { timeout: 10_000 })
 
-    await expect(page.getByRole('link', { name: 'Items' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Empresas' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Profile' })).toBeVisible()
     await expect(page.getByRole('button', { name: /logout/i })).toBeVisible()
   })
@@ -99,14 +99,14 @@ test.describe('Authentication', () => {
   // ── returnTo redirect ───────────────────────────────────────────────────────
 
   test('redirects to returnTo path after login', async ({ page }) => {
-    await page.goto('/login?returnTo=%2Fitems')
+    await page.goto('/login?returnTo=%2Fcompanies')
     await page.waitForLoadState('networkidle')
 
     await page.getByLabel(/email address/i).fill('user@example.com')
     await page.getByLabel(/password/i).fill('password')
     await page.getByRole('button', { name: /sign in/i }).click()
 
-    await expect(page).toHaveURL('/items', { timeout: 10_000 })
+    await expect(page).toHaveURL('/companies', { timeout: 10_000 })
   })
 
   test('ignores external returnTo (open redirect protection)', async ({ page }) => {
@@ -153,8 +153,8 @@ test.describe('Authentication', () => {
     await page.waitForURL('/login', { timeout: 5_000 })
 
     // Try to access a protected route
-    await page.goto('/items')
-    await expect(page).toHaveURL(/\/login\?returnTo=%2Fitems/)
+    await page.goto('/companies')
+    await expect(page).toHaveURL(/\/login\?returnTo=%2Fcompanies/)
   })
 
   // ── Already authenticated ───────────────────────────────────────────────────

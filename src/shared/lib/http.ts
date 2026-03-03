@@ -80,6 +80,12 @@ type RefreshQueueItem = {
 let isRefreshing = false
 let refreshQueue: RefreshQueueItem[] = []
 
+function redirectToLoginIfNeeded(): void {
+  if (typeof window === 'undefined') return
+  if (window.location.pathname === '/login') return
+  window.location.replace('/login')
+}
+
 function processQueue(error: unknown, token: string | null = null): void {
   refreshQueue.forEach(({ resolve, reject }) => {
     if (error !== null) {
@@ -140,7 +146,7 @@ httpClient.interceptors.response.use(
       processQueue(new Error('No refresh token'), null)
       isRefreshing = false
       _tokenProvider?.logout()
-      window.location.href = '/login'
+      redirectToLoginIfNeeded()
       return Promise.reject(error)
     }
 
@@ -168,7 +174,7 @@ httpClient.interceptors.response.use(
       logger.error({ message: 'Token refresh failed — logging out', error: String(refreshError) })
       processQueue(refreshError, null)
       _tokenProvider?.logout()
-      window.location.href = '/login'
+      redirectToLoginIfNeeded()
       return Promise.reject(
         refreshError instanceof Error ? refreshError : new Error(String(refreshError))
       )

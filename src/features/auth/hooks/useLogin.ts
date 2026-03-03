@@ -31,8 +31,13 @@ export function useLogin() {
 
       logger.info({ message: 'User logged in', userId: String(payload?.user_id) })
 
-      // 3. Invalidate all stale queries so protected pages refetch with new token
-      await queryClient.invalidateQueries()
+      // 3. Invalidate auth/business domains that may be stale after login
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['me'] }),
+        queryClient.invalidateQueries({ queryKey: ['companies'] }),
+        queryClient.invalidateQueries({ queryKey: ['accounts'] }),
+        queryClient.invalidateQueries({ queryKey: ['journal'] }),
+      ])
 
       // 4. Redirect: honour ?returnTo=, fall back to home
       const returnTo = searchParams.get('returnTo') ?? '/'

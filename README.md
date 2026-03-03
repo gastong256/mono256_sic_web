@@ -8,24 +8,24 @@ A production-ready React application bootstrapped from [react-vite-ts-tailwind-b
 
 ## Stack
 
-| Layer | Technology |
-|---|---|
-| UI | React 19 |
-| Build | Vite 6 |
-| Language | TypeScript 5 (strict) |
-| Styling | Tailwind CSS v4 (CSS-first) |
-| Routing | React Router 7 |
-| State | Zustand 5 |
-| Server state | TanStack Query 5 |
-| Forms | React Hook Form + Zod |
-| HTTP | Axios (via `shared/lib/http`) |
-| Mocking | MSW v2 |
-| Unit tests | Vitest + React Testing Library |
-| E2E tests | Playwright |
-| Linting | ESLint v9 flat config |
-| Formatting | Prettier |
-| Commits | Conventional Commits + commitlint |
-| Releases | semantic-release |
+| Layer        | Technology                        |
+| ------------ | --------------------------------- |
+| UI           | React 19                          |
+| Build        | Vite 6                            |
+| Language     | TypeScript 5 (strict)             |
+| Styling      | Tailwind CSS v4 (CSS-first)       |
+| Routing      | React Router 7                    |
+| State        | Zustand 5                         |
+| Server state | TanStack Query 5                  |
+| Forms        | React Hook Form + Zod             |
+| HTTP         | Axios (via `shared/lib/http`)     |
+| Mocking      | MSW v2                            |
+| Unit tests   | Vitest + React Testing Library    |
+| E2E tests    | Playwright                        |
+| Linting      | ESLint v9 flat config             |
+| Formatting   | Prettier                          |
+| Commits      | Conventional Commits + commitlint |
+| Releases     | semantic-release                  |
 
 ---
 
@@ -66,34 +66,34 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Copy `.env.example` to `.env` (done automatically by `pnpm run init`):
 
-| Variable | Default | Description |
-|---|---|---|
-| `VITE_APP_NAME` | `SIC (Angrisani)` | Application display name |
-| `VITE_API_BASE_URL` | `http://localhost:8000/api` | Real backend base URL |
-| `VITE_USE_MOCK_API` | `true` | Use MSW mocks instead of real API |
-| `VITE_SENTRY_ENABLED` | `false` | Enable Sentry error tracking |
-| `VITE_SENTRY_DSN` | — | Sentry DSN (required if enabled) |
+| Variable              | Default                        | Description                       |
+| --------------------- | ------------------------------ | --------------------------------- |
+| `VITE_APP_NAME`       | `SIC (Angrisani)`              | Application display name          |
+| `VITE_API_BASE_URL`   | `http://localhost:8000/api/v1` | Real backend base URL             |
+| `VITE_USE_MOCK_API`   | `true`                         | Use MSW mocks instead of real API |
+| `VITE_SENTRY_ENABLED` | `false`                        | Enable Sentry error tracking      |
+| `VITE_SENTRY_DSN`     | —                              | Sentry DSN (required if enabled)  |
 
 ---
 
 ## Scripts
 
-| Command | Description |
-|---|---|
-| `pnpm dev` | Start dev server (port 3000) |
-| `pnpm build` | Production build |
-| `pnpm preview` | Preview production build |
-| `pnpm lint` | Run ESLint |
-| `pnpm lint:fix` | Run ESLint with auto-fix |
-| `pnpm typecheck` | TypeScript type-check |
-| `pnpm test` | Run unit tests (single run) |
-| `pnpm test:watch` | Run unit tests in watch mode |
-| `pnpm test:coverage` | Run unit tests with coverage |
-| `pnpm test:e2e` | Run Playwright e2e tests |
-| `pnpm test:e2e:ui` | Run Playwright in interactive mode |
-| `pnpm format` | Format all files with Prettier |
-| `pnpm format:check` | Check formatting |
-| `pnpm init` | Initialize template (idempotent) |
+| Command              | Description                        |
+| -------------------- | ---------------------------------- |
+| `pnpm dev`           | Start dev server (port 3000)       |
+| `pnpm build`         | Production build                   |
+| `pnpm preview`       | Preview production build           |
+| `pnpm lint`          | Run ESLint                         |
+| `pnpm lint:fix`      | Run ESLint with auto-fix           |
+| `pnpm typecheck`     | TypeScript type-check              |
+| `pnpm test`          | Run unit tests (single run)        |
+| `pnpm test:watch`    | Run unit tests in watch mode       |
+| `pnpm test:coverage` | Run unit tests with coverage       |
+| `pnpm test:e2e`      | Run Playwright e2e tests           |
+| `pnpm test:e2e:ui`   | Run Playwright in interactive mode |
+| `pnpm format`        | Format all files with Prettier     |
+| `pnpm format:check`  | Check formatting                   |
+| `pnpm init`          | Initialize template (idempotent)   |
 
 ---
 
@@ -116,7 +116,9 @@ src/
 │   └── types/             # Global TypeScript types
 ├── features/              # Feature modules (self-contained)
 │   ├── auth/              # Authentication (login, tokens, store)
-│   └── items/             # Example CRUD feature
+│   ├── companies/         # Company management
+│   ├── accounts/          # Company chart of accounts
+│   └── journal/           # Journal entries
 ├── pages/                 # Route-level page components
 └── mocks/                 # MSW handlers (dev only)
     ├── browser.ts
@@ -155,12 +157,13 @@ The Axios interceptor (`shared/lib/http.ts`) automatically:
 
 ### Routes
 
-| Path | Access |
-|---|---|
-| `/` | Public |
-| `/login` | Public (redirects to `/` if authenticated) |
-| `/items` | Protected |
-| `/profile` | Protected |
+| Path                    | Access                                     |
+| ----------------------- | ------------------------------------------ |
+| `/`                     | Protected                                  |
+| `/login`                | Public (redirects to `/` if authenticated) |
+| `/companies`            | Protected                                  |
+| `/companies/:companyId` | Protected                                  |
+| `/profile`              | Protected                                  |
 
 ---
 
@@ -168,15 +171,15 @@ The Axios interceptor (`shared/lib/http.ts`) automatically:
 
 MSW handlers are located in `src/mocks/handlers/`. Active when `VITE_USE_MOCK_API=true`.
 
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/auth/login` | Returns access + refresh tokens |
-| `POST` | `/auth/refresh` | Refreshes tokens |
-| `GET` | `/me` | Returns current user |
-| `GET` | `/items` | Returns list of items |
-| `POST` | `/items` | Creates a new item |
+| Method     | Path                             | Description                     |
+| ---------- | -------------------------------- | ------------------------------- |
+| `POST`     | `/auth/token/`                   | Returns access + refresh tokens |
+| `POST`     | `/auth/token/refresh/`           | Refreshes tokens                |
+| `GET`      | `/auth/me/`                      | Returns current user            |
+| `GET`      | `/companies/`                    | Returns companies list          |
+| `GET/POST` | `/companies/:companyId/journal/` | List/create journal entries     |
 
-**Default credentials (mock):** `user@example.com` / `password`
+**Default credentials (mock):** `admin` / `password`
 
 ---
 

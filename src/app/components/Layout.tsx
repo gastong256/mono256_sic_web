@@ -1,37 +1,86 @@
-import { Link, Outlet, useNavigate } from 'react-router'
+import { useState } from 'react'
+import { Link, Outlet } from 'react-router'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { useMe } from '@/features/auth/hooks/useMe'
+import { useLogout } from '@/features/auth/hooks/useLogout'
 import { env } from '@/shared/config/env'
+import { CompanySelector } from '@/features/companies/components/CompanySelector'
 
 export function Layout() {
-  const { accessToken, logout } = useAuthStore()
-  const navigate = useNavigate()
-
-  function handleLogout() {
-    logout()
-    void navigate('/login', { replace: true })
-  }
+  const { accessToken } = useAuthStore()
+  const [diarioOpen, setDiarioOpen] = useState(false)
+  useMe()
+  const handleLogout = useLogout()
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <nav className="border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          {/* Logo */}
-          <Link
-            to="/"
-            className="text-lg font-semibold text-gray-900 transition-colors hover:text-blue-600"
-          >
-            {env.VITE_APP_NAME}
-          </Link>
+          {/* Left: Logo + CompanySelector */}
+          <div className="flex items-center gap-4">
+            <Link
+              to="/"
+              className="text-lg font-semibold text-gray-900 transition-colors hover:text-blue-600"
+            >
+              {env.VITE_APP_NAME}
+            </Link>
+            <CompanySelector />
+          </div>
 
           {/* Nav links */}
           <div className="flex items-center gap-6">
-            <Link to="/" className="text-sm text-gray-600 transition-colors hover:text-gray-900">
-              Home
-            </Link>
-
             {accessToken ? (
               <>
+                {/* Diario dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setDiarioOpen((v) => !v)}
+                    onBlur={() => setTimeout(() => setDiarioOpen(false), 150)}
+                    className="flex items-center gap-1 text-sm text-gray-600 transition-colors hover:text-gray-900"
+                  >
+                    Diario
+                    <svg
+                      className={[
+                        'size-3.5 transition-transform',
+                        diarioOpen ? 'rotate-180' : '',
+                      ].join(' ')}
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                  {diarioOpen && (
+                    <div className="absolute top-full right-0 z-20 mt-1 w-52 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                      <Link
+                        to="/"
+                        onClick={() => setDiarioOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        Asientos manuales
+                      </Link>
+                      <span
+                        title="Próximamente"
+                        className="block cursor-not-allowed px-4 py-2 text-sm text-gray-400 opacity-60 select-none"
+                      >
+                        Por operación
+                      </span>
+                      <span
+                        title="Próximamente"
+                        className="block cursor-not-allowed px-4 py-2 text-sm text-gray-400 opacity-60 select-none"
+                      >
+                        Por documento contable
+                      </span>
+                    </div>
+                  )}
+                </div>
+
                 <Link
                   to="/companies"
                   className="text-sm text-gray-600 transition-colors hover:text-gray-900"

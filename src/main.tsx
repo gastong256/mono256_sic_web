@@ -16,7 +16,14 @@ async function enableMocking(): Promise<void> {
    * When false, this entire branch is dead code and tree-shaken
    * by Rollup — MSW will NOT be included in the production bundle.
    */
-  if (import.meta.env.VITE_USE_MOCK_API !== 'true') return
+  if (import.meta.env.VITE_USE_MOCK_API !== 'true') {
+    // Unregister any stale MSW service worker left from a previous mock session
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations()
+      await Promise.all(regs.map((r) => r.unregister()))
+    }
+    return
+  }
 
   const { worker } = await import('@/mocks/browser')
 
@@ -43,7 +50,7 @@ enableMocking()
     createRoot(rootElement).render(
       <StrictMode>
         <App />
-      </StrictMode>,
+      </StrictMode>
     )
   })
   .catch((err: unknown) => {
