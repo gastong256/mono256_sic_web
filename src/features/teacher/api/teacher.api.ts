@@ -1,10 +1,6 @@
 import { httpClient } from '@/shared/lib/http'
 import type { Company } from '@/features/companies/types/company.types'
-import type {
-  CreateJournalEntryPayload,
-  JournalEntry,
-  JournalEntryDetail,
-} from '@/features/journal/types/journal.types'
+import type { JournalEntryDetail } from '@/features/journal/types/journal.types'
 import type { TeacherDashboardResponse } from '@/shared/types'
 
 export const teacherApi = {
@@ -22,14 +18,8 @@ export const teacherApi = {
       .post<Company>(`/teacher/students/${studentId}/companies/`, payload)
       .then((r) => r.data),
 
-  companyJournal: (companyId: number): Promise<JournalEntry[]> =>
-    httpClient.get<JournalEntry[]>(`/teacher/companies/${companyId}/journal/`).then((r) => r.data),
-
-  createCompanyJournalEntry: (
-    companyId: number,
-    payload: CreateJournalEntryPayload
-  ): Promise<JournalEntryDetail> =>
+  companyJournal: (companyId: number): Promise<JournalEntryDetail[]> =>
     httpClient
-      .post<JournalEntryDetail>(`/teacher/companies/${companyId}/journal/`, payload)
+      .get<JournalEntryDetail[]>(`/teacher/companies/${companyId}/journal/`)
       .then((r) => r.data),
 }

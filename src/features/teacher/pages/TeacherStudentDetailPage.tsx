@@ -3,6 +3,53 @@ import { useParams } from 'react-router'
 import { useTeacherStudentCompanies } from '@/features/teacher/hooks/useTeacherStudentCompanies'
 import { useTeacherCompanyJournalEntries } from '@/features/teacher/hooks/useTeacherCompanyJournalEntries'
 import { Spinner } from '@/shared/ui/Spinner'
+import type { JournalEntryDetail, JournalLine } from '@/features/journal/types/journal.types'
+
+const arsFormatter = new Intl.NumberFormat('es-AR', {
+  style: 'currency',
+  currency: 'ARS',
+})
+
+function parseAmount(value: string): number {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+function summarizeByAccount(entries: JournalEntryDetail[]) {
+  const summary = new Map<
+    number,
+    { code: string; name: string; debit: number; credit: number; balance: number }
+  >()
+
+  entries.forEach((entry) => {
+    entry.lines.forEach((line) => {
+      const amount = parseAmount(line.amount)
+      const debit = line.type === 'DEBIT' ? amount : 0
+      const credit = line.type === 'CREDIT' ? amount : 0
+      const previous = summary.get(line.account_id) ?? {
+        code: line.account_code,
+        name: line.account_name,
+        debit: 0,
+        credit: 0,
+        balance: 0,
+      }
+
+      const next = {
+        ...previous,
+        debit: previous.debit + debit,
+        credit: previous.credit + credit,
+      }
+      next.balance = next.debit - next.credit
+      summary.set(line.account_id, next)
+    })
+  })
+
+  return Array.from(summary.values()).sort((a, b) => a.code.localeCompare(b.code))
+}
+
+function lineAmount(line: JournalLine): string {
+  return arsFormatter.format(parseAmount(line.amount))
+}
 
 export function TeacherStudentDetailPage() {
   const { studentId } = useParams<{ studentId: string }>()
@@ -22,6 +69,17 @@ export function TeacherStudentDetailPage() {
     () => companies.find((company) => company.id === selectedCompanyId) ?? null,
     [companies, selectedCompanyId]
   )
+  const companySummary = useMemo(() => {
+    const totalDebit = journalEntries.reduce((sum, entry) => sum + entry.total_debit, 0)
+    const totalCredit = journalEntries.reduce((sum, entry) => sum + entry.total_credit, 0)
+    return {
+      entries: journalEntries.length,
+      totalDebit,
+      totalCredit,
+      balanceDiff: totalDebit - totalCredit,
+      byAccount: summarizeByAccount(journalEntries),
+    }
+  }, [journalEntries])
 
   return (
     <div className="space-y-6">
@@ -75,7 +133,7 @@ export function TeacherStudentDetailPage() {
         </div>
 
         {!selectedCompany && (
-          <p className="text-sm text-gray-500">Seleccioná una empresa para ver y crear asientos.</p>
+          <p className="text-sm text-gray-500">Seleccioná una empresa para revisar los asientos.</p>
         )}
 
         {selectedCompany && journalLoading && (
@@ -96,21 +154,113 @@ export function TeacherStudentDetailPage() {
         )}
 
         {selectedCompany && !journalLoading && !journalError && journalEntries.length > 0 && (
-          <ul className="divide-y divide-gray-100 rounded-md border border-gray-100">
-            {journalEntries.map((entry) => (
-              <li key={entry.id} className="flex items-center justify-between px-3 py-2 text-sm">
-                <span className="text-gray-700">
-                  #{entry.entry_number} · {entry.date} · {entry.description}
-                </span>
-                <span className="font-medium text-gray-900">
-                  {entry.total_debit.toLocaleString('es-AR', {
-                    style: 'currency',
-                    currency: 'ARS',
-                  })}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-4">
+            <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+              <p className="text-sm font-semibold text-blue-900">
+                Resumen de {selectedCompany.name}
+              </p>
+              <div className="mt-2 grid gap-2 text-sm text-blue-900 sm:grid-cols-2 lg:grid-cols-4">
+                <p>Asientos: {companySummary.entries}</p>
+                <p>Debe total: {arsFormatter.format(companySummary.totalDebit)}</p>
+                <p>Haber total: {arsFormatter.format(companySummary.totalCredit)}</p>
+                <p
+                  className={companySummary.balanceDiff === 0 ? 'text-emerald-700' : 'text-red-700'}
+                >
+                  Diferencia: {arsFormatter.format(companySummary.balanceDiff)}
+                </p>
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-md border border-gray-200">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                      Cuenta
+                    </th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Debe</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">
+                      Haber
+                    </th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">
+                      Saldo neto
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {companySummary.byAccount.map((account) => (
+                    <tr key={account.code}>
+                      <td className="px-3 py-2 text-gray-700">
+                        {account.code} · {account.name}
+                      </td>
+                      <td className="px-3 py-2 text-right text-gray-700">
+                        {arsFormatter.format(account.debit)}
+                      </td>
+                      <td className="px-3 py-2 text-right text-gray-700">
+                        {arsFormatter.format(account.credit)}
+                      </td>
+                      <td
+                        className={[
+                          'px-3 py-2 text-right font-medium',
+                          account.balance >= 0 ? 'text-emerald-700' : 'text-red-700',
+                        ].join(' ')}
+                      >
+                        {arsFormatter.format(account.balance)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <ul className="space-y-3">
+              {journalEntries.map((entry) => (
+                <li key={entry.id} className="rounded-md border border-gray-200">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2 text-sm">
+                    <span className="font-medium text-gray-800">
+                      Asiento #{entry.entry_number} · {entry.date} · {entry.description}
+                    </span>
+                    <span
+                      className={
+                        entry.total_debit === entry.total_credit
+                          ? 'text-emerald-700'
+                          : 'text-red-700'
+                      }
+                    >
+                      Debe {arsFormatter.format(entry.total_debit)} | Haber{' '}
+                      {arsFormatter.format(entry.total_credit)}
+                    </span>
+                  </div>
+                  <div className="overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-xs text-gray-500">
+                          <th className="px-3 py-2">Cuenta</th>
+                          <th className="px-3 py-2 text-right">Debe</th>
+                          <th className="px-3 py-2 text-right">Haber</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {entry.lines.map((line, index) => (
+                          <tr key={`${entry.id}-${index}`}>
+                            <td className="px-3 py-2 text-gray-700">
+                              {line.account_code} · {line.account_name}
+                            </td>
+                            <td className="px-3 py-2 text-right text-gray-700">
+                              {line.type === 'DEBIT' ? lineAmount(line) : '—'}
+                            </td>
+                            <td className="px-3 py-2 text-right text-gray-700">
+                              {line.type === 'CREDIT' ? lineAmount(line) : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
     </div>

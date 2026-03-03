@@ -9,7 +9,7 @@ import { canManageRoles, canViewTeacherDashboard } from '@/shared/lib/authorizat
 
 export function Layout() {
   const { accessToken, user } = useAuthStore()
-  const [diarioOpen, setDiarioOpen] = useState(false)
+  const [asientosOpen, setAsientosOpen] = useState(false)
   useMe()
   const handleLogout = useLogout()
   const canViewTeacher = canViewTeacherDashboard(user)
@@ -35,18 +35,18 @@ export function Layout() {
           <div className="flex items-center gap-6">
             {accessToken ? (
               <>
-                {/* Diario dropdown */}
+                {/* Asientos dropdown */}
                 <div className="relative">
                   <button
-                    onClick={() => setDiarioOpen((v) => !v)}
-                    onBlur={() => setTimeout(() => setDiarioOpen(false), 150)}
+                    onClick={() => setAsientosOpen((v) => !v)}
+                    onBlur={() => setTimeout(() => setAsientosOpen(false), 150)}
                     className="flex items-center gap-1 text-sm text-gray-600 transition-colors hover:text-gray-900"
                   >
-                    Diario
+                    Asientos
                     <svg
                       className={[
                         'size-3.5 transition-transform',
-                        diarioOpen ? 'rotate-180' : '',
+                        asientosOpen ? 'rotate-180' : '',
                       ].join(' ')}
                       viewBox="0 0 20 20"
                       fill="currentColor"
@@ -59,14 +59,14 @@ export function Layout() {
                       />
                     </svg>
                   </button>
-                  {diarioOpen && (
+                  {asientosOpen && (
                     <div className="absolute top-full right-0 z-20 mt-1 w-52 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
                       <Link
                         to="/"
-                        onClick={() => setDiarioOpen(false)}
+                        onClick={() => setAsientosOpen(false)}
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                       >
-                        Asientos manuales
+                        Registro manual
                       </Link>
                       <span
                         title="Próximamente"
@@ -108,7 +108,7 @@ export function Layout() {
                       to="/settings/chart-visibility"
                       className="text-sm text-gray-600 transition-colors hover:text-gray-900"
                     >
-                      Árbol global
+                      Plan de cuentas
                     </Link>
                   </>
                 )}

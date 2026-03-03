@@ -476,6 +476,12 @@ export function listJournalEntriesByCompany(companyId: number): JournalEntry[] {
     .map(toJournalList)
 }
 
+export function listJournalEntryDetailsByCompany(companyId: number): JournalEntryDetail[] {
+  return journalEntries
+    .filter((entry) => journalCompanyMap[entry.id] === companyId)
+    .sort((a, b) => a.entry_number - b.entry_number)
+}
+
 export function getJournalEntry(companyId: number, entryId: number): JournalEntryDetail | null {
   return (
     journalEntries.find(

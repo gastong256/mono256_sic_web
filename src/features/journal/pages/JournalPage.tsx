@@ -23,7 +23,7 @@ export function JournalPage() {
   if (activeCompanyId === null) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
-        <p className="text-gray-500">Seleccioná una empresa para ver el diario.</p>
+        <p className="text-gray-500">Seleccioná una empresa para ver los asientos.</p>
       </div>
     )
   }
@@ -32,7 +32,7 @@ export function JournalPage() {
     <div className="space-y-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Diario</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Asientos</h1>
         <Button onClick={() => setIsFormOpen(true)}>+ Nuevo asiento</Button>
       </div>
 

@@ -5,8 +5,8 @@ import {
   canReviewCompany,
   getCompanyById,
   getRequestUser,
+  listJournalEntryDetailsByCompany,
   listCompaniesForStudentAsTeacher,
-  listJournalEntriesByCompany,
 } from '@/mocks/data/mockDb'
 
 const BASE = env.VITE_API_BASE_URL
@@ -51,7 +51,7 @@ export const teacherHandlers = [
     if (!canReviewCompany(user, company))
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
 
-    return HttpResponse.json(listJournalEntriesByCompany(company.id))
+    return HttpResponse.json(listJournalEntryDetailsByCompany(company.id))
   }),
 
   http.post(`${BASE}/teacher/companies/:companyId/journal/`, () =>
