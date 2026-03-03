@@ -7,6 +7,7 @@ import type { AccountLevelConfig } from '@/shared/types'
 import { Spinner } from '@/shared/ui/Spinner'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Button } from '@/shared/ui/Button'
+import { Alert } from '@/shared/ui/Alert'
 
 type ChartTreeNode = AccountLevelConfig & { children: AccountLevelConfig[] }
 
@@ -52,12 +53,7 @@ export function AccountChartVisibilityPage() {
       )}
 
       {error && !isLoading && (
-        <div
-          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-          role="alert"
-        >
-          Error al cargar configuración de visibilidad.
-        </div>
+        <Alert tone="error">Error al cargar configuracion de visibilidad.</Alert>
       )}
 
       {!isLoading && !error && (

@@ -8,6 +8,8 @@ import { NewJournalEntryForm } from '@/features/journal/components/NewJournalEnt
 import { Spinner } from '@/shared/ui/Spinner'
 import { Button } from '@/shared/ui/Button'
 import { PageHeader } from '@/shared/ui/PageHeader'
+import { EmptyState } from '@/shared/ui/EmptyState'
+import { Alert } from '@/shared/ui/Alert'
 
 export function JournalPage() {
   const { accessToken, refreshToken } = useAuthStore()
@@ -23,9 +25,11 @@ export function JournalPage() {
 
   if (activeCompanyId === null) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <p className="text-gray-500">Seleccioná una empresa para ver los asientos.</p>
-      </div>
+      <EmptyState
+        title="Selecciona una empresa"
+        description="Necesitas una empresa activa para ver y registrar asientos."
+        className="py-24"
+      />
     )
   }
 
@@ -45,22 +49,15 @@ export function JournalPage() {
         </div>
       )}
 
-      {isError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          Error al cargar los asientos. Intentá de nuevo.
-        </div>
-      )}
+      {isError && <Alert tone="error">Error al cargar los asientos. Intentá de nuevo.</Alert>}
 
       {!isLoading && !isError && entries && entries.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border-soft)] py-20 text-center">
-          <p className="muted-text">No hay asientos registrados.</p>
-          <button
-            onClick={() => setIsFormOpen(true)}
-            className="mt-3 text-sm font-medium text-[var(--brand-600)] hover:text-[var(--brand-700)]"
-          >
-            Crear el primer asiento
-          </button>
-        </div>
+        <EmptyState
+          title="No hay asientos registrados"
+          description="Comenza registrando el primer asiento manual de esta empresa."
+          action={<Button onClick={() => setIsFormOpen(true)}>Crear primer asiento</Button>}
+          className="py-20"
+        />
       )}
 
       {!isLoading && entries && entries.length > 0 && (

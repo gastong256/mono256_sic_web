@@ -2,6 +2,8 @@ import { useAdminUsers, useUpdateUserRole } from '@/features/admin/hooks/useAdmi
 import type { Role } from '@/shared/types'
 import { Spinner } from '@/shared/ui/Spinner'
 import { PageHeader } from '@/shared/ui/PageHeader'
+import { Alert } from '@/shared/ui/Alert'
+import { EmptyState } from '@/shared/ui/EmptyState'
 
 export function AdminRolesPage() {
   const { data: users = [], isLoading, error } = useAdminUsers()
@@ -20,54 +22,66 @@ export function AdminRolesPage() {
         </div>
       )}
 
-      {error && !isLoading && (
-        <div
-          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-          role="alert"
-        >
-          Error al cargar usuarios.
-        </div>
+      {error && !isLoading && <Alert tone="error">Error al cargar usuarios.</Alert>}
+
+      {!isLoading && !error && users.length === 0 && (
+        <EmptyState
+          title="No hay usuarios disponibles"
+          description="No se encontraron registros para administrar roles."
+        />
       )}
 
-      {!isLoading && !error && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          <table className="w-full text-sm">
-            <thead className="border-b border-gray-200 bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Usuario</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Nombre</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Rol actual</th>
-                <th className="px-4 py-3 text-right font-medium text-gray-600">Nuevo rol</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td className="px-4 py-3 text-gray-900">@{user.username}</td>
-                  <td className="px-4 py-3 text-gray-700">
-                    {`${user.first_name} ${user.last_name}`.trim()}
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">{user.role}</td>
-                  <td className="px-4 py-3 text-right">
-                    <select
-                      value={user.role === 'admin' ? 'teacher' : user.role}
-                      onChange={(e) =>
-                        updateRole({
-                          userId: user.id,
-                          payload: { role: e.target.value as Exclude<Role, 'admin'> },
-                        })
-                      }
-                      disabled={isPending || user.role === 'admin'}
-                      className="rounded-md border border-gray-200 px-2 py-1 text-sm"
-                    >
-                      <option value="student">student</option>
-                      <option value="teacher">teacher</option>
-                    </select>
-                  </td>
+      {!isLoading && !error && users.length > 0 && (
+        <div className="surface-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-sm">
+              <thead className="border-b border-[var(--border-soft)] bg-[var(--bg-subtle)]">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                    Usuario
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                    Nombre
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                    Rol actual
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                    Nuevo rol
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-[var(--border-soft)]">
+                {users.map((user) => (
+                  <tr key={user.id}>
+                    <td className="px-4 py-3 font-medium text-[var(--text-strong)]">
+                      @{user.username}
+                    </td>
+                    <td className="muted-text px-4 py-3">
+                      {`${user.first_name} ${user.last_name}`.trim()}
+                    </td>
+                    <td className="muted-text px-4 py-3">{user.role}</td>
+                    <td className="px-4 py-3 text-right">
+                      <select
+                        value={user.role === 'admin' ? 'teacher' : user.role}
+                        onChange={(e) =>
+                          updateRole({
+                            userId: user.id,
+                            payload: { role: e.target.value as Exclude<Role, 'admin'> },
+                          })
+                        }
+                        disabled={isPending || user.role === 'admin'}
+                        className="rounded-md border border-[var(--border-strong)] px-2 py-1 text-sm text-[var(--text-strong)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
+                      >
+                        <option value="student">student</option>
+                        <option value="teacher">teacher</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, useFieldArray, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,6 +8,7 @@ import { Input } from '@/shared/ui/Input'
 import { useCreateJournalEntry } from '@/features/journal/hooks/useCreateJournalEntry'
 import { useJournalAccounts } from '@/features/journal/hooks/useJournalAccounts'
 import type { CreateJournalLinePayload } from '@/features/journal/types/journal.types'
+import { Alert } from '@/shared/ui/Alert'
 
 // ── Zod schema ────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
   const mutateAsync = studentMutation.mutateAsync
   const isPending = studentMutation.isPending
   const { data: accounts, isLoading: accountsLoading } = useJournalAccounts(companyId)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const {
     register,
@@ -86,6 +88,7 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
+      setSubmitError(null)
       reset({
         date: new Date().toISOString().slice(0, 10),
         description: '',
@@ -95,6 +98,7 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
   }, [isOpen, reset])
 
   async function onSubmit(values: FormValues) {
+    setSubmitError(null)
     const normalizedLines: CreateJournalLinePayload[] = []
 
     values.lines.forEach((l) => {
@@ -109,12 +113,16 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
       }
     })
 
-    await mutateAsync({
-      date: values.date,
-      description: values.description,
-      lines: normalizedLines,
-    })
-    onClose()
+    try {
+      await mutateAsync({
+        date: values.date,
+        description: values.description,
+        lines: normalizedLines,
+      })
+      onClose()
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'No se pudo guardar el asiento.')
+    }
   }
 
   return (
@@ -125,18 +133,26 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
         }}
         className="space-y-5"
       >
+        {submitError && <Alert tone="error">{submitError}</Alert>}
+
         {/* Date + Description */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Fecha</label>
+            <label className="mb-1 block text-sm font-semibold text-[var(--text-strong)]">
+              Fecha
+            </label>
             <Input type="date" {...register('date')} />
-            {errors.date && <p className="mt-1 text-xs text-red-600">{errors.date.message}</p>}
+            {errors.date && (
+              <p className="mt-1 text-xs text-[var(--danger-600)]">{errors.date.message}</p>
+            )}
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Descripción</label>
+            <label className="mb-1 block text-sm font-semibold text-[var(--text-strong)]">
+              Descripcion
+            </label>
             <Input placeholder="Concepto del asiento" {...register('description')} />
             {errors.description && (
-              <p className="mt-1 text-xs text-red-600">{errors.description.message}</p>
+              <p className="mt-1 text-xs text-[var(--danger-600)]">{errors.description.message}</p>
             )}
           </div>
         </div>
@@ -144,44 +160,42 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
         {/* Lines table */}
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">Líneas</span>
-            <button
-              type="button"
-              onClick={() => append(defaultLine)}
-              className="text-xs font-medium text-blue-600 hover:text-blue-800"
-            >
-              + Agregar línea
-            </button>
+            <span className="text-sm font-semibold text-[var(--text-strong)]">Lineas</span>
+            <Button type="button" variant="ghost" onClick={() => append(defaultLine)}>
+              + Agregar linea
+            </Button>
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-gray-200">
+          <div className="overflow-hidden rounded-lg border border-[var(--border-soft)]">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50">
+              <thead className="bg-[var(--bg-subtle)]">
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Cuenta</th>
-                  <th className="w-36 px-3 py-2 text-right text-xs font-medium text-gray-500">
+                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                    Cuenta
+                  </th>
+                  <th className="w-36 px-3 py-2 text-right text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
                     Debe
                   </th>
-                  <th className="w-36 px-3 py-2 text-right text-xs font-medium text-gray-500">
+                  <th className="w-36 px-3 py-2 text-right text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
                     Haber
                   </th>
                   <th className="w-10 px-3 py-2" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[var(--border-soft)]">
                 {fields.map((field, index) => (
                   <tr key={field.id}>
                     {/* Account select */}
                     <td className="px-3 py-2">
                       <select
                         {...register(`lines.${index}.account`, { valueAsNumber: true })}
-                        className="w-full rounded-md border border-gray-200 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        className="w-full rounded-md border border-[var(--border-strong)] bg-white px-2 py-1 text-sm focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
                       >
-                        <option value={0}>Seleccionar cuenta…</option>
-                        {accountsLoading && <option disabled>Cargando…</option>}
+                        <option value={0}>Seleccionar cuenta...</option>
+                        {accountsLoading && <option disabled>Cargando...</option>}
                         {accounts?.map((a) => (
                           <option key={a.id} value={a.id}>
-                            {a.code} – {a.name}
+                            {a.code} - {a.name}
                           </option>
                         ))}
                       </select>
@@ -198,6 +212,8 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
                         type="number"
                         step="0.01"
                         min="0"
+                        inputMode="decimal"
+                        placeholder="0.00"
                         {...register(`lines.${index}.debe`, {
                           onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
                             if (Number(e.target.value) > 0) {
@@ -205,7 +221,7 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
                             }
                           },
                         })}
-                        className="w-full rounded-md border border-gray-200 px-2 py-1 text-right text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        className="w-full rounded-md border border-[var(--border-strong)] px-2 py-1 text-right text-sm focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
                       />
                       {errors.lines?.[index]?.debe && (
                         <p className="mt-0.5 text-xs text-red-600">
@@ -220,6 +236,8 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
                         type="number"
                         step="0.01"
                         min="0"
+                        inputMode="decimal"
+                        placeholder="0.00"
                         {...register(`lines.${index}.haber`, {
                           onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
                             if (Number(e.target.value) > 0) {
@@ -227,7 +245,7 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
                             }
                           },
                         })}
-                        className="w-full rounded-md border border-gray-200 px-2 py-1 text-right text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        className="w-full rounded-md border border-[var(--border-strong)] px-2 py-1 text-right text-sm focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
                       />
                     </td>
 
@@ -237,8 +255,8 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
                         <button
                           type="button"
                           onClick={() => remove(index)}
-                          className="rounded p-1 text-gray-300 hover:text-red-500"
-                          aria-label="Eliminar línea"
+                          className="rounded p-1 text-[var(--text-muted)] hover:bg-red-50 hover:text-red-600"
+                          aria-label="Eliminar linea"
                         >
                           <svg className="size-4" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
@@ -252,8 +270,11 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
             </table>
           </div>
           {errors.lines?.root && (
-            <p className="mt-1 text-xs text-red-600">{errors.lines.root.message}</p>
+            <p className="mt-1 text-xs text-[var(--danger-600)]">{errors.lines.root.message}</p>
           )}
+          <p className="muted-text mt-2 text-xs">
+            Regla: cada linea debe tener valor en Debe o Haber, nunca en ambos.
+          </p>
         </div>
 
         {/* Balance bar */}
@@ -286,13 +307,9 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
 
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-1">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
-          >
+          <Button type="button" variant="secondary" onClick={onClose}>
             Cancelar
-          </button>
+          </Button>
           <Button type="submit" isLoading={isPending} disabled={!isBalanced || isPending}>
             Guardar asiento
           </Button>

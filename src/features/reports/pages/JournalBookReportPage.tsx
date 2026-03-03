@@ -4,6 +4,8 @@ import { useJournalBookReport } from '@/features/reports/hooks/useJournalBookRep
 import { Spinner } from '@/shared/ui/Spinner'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Button } from '@/shared/ui/Button'
+import { Alert } from '@/shared/ui/Alert'
+import { EmptyState } from '@/shared/ui/EmptyState'
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
   style: 'currency',
@@ -89,9 +91,7 @@ export function JournalBookReportPage() {
       </section>
 
       {activeCompanyId === null && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-          Seleccioná una empresa para ver el Libro Diario.
-        </div>
+        <Alert tone="warning">Selecciona una empresa para ver el Libro Diario.</Alert>
       )}
 
       {activeCompanyId !== null && isLoading && (
@@ -101,9 +101,9 @@ export function JournalBookReportPage() {
       )}
 
       {activeCompanyId !== null && isError && !isLoading && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <Alert tone="error">
           {error instanceof Error ? error.message : 'No se pudo cargar el Libro Diario.'}
-        </div>
+        </Alert>
       )}
 
       {activeCompanyId !== null && !isLoading && !isError && data && (
@@ -118,9 +118,11 @@ export function JournalBookReportPage() {
           </div>
 
           {data.entries.length === 0 ? (
-            <div className="rounded-md border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500">
-              No hay asientos para los filtros seleccionados.
-            </div>
+            <EmptyState
+              title="Sin resultados en el periodo"
+              description="No hay asientos para los filtros seleccionados."
+              className="py-8"
+            />
           ) : (
             <ul className="space-y-3">
               {data.entries.map((entry) => (

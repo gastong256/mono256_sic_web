@@ -4,6 +4,7 @@ import { Spinner } from '@/shared/ui/Spinner'
 import { getRequestId } from '@/shared/lib/tracing'
 import { RegistrationCodeCard } from '@/features/auth/components/RegistrationCodeCard'
 import { PageHeader } from '@/shared/ui/PageHeader'
+import { Alert } from '@/shared/ui/Alert'
 
 export function ProfilePage() {
   const { user } = useAuthStore()
@@ -18,14 +19,7 @@ export function ProfilePage() {
   }
 
   if (isError || !user) {
-    return (
-      <div
-        role="alert"
-        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-      >
-        Failed to load profile. Please try refreshing the page.
-      </div>
-    )
+    return <Alert tone="error">Failed to load profile. Please try refreshing the page.</Alert>
   }
 
   const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username

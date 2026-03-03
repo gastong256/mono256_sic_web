@@ -6,6 +6,8 @@ import { Spinner } from '@/shared/ui/Spinner'
 import type { JournalLine } from '@/features/journal/types/journal.types'
 import type { TeacherCourseJournalEntry } from '@/features/teacher/types/teacher.types'
 import { PageHeader } from '@/shared/ui/PageHeader'
+import { Alert } from '@/shared/ui/Alert'
+import { EmptyState } from '@/shared/ui/EmptyState'
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
   style: 'currency',
@@ -113,12 +115,7 @@ export function TeacherStudentDetailPage() {
       <PageHeader title="Detalle de alumno" subtitle={`Alumno #${parsedStudentId}`} />
 
       {(Number.isNaN(parsedCourseId) || parsedCourseId <= 0) && (
-        <div
-          className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-          role="alert"
-        >
-          Falta el contexto de curso. Volvé al panel docente y reintentá.
-        </div>
+        <Alert tone="error">Falta el contexto de curso. Volvé al panel docente y reintentá.</Alert>
       )}
 
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -127,16 +124,11 @@ export function TeacherStudentDetailPage() {
         {isLoading && <Spinner className="size-6 text-blue-600" label="Cargando empresas…" />}
 
         {error && !isLoading && (
-          <div
-            className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-            role="alert"
-          >
-            Error al cargar las empresas del alumno.
-          </div>
+          <Alert tone="error">Error al cargar las empresas del alumno.</Alert>
         )}
 
         {!isLoading && !error && companies.length === 0 && (
-          <p className="text-sm text-gray-500">Este alumno aún no tiene empresas.</p>
+          <EmptyState title="Este alumno aun no tiene empresas" className="border-none py-6" />
         )}
 
         {!isLoading && !error && companies.length > 0 && (
@@ -166,7 +158,11 @@ export function TeacherStudentDetailPage() {
         </div>
 
         {!selectedCompany && (
-          <p className="text-sm text-gray-500">Seleccioná una empresa para revisar los asientos.</p>
+          <EmptyState
+            title="Selecciona una empresa"
+            description="Necesitas una empresa seleccionada para revisar los asientos del alumno."
+            className="border-none py-6"
+          />
         )}
 
         {selectedCompany && journalLoading && (
@@ -174,16 +170,15 @@ export function TeacherStudentDetailPage() {
         )}
 
         {selectedCompany && journalError && !journalLoading && (
-          <div
-            className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-            role="alert"
-          >
-            Error al cargar asientos para {selectedCompany.name}.
-          </div>
+          <Alert tone="error">Error al cargar asientos para {selectedCompany.name}.</Alert>
         )}
 
         {selectedCompany && !journalLoading && !journalError && journalEntries.length === 0 && (
-          <p className="text-sm text-gray-500">No hay asientos registrados para esta empresa.</p>
+          <EmptyState
+            title="No hay asientos registrados"
+            description="Esta empresa todavia no tiene actividad contable."
+            className="border-none py-6"
+          />
         )}
 
         {selectedCompany && !journalLoading && !journalError && journalEntries.length > 0 && (

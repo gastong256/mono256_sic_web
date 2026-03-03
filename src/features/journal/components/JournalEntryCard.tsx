@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { JournalEntry } from '@/features/journal/types/journal.types'
 import { useJournalEntry } from '@/features/journal/hooks/useJournalEntry'
 import { Spinner } from '@/shared/ui/Spinner'
+import { Alert } from '@/shared/ui/Alert'
 
 const arsFormat = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' })
 
@@ -27,30 +28,34 @@ export function JournalEntryCard({ entry, companyId }: JournalEntryCardProps) {
   const totalHaber = entry.total_credit
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="surface-card overflow-hidden">
       {/* Header row */}
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-gray-50"
+        className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-[var(--bg-subtle)]"
       >
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-gray-500 tabular-nums">{entry.date}</span>
-          <span className="font-medium text-gray-900">{entry.description}</span>
+          <span className="muted-text text-sm font-medium tabular-nums">{entry.date}</span>
+          <span className="font-medium text-[var(--text-strong)]">{entry.description}</span>
         </div>
         <div className="flex items-center gap-6">
           <div className="hidden text-right sm:block">
-            <p className="text-xs text-gray-400">Debe</p>
-            <p className="text-sm font-medium text-gray-700">{formatARS(String(totalDebe))}</p>
+            <p className="muted-text text-xs">Debe</p>
+            <p className="text-sm font-semibold text-[var(--text-strong)]">
+              {formatARS(String(totalDebe))}
+            </p>
           </div>
           <div className="hidden text-right sm:block">
-            <p className="text-xs text-gray-400">Haber</p>
-            <p className="text-sm font-medium text-gray-700">{formatARS(String(totalHaber))}</p>
+            <p className="muted-text text-xs">Haber</p>
+            <p className="text-sm font-semibold text-[var(--text-strong)]">
+              {formatARS(String(totalHaber))}
+            </p>
           </div>
           {/* Chevron */}
           <svg
             className={[
-              'size-4 text-gray-400 transition-transform',
+              'muted-text size-4 transition-transform',
               expanded ? 'rotate-180' : '',
             ].join(' ')}
             viewBox="0 0 20 20"
@@ -68,50 +73,46 @@ export function JournalEntryCard({ entry, companyId }: JournalEntryCardProps) {
 
       {/* Expanded lines */}
       {expanded && (
-        <div className="border-t border-gray-100 px-5 pt-3 pb-4">
+        <div className="border-t border-[var(--border-soft)] px-5 pt-3 pb-4">
           {detailLoading && (
             <div className="flex justify-center py-6">
-              <Spinner className="size-5 text-blue-600" label="Cargando líneas…" />
+              <Spinner className="size-5 text-[var(--brand-500)]" label="Cargando lineas..." />
             </div>
           )}
 
-          {detailError && (
-            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              Error al cargar el detalle del asiento.
-            </div>
-          )}
+          {detailError && <Alert tone="error">Error al cargar el detalle del asiento.</Alert>}
 
           {!detailLoading && !detailError && detail && (
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-gray-400">
-                  <th className="pb-2 font-medium">Cuenta</th>
-                  <th className="pb-2 text-right font-medium">Debe</th>
-                  <th className="pb-2 text-right font-medium">Haber</th>
+                <tr className="text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                  <th className="pb-2">Cuenta</th>
+                  <th className="pb-2 text-right">Debe</th>
+                  <th className="pb-2 text-right">Haber</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-[var(--border-soft)]">
                 {detail.lines.map((line, idx) => (
                   <tr key={`${line.account_id}-${idx}`}>
-                    <td className="py-1.5 text-gray-700">
+                    <td className="py-1.5 text-[var(--text-strong)]">
                       {line.account_code} - {line.account_name}
                     </td>
-                    <td className="py-1.5 text-right text-gray-600 tabular-nums">
+                    <td className="muted-text py-1.5 text-right tabular-nums">
                       {line.type === 'DEBIT' ? formatARS(line.amount) : '—'}
                     </td>
-                    <td className="py-1.5 text-right text-gray-600 tabular-nums">
+                    <td className="muted-text py-1.5 text-right tabular-nums">
                       {line.type === 'CREDIT' ? formatARS(line.amount) : '—'}
                     </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr className="border-t border-gray-200 font-medium">
-                  <td className="pt-2 text-gray-500">Total</td>
-                  <td className="pt-2 text-right text-gray-700 tabular-nums">
+                <tr className="border-t border-[var(--border-strong)] font-semibold">
+                  <td className="muted-text pt-2">Total</td>
+                  <td className="pt-2 text-right text-[var(--text-strong)] tabular-nums">
                     {formatARS(String(totalDebe))}
                   </td>
-                  <td className="pt-2 text-right text-gray-700 tabular-nums">
+                  <td className="pt-2 text-right text-[var(--text-strong)] tabular-nums">
                     {formatARS(String(totalHaber))}
                   </td>
                 </tr>

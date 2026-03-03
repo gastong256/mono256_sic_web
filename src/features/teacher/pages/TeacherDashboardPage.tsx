@@ -2,6 +2,8 @@ import { Link } from 'react-router'
 import { useTeacherDashboard } from '@/features/teacher/hooks/useTeacherDashboard'
 import { Spinner } from '@/shared/ui/Spinner'
 import { PageHeader } from '@/shared/ui/PageHeader'
+import { Alert } from '@/shared/ui/Alert'
+import { EmptyState } from '@/shared/ui/EmptyState'
 
 export function TeacherDashboardPage() {
   const { data, isLoading, error } = useTeacherDashboard()
@@ -16,19 +18,10 @@ export function TeacherDashboardPage() {
         </div>
       )}
 
-      {error && !isLoading && (
-        <div
-          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-          role="alert"
-        >
-          Error al cargar el panel docente.
-        </div>
-      )}
+      {error && !isLoading && <Alert tone="error">Error al cargar el panel docente.</Alert>}
 
       {!isLoading && !error && data && data.courses.length === 0 && (
-        <div className="rounded-xl border-2 border-dashed border-gray-200 py-16 text-center">
-          <p className="text-sm font-medium text-gray-500">No hay cursos asignados.</p>
-        </div>
+        <EmptyState title="No hay cursos asignados" />
       )}
 
       {!isLoading && !error && data && data.courses.length > 0 && (

@@ -8,6 +8,8 @@ import { Button } from '@/shared/ui/Button'
 import { Spinner } from '@/shared/ui/Spinner'
 import type { Company } from '@/features/companies/types/company.types'
 import { PageHeader } from '@/shared/ui/PageHeader'
+import { Alert } from '@/shared/ui/Alert'
+import { EmptyState } from '@/shared/ui/EmptyState'
 
 export function CompaniesPage() {
   const navigate = useNavigate()
@@ -49,22 +51,16 @@ export function CompaniesPage() {
 
       {/* Error */}
       {error && !isLoading && (
-        <div
-          role="alert"
-          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-        >
-          Error al cargar las empresas. Intente nuevamente.
-        </div>
+        <Alert tone="error">Error al cargar las empresas. Intente nuevamente.</Alert>
       )}
 
       {/* Empty */}
       {!isLoading && !error && companies.length === 0 && (
-        <div className="rounded-xl border-2 border-dashed border-[var(--border-soft)] py-16 text-center">
-          <p className="muted-text text-sm font-medium">No hay empresas registradas.</p>
-          <p className="muted-text mt-1 text-xs">
-            Haga clic en &quot;Nueva empresa&quot; para comenzar.
-          </p>
-        </div>
+        <EmptyState
+          title="No hay empresas registradas"
+          description='Hace clic en "Nueva empresa" para comenzar.'
+          action={<Button onClick={openCreate}>Nueva empresa</Button>}
+        />
       )}
 
       {/* Table */}

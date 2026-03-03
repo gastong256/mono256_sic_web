@@ -9,6 +9,7 @@ import { Button } from '@/shared/ui/Button'
 import { useRegister } from '@/features/auth/hooks/useRegister'
 import type { RegisterPayload } from '@/features/auth/api/auth.api'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { Alert } from '@/shared/ui/Alert'
 
 const registerSchema = z
   .object({
@@ -125,14 +126,16 @@ export function RegisterPage() {
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="surface-card p-8">
           <div className="mb-6 text-center">
-            <h1 className="text-2xl font-bold text-gray-900">Crear cuenta</h1>
-            <p className="mt-1 text-sm text-gray-500">Registro de estudiante</p>
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--text-strong)]">
+              Crear cuenta
+            </h1>
+            <p className="muted-text mt-1 text-sm">Registro de estudiante</p>
           </div>
 
           {success && (
-            <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+            <Alert tone="success" className="mb-4">
               Usuario creado correctamente.
               <button
                 type="button"
@@ -141,13 +144,13 @@ export function RegisterPage() {
               >
                 Ir a login
               </button>
-            </div>
+            </Alert>
           )}
 
           {(genericError || blockLabel) && (
-            <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <Alert tone="error" className="mb-4">
               {blockLabel ?? genericError}
-            </div>
+            </Alert>
           )}
 
           <form
@@ -199,7 +202,10 @@ export function RegisterPage() {
 
           <p className="mt-4 text-center text-sm text-gray-500">
             ¿Ya tenés cuenta?{' '}
-            <Link to="/login" className="font-medium text-blue-600 hover:text-blue-700">
+            <Link
+              to="/login"
+              className="font-semibold text-[var(--brand-600)] hover:text-[var(--brand-700)]"
+            >
               Iniciar sesión
             </Link>
           </p>

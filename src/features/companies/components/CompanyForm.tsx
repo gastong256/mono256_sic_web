@@ -9,6 +9,7 @@ import { Input } from '@/shared/ui/Input'
 import { useCreateCompany } from '@/features/companies/hooks/useCreateCompany'
 import { useUpdateCompany } from '@/features/companies/hooks/useUpdateCompany'
 import type { Company } from '@/features/companies/types/company.types'
+import { Alert } from '@/shared/ui/Alert'
 
 // ── Validation schema ─────────────────────────────────────────────────────────
 
@@ -101,23 +102,19 @@ export function CompanyForm({ isOpen, onClose, company }: CompanyFormProps) {
       title={isEditMode ? 'Editar empresa' : 'Nueva empresa'}
     >
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
-        {errors.root?.message && (
-          <div
-            role="alert"
-            className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-          >
-            {errors.root.message}
-          </div>
-        )}
+        {errors.root?.message && <Alert tone="error">{errors.root.message}</Alert>}
 
         <Input label="Nombre" autoFocus error={errors.name?.message} {...register('name')} />
 
-        <Input
-          label="CUIT"
-          placeholder="Opcional"
-          error={errors.tax_id?.message}
-          {...register('tax_id')}
-        />
+        <div>
+          <Input
+            label="CUIT"
+            placeholder="Opcional"
+            error={errors.tax_id?.message}
+            {...register('tax_id')}
+          />
+          <p className="muted-text mt-1 text-xs">Formato sugerido: 30-12345678-9.</p>
+        </div>
 
         <div className="flex justify-end gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={handleClose} disabled={isPending}>
