@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet, useLocation } from 'react-router'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useMe } from '@/features/auth/hooks/useMe'
 import { useLogout } from '@/features/auth/hooks/useLogout'
@@ -10,10 +10,17 @@ import { AppBreadcrumbs } from '@/shared/ui/AppBreadcrumbs'
 
 function navLinkClassName(isActive: boolean): string {
   return [
-    'menu-pill text-sm font-semibold',
+    'menu-pill',
     isActive
       ? 'border-[var(--border-soft)] bg-white text-[var(--text-strong)] shadow-[0_8px_20px_-18px_rgba(10,29,64,0.8)]'
       : '',
+  ].join(' ')
+}
+
+function navDropdownItemClassName(isActive: boolean): string {
+  return [
+    'menu-dropdown-item',
+    isActive ? 'bg-[var(--bg-subtle)] text-[var(--text-strong)]' : '',
   ].join(' ')
 }
 
@@ -24,6 +31,7 @@ export function Layout() {
   const [supervisionOpen, setSupervisionOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { pathname } = useLocation()
+  const navigate = useNavigate()
 
   useMe()
 
@@ -78,7 +86,7 @@ export function Layout() {
                     onClick={() => setAsientosOpen((v) => !v)}
                     aria-expanded={asientosOpen}
                     aria-controls="menu-asientos"
-                    className="menu-pill flex items-center gap-1 text-sm font-semibold"
+                    className="menu-pill gap-1"
                   >
                     Asientos
                     <svg
@@ -104,26 +112,19 @@ export function Layout() {
                     >
                       <NavLink
                         to="/"
-                        className={({ isActive }) =>
-                          [
-                            'mx-1 block rounded-lg px-3 py-2 text-sm',
-                            isActive
-                              ? 'bg-[var(--bg-subtle)] text-[var(--text-strong)]'
-                              : 'text-[var(--text-strong)] hover:bg-[var(--bg-subtle)]',
-                          ].join(' ')
-                        }
+                        className={({ isActive }) => navDropdownItemClassName(isActive)}
                       >
                         Registro manual
                       </NavLink>
                       <span
                         title="Proximamente"
-                        className="block cursor-not-allowed px-4 py-2 text-sm text-[var(--text-muted)] opacity-60 select-none"
+                        className="menu-dropdown-item cursor-not-allowed text-[var(--text-muted)] opacity-60 select-none"
                       >
                         Por operacion
                       </span>
                       <span
                         title="Proximamente"
-                        className="block cursor-not-allowed px-4 py-2 text-sm text-[var(--text-muted)] opacity-60 select-none"
+                        className="menu-dropdown-item cursor-not-allowed text-[var(--text-muted)] opacity-60 select-none"
                       >
                         Por documento contable
                       </span>
@@ -136,7 +137,7 @@ export function Layout() {
                     onClick={() => setLibrosOpen((v) => !v)}
                     aria-expanded={librosOpen}
                     aria-controls="menu-libros"
-                    className="menu-pill flex items-center gap-1 text-sm font-semibold"
+                    className="menu-pill gap-1"
                   >
                     Libros
                     <svg
@@ -162,40 +163,19 @@ export function Layout() {
                     >
                       <NavLink
                         to="/reports/journal-book"
-                        className={({ isActive }) =>
-                          [
-                            'mx-1 block rounded-lg px-3 py-2 text-sm',
-                            isActive
-                              ? 'bg-[var(--bg-subtle)] text-[var(--text-strong)]'
-                              : 'text-[var(--text-strong)] hover:bg-[var(--bg-subtle)]',
-                          ].join(' ')
-                        }
+                        className={({ isActive }) => navDropdownItemClassName(isActive)}
                       >
                         Libro Diario
                       </NavLink>
                       <NavLink
                         to="/reports/ledger"
-                        className={({ isActive }) =>
-                          [
-                            'block px-4 py-2 text-sm',
-                            isActive
-                              ? 'bg-[var(--bg-subtle)] text-[var(--text-strong)]'
-                              : 'text-[var(--text-strong)] hover:bg-[var(--bg-subtle)]',
-                          ].join(' ')
-                        }
+                        className={({ isActive }) => navDropdownItemClassName(isActive)}
                       >
                         Libro Mayor
                       </NavLink>
                       <NavLink
                         to="/reports/trial-balance"
-                        className={({ isActive }) =>
-                          [
-                            'block px-4 py-2 text-sm',
-                            isActive
-                              ? 'bg-[var(--bg-subtle)] text-[var(--text-strong)]'
-                              : 'text-[var(--text-strong)] hover:bg-[var(--bg-subtle)]',
-                          ].join(' ')
-                        }
+                        className={({ isActive }) => navDropdownItemClassName(isActive)}
                       >
                         Balance de comprobacion
                       </NavLink>
@@ -203,9 +183,17 @@ export function Layout() {
                   )}
                 </div>
 
-                <NavLink to="/companies" className={({ isActive }) => navLinkClassName(isActive)}>
+                <button
+                  onClick={() => navigate('/companies')}
+                  className={[
+                    'menu-pill gap-1',
+                    pathname.startsWith('/companies')
+                      ? 'border-[var(--border-soft)] bg-white text-[var(--text-strong)] shadow-[0_8px_20px_-18px_rgba(10,29,64,0.8)]'
+                      : '',
+                  ].join(' ')}
+                >
                   Empresas
-                </NavLink>
+                </button>
 
                 {canViewTeacher && (
                   <div className="relative">
@@ -213,7 +201,7 @@ export function Layout() {
                       onClick={() => setSupervisionOpen((v) => !v)}
                       aria-expanded={supervisionOpen}
                       aria-controls="menu-supervision"
-                      className="menu-pill flex items-center gap-1 text-sm font-semibold"
+                      className="menu-pill gap-1"
                     >
                       Supervision
                       <svg
@@ -239,41 +227,20 @@ export function Layout() {
                       >
                         <NavLink
                           to="/teacher/dashboard"
-                          className={({ isActive }) =>
-                            [
-                              'mx-1 block rounded-lg px-3 py-2 text-sm',
-                              isActive
-                                ? 'bg-[var(--bg-subtle)] text-[var(--text-strong)]'
-                                : 'text-[var(--text-strong)] hover:bg-[var(--bg-subtle)]',
-                            ].join(' ')
-                          }
+                          className={({ isActive }) => navDropdownItemClassName(isActive)}
                         >
                           Panel docente
                         </NavLink>
                         <NavLink
                           to="/settings/chart-visibility"
-                          className={({ isActive }) =>
-                            [
-                              'block px-4 py-2 text-sm',
-                              isActive
-                                ? 'bg-[var(--bg-subtle)] text-[var(--text-strong)]'
-                                : 'text-[var(--text-strong)] hover:bg-[var(--bg-subtle)]',
-                            ].join(' ')
-                          }
+                          className={({ isActive }) => navDropdownItemClassName(isActive)}
                         >
                           Plan de cuentas
                         </NavLink>
                         {canAssignRoles && (
                           <NavLink
                             to="/admin/roles"
-                            className={({ isActive }) =>
-                              [
-                                'block px-4 py-2 text-sm',
-                                isActive
-                                  ? 'bg-[var(--bg-subtle)] text-[var(--text-strong)]'
-                                  : 'text-[var(--text-strong)] hover:bg-[var(--bg-subtle)]',
-                              ].join(' ')
-                            }
+                            className={({ isActive }) => navDropdownItemClassName(isActive)}
                           >
                             Roles
                           </NavLink>
@@ -283,9 +250,17 @@ export function Layout() {
                   </div>
                 )}
 
-                <NavLink to="/profile" className={({ isActive }) => navLinkClassName(isActive)}>
+                <button
+                  onClick={() => navigate('/profile')}
+                  className={[
+                    'menu-pill gap-1',
+                    pathname.startsWith('/profile')
+                      ? 'border-[var(--border-soft)] bg-white text-[var(--text-strong)] shadow-[0_8px_20px_-18px_rgba(10,29,64,0.8)]'
+                      : '',
+                  ].join(' ')}
+                >
                   Perfil
-                </NavLink>
+                </button>
 
                 <button
                   onClick={handleLogout}

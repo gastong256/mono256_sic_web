@@ -122,8 +122,10 @@ export function TeacherStudentDetailPage() {
         <Alert tone="error">Falta el contexto de curso. Volvé al panel docente y reintentá.</Alert>
       )}
 
-      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">Empresas del alumno</h2>
+      <section className="surface-card p-4">
+        <h2 className="mb-3 text-lg font-semibold text-[var(--text-strong)]">
+          Empresas del alumno
+        </h2>
 
         {isLoading && <Spinner className="size-6 text-blue-600" label="Cargando empresas…" />}
 
@@ -146,10 +148,10 @@ export function TeacherStudentDetailPage() {
                 <button
                   onClick={() => setSelectedCompanyId(company.id)}
                   className={[
-                    'w-full rounded-md border px-3 py-2 text-left text-sm',
+                    'w-full rounded-xl border px-3 py-2.5 text-left text-sm transition-colors',
                     selectedCompanyId === company.id
-                      ? 'border-blue-200 bg-blue-50 text-blue-900'
-                      : 'border-gray-200 hover:bg-gray-50',
+                      ? 'border-[var(--brand-500)] bg-[var(--bg-subtle)] text-[var(--brand-700)]'
+                      : 'border-[var(--border-soft)] text-[var(--text-strong)] hover:bg-[var(--bg-subtle)]',
                   ].join(' ')}
                 >
                   {company.name}
@@ -160,9 +162,9 @@ export function TeacherStudentDetailPage() {
         )}
       </section>
 
-      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <section className="surface-card p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Asientos del alumno</h2>
+          <h2 className="text-lg font-semibold text-[var(--text-strong)]">Asientos del alumno</h2>
         </div>
 
         {!selectedCompany && (
@@ -193,104 +195,161 @@ export function TeacherStudentDetailPage() {
 
         {selectedCompany && !journalLoading && !journalError && journalEntries.length > 0 && (
           <div className="space-y-4">
-            <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
-              <p className="text-sm font-semibold text-blue-900">
-                Resumen de {selectedCompany.name}
+            <div className="subtle-panel p-3.5">
+              <p className="text-sm font-semibold text-[var(--text-strong)]">
+                Resumen contable de {selectedCompany.name}
               </p>
-              <div className="mt-2 grid gap-2 text-sm text-blue-900 sm:grid-cols-2 lg:grid-cols-4">
-                <p>Asientos: {companySummary.entries}</p>
-                <p>Debe total: {arsFormatter.format(companySummary.totalDebit)}</p>
-                <p>Haber total: {arsFormatter.format(companySummary.totalCredit)}</p>
-                <p
-                  className={companySummary.balanceDiff === 0 ? 'text-emerald-700' : 'text-red-700'}
-                >
-                  Diferencia: {arsFormatter.format(companySummary.balanceDiff)}
-                </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <article className="summary-stat-card">
+                  <p className="summary-stat-label">Asientos</p>
+                  <p className="summary-stat-value">{companySummary.entries}</p>
+                </article>
+                <article className="summary-stat-card">
+                  <p className="summary-stat-label">Debe total</p>
+                  <p className="summary-stat-value text-[#145f91]">
+                    {arsFormatter.format(companySummary.totalDebit)}
+                  </p>
+                </article>
+                <article className="summary-stat-card">
+                  <p className="summary-stat-label">Haber total</p>
+                  <p className="summary-stat-value text-[#8f4b12]">
+                    {arsFormatter.format(companySummary.totalCredit)}
+                  </p>
+                </article>
+                <article className="summary-stat-card">
+                  <p className="summary-stat-label">Diferencia</p>
+                  <p
+                    className={[
+                      'summary-stat-value',
+                      companySummary.balanceDiff === 0 ? 'text-emerald-700' : 'text-red-700',
+                    ].join(' ')}
+                  >
+                    {arsFormatter.format(companySummary.balanceDiff)}
+                  </p>
+                </article>
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-md border border-gray-200">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                      Cuenta
-                    </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Debe</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">
-                      Haber
-                    </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">
-                      Saldo neto
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {companySummary.byAccount.map((account) => (
-                    <tr key={account.code}>
-                      <td className="px-3 py-2 text-gray-700">
-                        {account.code} · {account.name}
-                      </td>
-                      <td className="px-3 py-2 text-right text-gray-700">
-                        {arsFormatter.format(account.debit)}
-                      </td>
-                      <td className="px-3 py-2 text-right text-gray-700">
-                        {arsFormatter.format(account.credit)}
-                      </td>
-                      <td
-                        className={[
-                          'px-3 py-2 text-right font-medium',
-                          account.balance >= 0 ? 'text-emerald-700' : 'text-red-700',
-                        ].join(' ')}
-                      >
-                        {arsFormatter.format(account.balance)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                Resumen por cuenta
+              </h3>
+              <div className="accounting-table-shell">
+                <div className="accounting-table-scroll">
+                  <table className="accounting-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Cuenta</th>
+                        <th scope="col" className="amount-col">
+                          Debe
+                        </th>
+                        <th scope="col" className="amount-col">
+                          Haber
+                        </th>
+                        <th scope="col" className="amount-col">
+                          Saldo neto
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {companySummary.byAccount.map((account) => (
+                        <tr key={account.code}>
+                          <td>
+                            {account.code} · {account.name}
+                          </td>
+                          <td className="amount-cell amount-cell-debit">
+                            {arsFormatter.format(account.debit)}
+                          </td>
+                          <td className="amount-cell amount-cell-credit">
+                            {arsFormatter.format(account.credit)}
+                          </td>
+                          <td
+                            className={[
+                              'amount-cell',
+                              account.balance >= 0 ? 'text-emerald-700' : 'text-red-700',
+                            ].join(' ')}
+                          >
+                            {arsFormatter.format(account.balance)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
 
+            <h3 className="text-sm font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+              Detalle de asientos
+            </h3>
             <ul className="space-y-3">
               {journalEntries.map((entry) => {
                 const totals = entryTotals(entry)
                 const balanced = totals.debit === totals.credit
 
                 return (
-                  <li key={entry.id} className="rounded-md border border-gray-200">
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2 text-sm">
-                      <span className="font-medium text-gray-800">
+                  <li key={entry.id} className="accounting-table-shell">
+                    <div className="data-table-head flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-soft)] px-3 py-2 text-sm">
+                      <span className="font-medium text-[var(--text-strong)]">
                         Asiento #{entry.entry_number} · {entry.date} · {entry.description}
                       </span>
-                      <span className={balanced ? 'text-emerald-700' : 'text-red-700'}>
+                      <span
+                        className={[
+                          'font-semibold tabular-nums',
+                          balanced ? 'text-emerald-700' : 'text-red-700',
+                        ].join(' ')}
+                      >
                         Debe {arsFormatter.format(totals.debit)} | Haber{' '}
                         {arsFormatter.format(totals.credit)}
                       </span>
                     </div>
-                    <div className="overflow-hidden">
-                      <table className="w-full text-sm">
+                    <div className="accounting-table-scroll">
+                      <table className="accounting-table">
                         <thead>
-                          <tr className="text-left text-xs text-gray-500">
-                            <th className="px-3 py-2">Cuenta</th>
-                            <th className="px-3 py-2 text-right">Debe</th>
-                            <th className="px-3 py-2 text-right">Haber</th>
+                          <tr>
+                            <th scope="col">Cuenta</th>
+                            <th scope="col" className="amount-col">
+                              Debe
+                            </th>
+                            <th scope="col" className="amount-col">
+                              Haber
+                            </th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody>
                           {entry.lines.map((line, index) => (
                             <tr key={`${entry.id}-${index}`}>
-                              <td className="px-3 py-2 text-gray-700">
+                              <td>
                                 {line.account_code} · {line.account_name}
                               </td>
-                              <td className="px-3 py-2 text-right text-gray-700">
+                              <td
+                                className={
+                                  line.type === 'DEBIT'
+                                    ? 'amount-cell amount-cell-debit'
+                                    : 'amount-cell-empty'
+                                }
+                              >
                                 {line.type === 'DEBIT' ? lineAmount(line) : '—'}
                               </td>
-                              <td className="px-3 py-2 text-right text-gray-700">
+                              <td
+                                className={
+                                  line.type === 'CREDIT'
+                                    ? 'amount-cell amount-cell-credit'
+                                    : 'amount-cell-empty'
+                                }
+                              >
                                 {line.type === 'CREDIT' ? lineAmount(line) : '—'}
                               </td>
                             </tr>
                           ))}
                         </tbody>
+                        <tfoot>
+                          <tr>
+                            <td>Total asiento</td>
+                            <td className="amount-cell">{arsFormatter.format(totals.debit)}</td>
+                            <td className="amount-cell">{arsFormatter.format(totals.credit)}</td>
+                          </tr>
+                        </tfoot>
                       </table>
                     </div>
                   </li>

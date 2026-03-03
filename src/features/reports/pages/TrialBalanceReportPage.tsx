@@ -129,61 +129,57 @@ export function TrialBalanceReportPage() {
               className="py-8"
             />
           ) : (
-            <div className="ui-fade-in data-table-shell">
-              <table className="w-full text-sm">
-                <thead className="data-table-head">
-                  <tr className="text-left">
-                    <th scope="col" className="px-3 py-2">
-                      Cuenta
-                    </th>
-                    <th scope="col" className="px-3 py-2 text-right">
-                      Debe
-                    </th>
-                    <th scope="col" className="px-3 py-2 text-right">
-                      Haber
-                    </th>
-                    <th scope="col" className="px-3 py-2 text-right">
-                      Saldo
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--border-soft)]">
-                  {data.rows.map((row) => (
-                    <Fragment key={`g-${row.level2_id}`}>
-                      <tr className="data-table-head">
-                        <td className="px-3 py-2 font-semibold text-[var(--text-strong)]">
-                          {row.code} · {row.name}
-                        </td>
-                        <td className="px-3 py-2 text-right font-semibold text-[var(--text-strong)]">
-                          {formatAmount(row.total_debit)}
-                        </td>
-                        <td className="px-3 py-2 text-right font-semibold text-[var(--text-strong)]">
-                          {formatAmount(row.total_credit)}
-                        </td>
-                        <td className="px-3 py-2 text-right font-semibold text-[var(--text-strong)]">
-                          {formatAmount(row.balance)}
-                        </td>
-                      </tr>
-                      {row.accounts.map((account) => (
-                        <tr key={`a-${account.account_id}`}>
-                          <td className="px-3 py-2 pl-8 text-[var(--text-strong)]">
-                            {account.code} · {account.name}
+            <div className="ui-fade-in accounting-table-shell">
+              <div className="accounting-table-scroll">
+                <table className="accounting-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Cuenta</th>
+                      <th scope="col" className="amount-col">
+                        Debe
+                      </th>
+                      <th scope="col" className="amount-col">
+                        Haber
+                      </th>
+                      <th scope="col" className="amount-col">
+                        Saldo
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.rows.map((row) => (
+                      <Fragment key={`g-${row.level2_id}`}>
+                        <tr className="data-table-head">
+                          <td className="font-semibold text-[var(--text-strong)]">
+                            {row.code} · {row.name}
                           </td>
-                          <td className="px-3 py-2 text-right font-medium text-[var(--text-muted)]">
-                            {formatAmount(account.total_debit)}
+                          <td className="amount-cell font-semibold">
+                            {formatAmount(row.total_debit)}
                           </td>
-                          <td className="px-3 py-2 text-right font-medium text-[var(--text-muted)]">
-                            {formatAmount(account.total_credit)}
+                          <td className="amount-cell font-semibold">
+                            {formatAmount(row.total_credit)}
                           </td>
-                          <td className="px-3 py-2 text-right font-medium text-[var(--text-muted)]">
-                            {formatAmount(account.balance)}
-                          </td>
+                          <td className="amount-cell font-semibold">{formatAmount(row.balance)}</td>
                         </tr>
-                      ))}
-                    </Fragment>
-                  ))}
-                </tbody>
-              </table>
+                        {row.accounts.map((account) => (
+                          <tr key={`a-${account.account_id}`}>
+                            <td className="pl-8">
+                              {account.code} · {account.name}
+                            </td>
+                            <td className="amount-cell amount-cell-debit">
+                              {formatAmount(account.total_debit)}
+                            </td>
+                            <td className="amount-cell amount-cell-credit">
+                              {formatAmount(account.total_credit)}
+                            </td>
+                            <td className="amount-cell">{formatAmount(account.balance)}</td>
+                          </tr>
+                        ))}
+                      </Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </section>

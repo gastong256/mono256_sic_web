@@ -12,14 +12,13 @@ interface PageHeaderProps {
 export function PageHeader({ title, subtitle, actions, icon }: PageHeaderProps) {
   return (
     <header className="flex flex-wrap items-start justify-between gap-3">
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3.5">
         {icon && (
-          <span className="glass-panel mt-1 inline-flex size-10 items-center justify-center rounded-xl text-[var(--brand-600)]">
-            <AppIcon name={icon} className="size-5" />
+          <span className="glass-panel inline-flex size-12 shrink-0 items-center justify-center rounded-2xl text-[var(--brand-600)]">
+            <AppIcon name={icon} className="size-6" />
           </span>
         )}
         <div>
-          <p className="section-kicker">SIC</p>
           <h1 className="section-title">{title}</h1>
           {subtitle && <p className="muted-text mt-1 text-sm">{subtitle}</p>}
         </div>

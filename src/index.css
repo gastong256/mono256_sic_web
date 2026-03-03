@@ -84,9 +84,19 @@ textarea {
   }
 
   .menu-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-sans);
+    font-style: normal;
+    font-synthesis: none;
     border: 1px solid transparent;
     border-radius: 9999px;
     padding: 0.4rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
     color: var(--text-muted);
     transition:
       border-color 200ms ease,
@@ -97,6 +107,45 @@ textarea {
   .menu-pill:hover {
     border-color: var(--border-soft);
     background: rgb(255 255 255 / 74%);
+  }
+
+  .menu-pill:visited,
+  .menu-pill:hover,
+  .menu-pill:active {
+    color: var(--text-strong);
+  }
+
+  .menu-pill:focus {
+    outline: none;
+  }
+
+  .menu-pill:focus-visible {
+    border-color: var(--brand-500);
+    box-shadow: 0 0 0 3px rgb(0 104 234 / 16%);
+    color: var(--text-strong);
+  }
+
+  .menu-pill:not([aria-current='page']):not(:hover) {
+    color: var(--text-muted);
+  }
+
+  .menu-dropdown-item {
+    margin: 0.2rem 0.25rem;
+    display: block;
+    border-radius: 0.65rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    line-height: 1.15rem;
+    text-decoration: none;
+    color: var(--text-strong);
+    transition: background-color 160ms ease;
+  }
+
+  .menu-dropdown-item:hover {
+    background: var(--bg-subtle);
+  }
+
+  .menu-dropdown-item:visited {
     color: var(--text-strong);
   }
 
@@ -107,15 +156,6 @@ textarea {
     font-weight: 700;
     color: var(--text-strong);
     letter-spacing: -0.02em;
-  }
-
-  .section-kicker {
-    margin-bottom: 0.35rem;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--brand-600);
   }
 
   .muted-text {
@@ -157,6 +197,125 @@ textarea {
     font-size: 0.7rem;
     font-weight: 700;
     color: var(--text-muted);
+  }
+
+  .accounting-table-shell {
+    overflow: hidden;
+    border: 1px solid var(--border-soft);
+    border-radius: 0.95rem;
+    background: rgb(255 255 255 / 95%);
+  }
+
+  .accounting-table-scroll {
+    overflow-x: auto;
+  }
+
+  .accounting-table {
+    width: 100%;
+    min-width: 42rem;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.875rem;
+  }
+
+  .accounting-table thead {
+    background: linear-gradient(180deg, #f7faff, #eef4ff);
+  }
+
+  .accounting-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 0.58rem 0.75rem;
+    text-align: left;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-soft);
+    white-space: nowrap;
+  }
+
+  .accounting-table tbody td {
+    padding: 0.55rem 0.75rem;
+    color: var(--text-strong);
+    border-bottom: 1px solid rgb(210 222 238 / 65%);
+    vertical-align: top;
+  }
+
+  .accounting-table tbody tr:nth-child(even) td {
+    background: rgb(247 250 255 / 58%);
+  }
+
+  .accounting-table tbody tr:hover td {
+    background: rgb(238 244 255 / 72%);
+  }
+
+  .accounting-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .accounting-table tfoot td {
+    padding: 0.62rem 0.75rem;
+    border-top: 1px solid var(--border-strong);
+    background: rgb(248 252 255 / 90%);
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+
+  .accounting-table .amount-col,
+  .accounting-table .amount-cell {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+    white-space: nowrap;
+  }
+
+  .accounting-table .amount-col {
+    width: 9.25rem;
+  }
+
+  .accounting-table .amount-cell {
+    font-weight: 600;
+  }
+
+  .accounting-table .amount-cell-empty {
+    text-align: right;
+    color: color-mix(in oklab, var(--text-muted) 62%, white 38%);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .accounting-table .amount-cell-debit {
+    color: #145f91;
+  }
+
+  .accounting-table .amount-cell-credit {
+    color: #8f4b12;
+  }
+
+  .summary-stat-card {
+    border: 1px solid var(--border-soft);
+    border-radius: 0.85rem;
+    background: linear-gradient(180deg, #fafdff, #f2f7ff);
+    padding: 0.7rem 0.8rem;
+  }
+
+  .summary-stat-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+
+  .summary-stat-value {
+    margin-top: 0.15rem;
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--text-strong);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
   }
 }
 

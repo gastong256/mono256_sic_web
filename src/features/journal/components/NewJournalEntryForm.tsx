@@ -170,117 +170,110 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
             </Button>
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-[var(--border-soft)]">
-            <table className="w-full text-sm">
-              <thead className="bg-[var(--bg-subtle)]">
-                <tr>
-                  <th
-                    scope="col"
-                    className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase"
-                  >
-                    Cuenta
-                  </th>
-                  <th
-                    scope="col"
-                    className="w-36 px-3 py-2 text-right text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase"
-                  >
-                    Debe
-                  </th>
-                  <th
-                    scope="col"
-                    className="w-36 px-3 py-2 text-right text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase"
-                  >
-                    Haber
-                  </th>
-                  <th className="w-10 px-3 py-2" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--border-soft)]">
-                {fields.map((field, index) => (
-                  <tr key={field.id}>
-                    {/* Account select */}
-                    <td className="px-3 py-2">
-                      <select
-                        {...register(`lines.${index}.account`, { valueAsNumber: true })}
-                        className="w-full rounded-md border border-[var(--border-strong)] bg-white px-2 py-1 text-sm focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
-                      >
-                        <option value={0}>Seleccionar cuenta...</option>
-                        {accountsLoading && <option disabled>Cargando...</option>}
-                        {accounts?.map((a) => (
-                          <option key={a.id} value={a.id}>
-                            {a.code} - {a.name}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.lines?.[index]?.account && (
-                        <p className="mt-0.5 text-xs text-red-600">
-                          {errors.lines[index].account?.message}
-                        </p>
-                      )}
-                    </td>
-
-                    {/* Debe */}
-                    <td className="px-3 py-2">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        inputMode="decimal"
-                        placeholder="0.00"
-                        {...register(`lines.${index}.debe`, {
-                          onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-                            if (Number(e.target.value) > 0) {
-                              setValue(`lines.${index}.haber`, '0.00')
-                            }
-                          },
-                        })}
-                        className="w-full rounded-md border border-[var(--border-strong)] px-2 py-1 text-right text-sm focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
-                      />
-                      {errors.lines?.[index]?.debe && (
-                        <p className="mt-0.5 text-xs text-red-600">
-                          {errors.lines[index].debe?.message}
-                        </p>
-                      )}
-                    </td>
-
-                    {/* Haber */}
-                    <td className="px-3 py-2">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        inputMode="decimal"
-                        placeholder="0.00"
-                        {...register(`lines.${index}.haber`, {
-                          onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-                            if (Number(e.target.value) > 0) {
-                              setValue(`lines.${index}.debe`, '0.00')
-                            }
-                          },
-                        })}
-                        className="w-full rounded-md border border-[var(--border-strong)] px-2 py-1 text-right text-sm focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
-                      />
-                    </td>
-
-                    {/* Delete */}
-                    <td className="px-3 py-2 text-center">
-                      {fields.length > 2 && (
-                        <button
-                          type="button"
-                          onClick={() => remove(index)}
-                          className="rounded p-1 text-[var(--text-muted)] hover:bg-red-50 hover:text-red-600"
-                          aria-label="Eliminar linea"
-                        >
-                          <svg className="size-4" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-                          </svg>
-                        </button>
-                      )}
-                    </td>
+          <div className="accounting-table-shell">
+            <div className="accounting-table-scroll">
+              <table className="accounting-table min-w-[48rem]">
+                <thead>
+                  <tr>
+                    <th scope="col">Cuenta</th>
+                    <th scope="col" className="amount-col">
+                      Debe
+                    </th>
+                    <th scope="col" className="amount-col">
+                      Haber
+                    </th>
+                    <th scope="col" className="amount-col">
+                      Acciones
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {fields.map((field, index) => (
+                    <tr key={field.id}>
+                      {/* Account select */}
+                      <td className="px-3 py-2">
+                        <select
+                          {...register(`lines.${index}.account`, { valueAsNumber: true })}
+                          className="w-full rounded-md border border-[var(--border-strong)] bg-white px-2 py-1 text-sm focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
+                        >
+                          <option value={0}>Seleccionar cuenta...</option>
+                          {accountsLoading && <option disabled>Cargando...</option>}
+                          {accounts?.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.code} - {a.name}
+                            </option>
+                          ))}
+                        </select>
+                        {errors.lines?.[index]?.account && (
+                          <p className="mt-0.5 text-xs text-red-600">
+                            {errors.lines[index].account?.message}
+                          </p>
+                        )}
+                      </td>
+
+                      {/* Debe */}
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          inputMode="decimal"
+                          placeholder="0.00"
+                          {...register(`lines.${index}.debe`, {
+                            onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                              if (Number(e.target.value) > 0) {
+                                setValue(`lines.${index}.haber`, '0.00')
+                              }
+                            },
+                          })}
+                          className="w-full rounded-md border border-[var(--border-strong)] px-2 py-1 text-right text-sm tabular-nums focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
+                        />
+                        {errors.lines?.[index]?.debe && (
+                          <p className="mt-0.5 text-xs text-red-600">
+                            {errors.lines[index].debe?.message}
+                          </p>
+                        )}
+                      </td>
+
+                      {/* Haber */}
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          inputMode="decimal"
+                          placeholder="0.00"
+                          {...register(`lines.${index}.haber`, {
+                            onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                              if (Number(e.target.value) > 0) {
+                                setValue(`lines.${index}.debe`, '0.00')
+                              }
+                            },
+                          })}
+                          className="w-full rounded-md border border-[var(--border-strong)] px-2 py-1 text-right text-sm tabular-nums focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
+                        />
+                      </td>
+
+                      {/* Delete */}
+                      <td className="px-3 py-2 text-center">
+                        {fields.length > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => remove(index)}
+                            className="rounded p-1 text-[var(--text-muted)] hover:bg-red-50 hover:text-red-600"
+                            aria-label="Eliminar linea"
+                          >
+                            <svg className="size-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                            </svg>
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
           {errors.lines?.root && (
             <p className="mt-1 text-xs text-[var(--danger-600)]">{errors.lines.root.message}</p>

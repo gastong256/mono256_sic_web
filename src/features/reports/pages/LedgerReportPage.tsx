@@ -154,51 +154,51 @@ export function LedgerReportPage() {
                     </span>
                   </div>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="data-table-head">
-                      <tr className="text-left">
-                        <th scope="col" className="px-3 py-2">
-                          Asiento
-                        </th>
-                        <th scope="col" className="px-3 py-2">
-                          Fecha
-                        </th>
-                        <th scope="col" className="px-3 py-2">
-                          Detalle
-                        </th>
-                        <th scope="col" className="px-3 py-2 text-right">
+                <div className="accounting-table-scroll">
+                  <table className="accounting-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Asiento</th>
+                        <th scope="col">Fecha</th>
+                        <th scope="col">Detalle</th>
+                        <th scope="col" className="amount-col">
                           Debe
                         </th>
-                        <th scope="col" className="px-3 py-2 text-right">
+                        <th scope="col" className="amount-col">
                           Haber
                         </th>
-                        <th scope="col" className="px-3 py-2 text-right">
+                        <th scope="col" className="amount-col">
                           Saldo
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[var(--border-soft)]">
+                    <tbody>
                       {card.movements.map((movement) => (
                         <tr
                           key={`${card.account_id}-${movement.entry_id}-${movement.entry_number}`}
                         >
-                          <td className="px-3 py-2 text-[var(--text-strong)]">
-                            #{movement.entry_number}
-                          </td>
-                          <td className="px-3 py-2 text-[var(--text-strong)]">{movement.date}</td>
-                          <td className="px-3 py-2 text-[var(--text-strong)]">
-                            {movement.description}
-                          </td>
-                          <td className="px-3 py-2 text-right font-medium text-[var(--text-muted)]">
+                          <td>#{movement.entry_number}</td>
+                          <td>{movement.date}</td>
+                          <td>{movement.description}</td>
+                          <td
+                            className={
+                              movement.debit > 0
+                                ? 'amount-cell amount-cell-debit'
+                                : 'amount-cell-empty'
+                            }
+                          >
                             {movement.debit > 0 ? formatAmount(movement.debit) : '—'}
                           </td>
-                          <td className="px-3 py-2 text-right font-medium text-[var(--text-muted)]">
+                          <td
+                            className={
+                              movement.credit > 0
+                                ? 'amount-cell amount-cell-credit'
+                                : 'amount-cell-empty'
+                            }
+                          >
                             {movement.credit > 0 ? formatAmount(movement.credit) : '—'}
                           </td>
-                          <td className="px-3 py-2 text-right font-semibold text-[var(--text-strong)]">
-                            {formatAmount(movement.balance)}
-                          </td>
+                          <td className="amount-cell">{formatAmount(movement.balance)}</td>
                         </tr>
                       ))}
                     </tbody>

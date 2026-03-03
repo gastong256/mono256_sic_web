@@ -138,31 +138,41 @@ export function JournalBookReportPage() {
                       {formatAmount(entry.total_credit)}
                     </span>
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="data-table-head">
-                        <tr className="text-left">
-                          <th scope="col" className="px-3 py-2">
-                            Cuenta
-                          </th>
-                          <th scope="col" className="px-3 py-2 text-right">
+                  <div className="accounting-table-scroll">
+                    <table className="accounting-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Cuenta</th>
+                          <th scope="col" className="amount-col">
                             Debe
                           </th>
-                          <th scope="col" className="px-3 py-2 text-right">
+                          <th scope="col" className="amount-col">
                             Haber
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[var(--border-soft)]">
+                      <tbody>
                         {entry.lines.map((line, index) => (
                           <tr key={`${entry.id}-${index}`}>
-                            <td className="px-3 py-2 text-[var(--text-strong)]">
+                            <td>
                               {line.account_code} · {line.account_name}
                             </td>
-                            <td className="px-3 py-2 text-right font-medium text-[var(--text-muted)]">
+                            <td
+                              className={
+                                line.type === 'DEBIT'
+                                  ? 'amount-cell amount-cell-debit'
+                                  : 'amount-cell-empty'
+                              }
+                            >
                               {line.type === 'DEBIT' ? formatAmount(line.amount) : '—'}
                             </td>
-                            <td className="px-3 py-2 text-right font-medium text-[var(--text-muted)]">
+                            <td
+                              className={
+                                line.type === 'CREDIT'
+                                  ? 'amount-cell amount-cell-credit'
+                                  : 'amount-cell-empty'
+                              }
+                            >
                               {line.type === 'CREDIT' ? formatAmount(line.amount) : '—'}
                             </td>
                           </tr>

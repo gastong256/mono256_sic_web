@@ -29,30 +29,34 @@ export function JournalEntryCard({ entry, companyId }: JournalEntryCardProps) {
 
   return (
     <div className="surface-card ui-fade-in ui-lift overflow-hidden">
-      {/* Header row */}
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-[var(--bg-subtle)]"
+        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-[var(--bg-subtle)]"
       >
         <div className="flex items-center gap-4">
           <span className="muted-text text-sm font-medium tabular-nums">{entry.date}</span>
           <span className="font-medium text-[var(--text-strong)]">{entry.description}</span>
         </div>
-        <div className="flex items-center gap-6">
-          <div className="hidden text-right sm:block">
-            <p className="muted-text text-xs">Debe</p>
-            <p className="text-sm font-semibold text-[var(--text-strong)]">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className="summary-stat-card hidden min-w-[9rem] text-right sm:block">
+            <span className="summary-stat-label">Debe</span>
+            <span className="summary-stat-value text-[0.9rem] text-[#145f91]">
               {formatARS(String(totalDebe))}
-            </p>
-          </div>
-          <div className="hidden text-right sm:block">
-            <p className="muted-text text-xs">Haber</p>
-            <p className="text-sm font-semibold text-[var(--text-strong)]">
+            </span>
+          </span>
+          <span className="summary-stat-card hidden min-w-[9rem] text-right sm:block">
+            <span className="summary-stat-label">Haber</span>
+            <span className="summary-stat-value text-[0.9rem] text-[#8f4b12]">
               {formatARS(String(totalHaber))}
-            </p>
-          </div>
-          {/* Chevron */}
+            </span>
+          </span>
+          <span className="summary-stat-card min-w-[8.2rem] text-right sm:hidden">
+            <span className="summary-stat-label">Debe/Haber</span>
+            <span className="summary-stat-value text-[0.86rem]">
+              {formatARS(String(totalDebe))} / {formatARS(String(totalHaber))}
+            </span>
+          </span>
           <svg
             className={[
               'muted-text size-4 transition-transform',
@@ -83,47 +87,57 @@ export function JournalEntryCard({ entry, companyId }: JournalEntryCardProps) {
           {detailError && <Alert tone="error">Error al cargar el detalle del asiento.</Alert>}
 
           {!detailLoading && !detailError && detail && (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
-                  <th scope="col" className="pb-2">
-                    Cuenta
-                  </th>
-                  <th scope="col" className="pb-2 text-right">
-                    Debe
-                  </th>
-                  <th scope="col" className="pb-2 text-right">
-                    Haber
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--border-soft)]">
-                {detail.lines.map((line, idx) => (
-                  <tr key={`${line.account_id}-${idx}`}>
-                    <td className="py-1.5 text-[var(--text-strong)]">
-                      {line.account_code} - {line.account_name}
-                    </td>
-                    <td className="muted-text py-1.5 text-right tabular-nums">
-                      {line.type === 'DEBIT' ? formatARS(line.amount) : '—'}
-                    </td>
-                    <td className="muted-text py-1.5 text-right tabular-nums">
-                      {line.type === 'CREDIT' ? formatARS(line.amount) : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="border-t border-[var(--border-strong)] font-semibold">
-                  <td className="muted-text pt-2">Total</td>
-                  <td className="pt-2 text-right text-[var(--text-strong)] tabular-nums">
-                    {formatARS(String(totalDebe))}
-                  </td>
-                  <td className="pt-2 text-right text-[var(--text-strong)] tabular-nums">
-                    {formatARS(String(totalHaber))}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
+            <div className="accounting-table-shell">
+              <div className="accounting-table-scroll">
+                <table className="accounting-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Cuenta</th>
+                      <th scope="col" className="amount-col">
+                        Debe
+                      </th>
+                      <th scope="col" className="amount-col">
+                        Haber
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detail.lines.map((line, idx) => (
+                      <tr key={`${line.account_id}-${idx}`}>
+                        <td>
+                          {line.account_code} - {line.account_name}
+                        </td>
+                        <td
+                          className={
+                            line.type === 'DEBIT'
+                              ? 'amount-cell amount-cell-debit'
+                              : 'amount-cell-empty'
+                          }
+                        >
+                          {line.type === 'DEBIT' ? formatARS(line.amount) : '—'}
+                        </td>
+                        <td
+                          className={
+                            line.type === 'CREDIT'
+                              ? 'amount-cell amount-cell-credit'
+                              : 'amount-cell-empty'
+                          }
+                        >
+                          {line.type === 'CREDIT' ? formatARS(line.amount) : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td>Total</td>
+                      <td className="amount-cell">{formatARS(String(totalDebe))}</td>
+                      <td className="amount-cell">{formatARS(String(totalHaber))}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
           )}
         </div>
       )}
