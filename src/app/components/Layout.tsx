@@ -10,10 +10,10 @@ import { AppBreadcrumbs } from '@/shared/ui/AppBreadcrumbs'
 
 function navLinkClassName(isActive: boolean): string {
   return [
-    'rounded-md px-2 py-1 text-sm font-medium transition-colors',
+    'menu-pill text-sm font-semibold',
     isActive
-      ? 'bg-[var(--bg-subtle)] text-[var(--text-strong)]'
-      : 'text-[var(--text-muted)] hover:text-[var(--text-strong)]',
+      ? 'border-[var(--border-soft)] bg-white text-[var(--text-strong)] shadow-[0_8px_20px_-18px_rgba(10,29,64,0.8)]'
+      : '',
   ].join(' ')
 }
 
@@ -56,12 +56,12 @@ export function Layout() {
 
   return (
     <div className="min-h-screen">
-      <nav className="sticky top-0 z-30 border-b border-[var(--border-soft)] bg-white/90 shadow-sm backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+      <nav className="sticky top-0 z-30 px-3 pt-3 sm:px-4">
+        <div className="glass-panel mx-auto flex max-w-6xl items-center justify-between gap-3 rounded-2xl px-4 py-3">
           <div className="flex min-w-0 items-center gap-4">
             <Link
               to="/"
-              className="shrink-0 text-lg font-bold tracking-tight text-[var(--text-strong)] transition-colors hover:text-[var(--brand-600)]"
+              className="shrink-0 bg-[linear-gradient(120deg,var(--brand-600),var(--accent-500))] bg-clip-text text-lg font-bold tracking-tight text-transparent transition-opacity hover:opacity-85"
             >
               {env.VITE_APP_NAME}
             </Link>
@@ -70,7 +70,7 @@ export function Layout() {
             </div>
           </div>
 
-          <div className="hidden items-center gap-3 md:flex">
+          <div className="hidden items-center gap-2 md:flex">
             {accessToken ? (
               <>
                 <div className="relative">
@@ -78,7 +78,7 @@ export function Layout() {
                     onClick={() => setAsientosOpen((v) => !v)}
                     aria-expanded={asientosOpen}
                     aria-controls="menu-asientos"
-                    className="flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]"
+                    className="menu-pill flex items-center gap-1 text-sm font-semibold"
                   >
                     Asientos
                     <svg
@@ -100,13 +100,13 @@ export function Layout() {
                   {asientosOpen && (
                     <div
                       id="menu-asientos"
-                      className="absolute top-full right-0 z-20 mt-1 w-56 rounded-xl border border-[var(--border-soft)] bg-white py-1 shadow-[var(--shadow-soft)]"
+                      className="glass-panel absolute top-full right-0 z-20 mt-2 w-56 rounded-2xl py-1"
                     >
                       <NavLink
                         to="/"
                         className={({ isActive }) =>
                           [
-                            'block px-4 py-2 text-sm',
+                            'mx-1 block rounded-lg px-3 py-2 text-sm',
                             isActive
                               ? 'bg-[var(--bg-subtle)] text-[var(--text-strong)]'
                               : 'text-[var(--text-strong)] hover:bg-[var(--bg-subtle)]',
@@ -136,7 +136,7 @@ export function Layout() {
                     onClick={() => setLibrosOpen((v) => !v)}
                     aria-expanded={librosOpen}
                     aria-controls="menu-libros"
-                    className="flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]"
+                    className="menu-pill flex items-center gap-1 text-sm font-semibold"
                   >
                     Libros
                     <svg
@@ -158,13 +158,13 @@ export function Layout() {
                   {librosOpen && (
                     <div
                       id="menu-libros"
-                      className="absolute top-full right-0 z-20 mt-1 w-56 rounded-xl border border-[var(--border-soft)] bg-white py-1 shadow-[var(--shadow-soft)]"
+                      className="glass-panel absolute top-full right-0 z-20 mt-2 w-56 rounded-2xl py-1"
                     >
                       <NavLink
                         to="/reports/journal-book"
                         className={({ isActive }) =>
                           [
-                            'block px-4 py-2 text-sm',
+                            'mx-1 block rounded-lg px-3 py-2 text-sm',
                             isActive
                               ? 'bg-[var(--bg-subtle)] text-[var(--text-strong)]'
                               : 'text-[var(--text-strong)] hover:bg-[var(--bg-subtle)]',
@@ -213,7 +213,7 @@ export function Layout() {
                       onClick={() => setSupervisionOpen((v) => !v)}
                       aria-expanded={supervisionOpen}
                       aria-controls="menu-supervision"
-                      className="flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]"
+                      className="menu-pill flex items-center gap-1 text-sm font-semibold"
                     >
                       Supervision
                       <svg
@@ -235,13 +235,13 @@ export function Layout() {
                     {supervisionOpen && (
                       <div
                         id="menu-supervision"
-                        className="absolute top-full right-0 z-20 mt-1 w-56 rounded-xl border border-[var(--border-soft)] bg-white py-1 shadow-[var(--shadow-soft)]"
+                        className="glass-panel absolute top-full right-0 z-20 mt-2 w-56 rounded-2xl py-1"
                       >
                         <NavLink
                           to="/teacher/dashboard"
                           className={({ isActive }) =>
                             [
-                              'block px-4 py-2 text-sm',
+                              'mx-1 block rounded-lg px-3 py-2 text-sm',
                               isActive
                                 ? 'bg-[var(--bg-subtle)] text-[var(--text-strong)]'
                                 : 'text-[var(--text-strong)] hover:bg-[var(--bg-subtle)]',
@@ -289,7 +289,7 @@ export function Layout() {
 
                 <button
                   onClick={handleLogout}
-                  className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-subtle)] px-3 py-1.5 text-sm font-semibold text-[var(--text-muted)] transition-colors hover:bg-red-50 hover:text-red-700"
+                  className="menu-pill rounded-full border-[var(--border-strong)] bg-white text-sm font-semibold hover:bg-red-50 hover:text-red-700"
                 >
                   Cerrar sesion
                 </button>
@@ -297,7 +297,7 @@ export function Layout() {
             ) : (
               <Link
                 to="/login"
-                className="rounded-lg bg-[var(--brand-500)] px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--brand-600)]"
+                className="rounded-full bg-[linear-gradient(120deg,var(--brand-500),var(--brand-600))] px-4 py-1.5 text-sm font-semibold text-white transition-all duration-200 hover:brightness-105"
               >
                 Iniciar sesion
               </Link>
@@ -307,7 +307,7 @@ export function Layout() {
           {accessToken && (
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-subtle)] px-3 py-1.5 text-sm font-semibold text-[var(--text-muted)] md:hidden"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--border-strong)] bg-white px-3 py-1.5 text-sm font-semibold text-[var(--text-muted)] md:hidden"
               onClick={() => setMobileMenuOpen((v) => !v)}
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-menu"
@@ -335,7 +335,7 @@ export function Layout() {
         {accessToken && mobileMenuOpen && (
           <div
             id="mobile-menu"
-            className="border-t border-[var(--border-soft)] px-4 py-3 md:hidden"
+            className="glass-panel mx-auto mt-2 max-w-6xl rounded-2xl border-t border-[var(--border-soft)] px-4 py-3 md:hidden"
           >
             <div className="mb-3 block sm:hidden">
               <CompanySelector />

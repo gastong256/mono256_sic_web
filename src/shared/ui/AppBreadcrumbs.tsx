@@ -52,7 +52,7 @@ export function AppBreadcrumbs() {
 
   return (
     <nav aria-label="Breadcrumb" className="mb-4">
-      <ol className="flex flex-wrap items-center gap-1 text-xs text-[var(--text-muted)]">
+      <ol className="glass-panel inline-flex flex-wrap items-center gap-1 rounded-full px-2 py-1 text-xs text-[var(--text-muted)]">
         {crumbs.map((crumb, index) => (
           <li key={`${crumb.label}-${index}`} className="flex items-center gap-1">
             {crumb.to ? (

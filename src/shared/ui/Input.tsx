@@ -24,8 +24,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           aria-describedby={error ? errorId : undefined}
           aria-invalid={error ? 'true' : undefined}
           className={[
-            'rounded-lg border px-3 py-2 text-sm transition-colors',
-            'bg-white placeholder:text-[var(--text-muted)]',
+            'rounded-xl border px-3 py-2 text-sm transition-all duration-200',
+            'bg-white/96 shadow-[inset_0_1px_0_rgb(255_255_255_/_85%)] placeholder:text-[var(--text-muted)]',
             'focus:ring-2 focus:outline-none',
             error
               ? 'border-[var(--danger-500)] focus:border-[var(--danger-500)] focus:ring-[var(--danger-500)]'

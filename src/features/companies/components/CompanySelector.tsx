@@ -23,7 +23,7 @@ export function CompanySelector() {
 
   if (companies.length === 1) {
     return (
-      <span className="rounded-md border border-[var(--border-soft)] bg-[var(--bg-subtle)] px-2 py-1 text-xs font-semibold text-[var(--text-strong)]">
+      <span className="glass-panel rounded-full px-3 py-1 text-xs font-semibold text-[var(--text-strong)]">
         Empresa activa: {companies[0].name}
       </span>
     )
@@ -35,7 +35,7 @@ export function CompanySelector() {
       <select
         value={activeCompanyId ?? ''}
         onChange={(e) => setActiveCompanyId(Number(e.target.value))}
-        className="rounded-md border border-[var(--border-strong)] bg-white px-2 py-1 text-sm font-medium text-[var(--text-strong)] shadow-sm focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
+        className="rounded-full border border-[var(--border-strong)] bg-white/95 px-3 py-1 text-sm font-semibold text-[var(--text-strong)] shadow-sm focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
       >
         {companies.map((company) => (
           <option key={company.id} value={company.id}>
