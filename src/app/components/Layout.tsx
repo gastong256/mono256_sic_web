@@ -7,8 +7,6 @@ import { env } from '@/shared/config/env'
 import { CompanySelector } from '@/features/companies/components/CompanySelector'
 import { canManageRoles, canViewTeacherDashboard } from '@/shared/lib/authorization'
 import { AppBreadcrumbs } from '@/shared/ui/AppBreadcrumbs'
-import { useCompanies } from '@/features/companies/hooks/useCompanies'
-import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
 
 function navLinkClassName(isActive: boolean): string {
   return [
@@ -33,10 +31,6 @@ export function Layout() {
   const canViewTeacher = canViewTeacherDashboard(user)
   const canAssignRoles = canManageRoles(user)
   const isAuthenticated = Boolean(accessToken)
-
-  const { activeCompanyId } = useActiveCompanyStore()
-  const { data: companies = [] } = useCompanies({ enabled: isAuthenticated })
-  const activeCompany = companies.find((company) => company.id === activeCompanyId) ?? null
 
   const showBreadcrumbs =
     isAuthenticated && pathname !== '/login' && pathname !== '/register' && pathname !== '/'
@@ -337,18 +331,6 @@ export function Layout() {
             </button>
           )}
         </div>
-
-        {isAuthenticated && (
-          <div className="mx-auto flex max-w-6xl items-center justify-between border-t border-[var(--border-soft)] px-4 py-2 text-xs">
-            <p className="muted-text">
-              Contexto activo:{' '}
-              <span className="font-semibold text-[var(--text-strong)]">
-                {activeCompany?.name ?? 'Sin empresa seleccionada'}
-              </span>
-            </p>
-            <p className="muted-text hidden sm:block">Ruta: {pathname}</p>
-          </div>
-        )}
 
         {accessToken && mobileMenuOpen && (
           <div
