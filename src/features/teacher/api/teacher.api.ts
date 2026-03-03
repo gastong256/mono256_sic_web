@@ -1,6 +1,7 @@
 import { httpClient } from '@/shared/lib/http'
 import type { TeacherDashboardResponse } from '@/shared/types'
 import type {
+  CourseCreatePayload,
   TeacherAvailableStudent,
   TeacherAvailableStudentsResponse,
   TeacherCompanyItem,
@@ -124,4 +125,13 @@ export const teacherApi = {
 
   unenrollStudent: (courseId: number, studentId: number): Promise<void> =>
     httpClient.delete(`/courses/${courseId}/enrollments/${studentId}/`).then(() => {}),
+
+  createCourse: (payload: CourseCreatePayload): Promise<void> =>
+    httpClient
+      .post('/courses/', {
+        name: payload.name,
+        ...(payload.code ? { code: payload.code } : null),
+        ...(payload.teacher_id ? { teacher_id: payload.teacher_id } : null),
+      })
+      .then(() => {}),
 }

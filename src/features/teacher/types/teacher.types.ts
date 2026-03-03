@@ -58,3 +58,9 @@ export interface TeacherAvailableStudentsResponse {
   previous: string | null
   results: TeacherAvailableStudent[]
 }
+
+export interface CourseCreatePayload {
+  name: string
+  code?: string
+  teacher_id?: number
+}

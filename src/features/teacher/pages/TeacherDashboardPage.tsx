@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useTeacherDashboard } from '@/features/teacher/hooks/useTeacherDashboard'
 import {
   useEnrollStudent,
   useTeacherAvailableStudents,
   useUnenrollStudent,
 } from '@/features/teacher/hooks/useTeacherEnrollments'
+import { useCreateCourse } from '@/features/teacher/hooks/useTeacherCourses'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
@@ -21,8 +23,13 @@ function fullName(student: { first_name?: string; last_name?: string; username: 
 }
 
 export function TeacherDashboardPage() {
+  const { user } = useAuthStore()
   const { pushToast } = useToast()
   const { data, isLoading, error } = useTeacherDashboard()
+  const [isCreateCourseOpen, setIsCreateCourseOpen] = useState(false)
+  const [newCourseName, setNewCourseName] = useState('')
+  const [newCourseCode, setNewCourseCode] = useState('')
+  const [createCourseError, setCreateCourseError] = useState<string | null>(null)
   const [courseForEnroll, setCourseForEnroll] = useState<{ id: number; name: string } | null>(null)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -39,6 +46,7 @@ export function TeacherDashboardPage() {
     isLoading: availableLoading,
     error: availableError,
   } = useTeacherAvailableStudents(courseForEnroll?.id ?? 0, availableParams)
+  const createCourseMutation = useCreateCourse()
   const enrollMutation = useEnrollStudent()
   const unenrollMutation = useUnenrollStudent()
 
@@ -79,12 +87,51 @@ export function TeacherDashboardPage() {
     setPage(1)
   }
 
+  async function handleCreateCourse() {
+    const name = newCourseName.trim()
+    const code = newCourseCode.trim()
+
+    if (!name) {
+      setCreateCourseError('El nombre del curso es obligatorio.')
+      return
+    }
+
+    try {
+      setCreateCourseError(null)
+      await createCourseMutation.mutateAsync({
+        name,
+        ...(code ? { code } : null),
+      })
+      pushToast('Curso creado correctamente.', 'success')
+      setIsCreateCourseOpen(false)
+      setNewCourseName('')
+      setNewCourseCode('')
+    } catch {
+      setCreateCourseError('No se pudo crear el curso.')
+      pushToast('No se pudo crear el curso.', 'error')
+    }
+  }
+
+  function closeCreateCourseModal() {
+    setIsCreateCourseOpen(false)
+    setCreateCourseError(null)
+    setNewCourseName('')
+    setNewCourseCode('')
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
         icon="teacher"
         title="Panel docente"
         subtitle="Resumen de cursos y alumnos asignados."
+        actions={
+          (user?.role === 'teacher' || user?.role === 'admin') && (
+            <Button type="button" onClick={() => setIsCreateCourseOpen(true)}>
+              + Nuevo curso
+            </Button>
+          )
+        }
       />
 
       {isLoading && (
@@ -183,6 +230,44 @@ export function TeacherDashboardPage() {
           ))}
         </div>
       )}
+
+      <Modal
+        isOpen={isCreateCourseOpen}
+        onClose={closeCreateCourseModal}
+        title="Crear nuevo curso"
+        className="max-w-lg"
+      >
+        <div className="space-y-4">
+          {createCourseError && <Alert tone="error">{createCourseError}</Alert>}
+          <Input
+            label="Nombre del curso"
+            placeholder="Ej: Contabilidad II"
+            value={newCourseName}
+            onChange={(event) => setNewCourseName(event.target.value)}
+          />
+          <Input
+            label="Codigo (opcional)"
+            placeholder="Ej: CONT-II"
+            value={newCourseCode}
+            onChange={(event) => setNewCourseCode(event.target.value)}
+          />
+
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={closeCreateCourseModal}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              isLoading={createCourseMutation.isPending}
+              onClick={() => {
+                void handleCreateCourse()
+              }}
+            >
+              Crear curso
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         isOpen={courseForEnroll !== null}

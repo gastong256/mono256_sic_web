@@ -1,6 +1,7 @@
 import { http, HttpResponse, delay } from 'msw'
 import { env } from '@/shared/config/env'
 import {
+  createCourseForUser,
   enrollStudentInCourse,
   getRequestUser,
   getRegistrationCode,
@@ -36,6 +37,24 @@ export const teacherHandlers = [
     }
 
     return HttpResponse.json(listCoursesForUser(user))
+  }),
+
+  http.post(`${BASE}/courses/`, async ({ request }) => {
+    await delay(140)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+
+    const body = (await request.json()) as { name?: string; code?: string; teacher_id?: number }
+    const created = createCourseForUser(user, body)
+    if ('error' in created) {
+      if (created.status === 400) {
+        return HttpResponse.json({ name: ['Este campo es obligatorio.'] }, { status: 400 })
+      }
+      return HttpResponse.json({ detail: created.error }, { status: created.status })
+    }
+
+    return HttpResponse.json(created, { status: 201 })
   }),
 
   http.get(`${BASE}/teacher/courses/:courseId/companies/`, async ({ request, params }) => {

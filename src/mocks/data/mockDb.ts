@@ -111,6 +111,7 @@ const courses: Course[] = [
     updated_at: '2024-02-01T08:00:00Z',
   },
 ]
+let nextCourseId = 2
 
 let nextUserId = 6
 const REGISTER_RATE_LIMIT_MAX_ATTEMPTS = 5
@@ -765,6 +766,66 @@ export function listCoursesForUser(user: User): Array<{
     created_at: course.created_at,
     updated_at: course.updated_at,
   }))
+}
+
+export function createCourseForUser(
+  user: User,
+  payload: { name?: string; code?: string; teacher_id?: number }
+):
+  | {
+      id: number
+      name: string
+      code: string | null
+      teacher_id: number
+      teacher_username: string
+      student_count: number
+      created_at: string
+      updated_at: string
+    }
+  | { error: string; status: number } {
+  if (user.role !== 'teacher' && user.role !== 'admin') {
+    return { error: 'Forbidden', status: 403 }
+  }
+
+  const name = payload.name?.trim()
+  if (!name) {
+    return { error: 'Validation error', status: 400 }
+  }
+
+  const teacherCandidate =
+    user.role === 'admin' && payload.teacher_id
+      ? users.find(
+          (candidate) => candidate.id === payload.teacher_id && candidate.role === 'teacher'
+        )
+      : users.find((candidate) => candidate.username === user.username)
+
+  if (!teacherCandidate) {
+    return { error: 'Teacher not found', status: 400 }
+  }
+
+  const now = new Date().toISOString()
+  const created: Course = {
+    id: nextCourseId++,
+    name,
+    code: payload.code?.trim() || null,
+    teacher_id: teacherCandidate.id,
+    teacher_username: teacherCandidate.username,
+    student_usernames: [],
+    created_at: now,
+    updated_at: now,
+  }
+  courses.push(created)
+
+  return {
+    id: created.id,
+    name: created.name,
+    code: created.code,
+    teacher_id: created.teacher_id,
+    teacher_username: created.teacher_username,
+    student_count: 0,
+    created_at: created.created_at,
+    updated_at: created.updated_at,
+  }
 }
 
 export function listTeacherCourseCompanies(
