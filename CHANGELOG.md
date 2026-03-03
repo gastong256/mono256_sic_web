@@ -1,3 +1,12 @@
+## 1.1.0 (2026-03-03)
+
+* feat: add journal flow, improve performance and delete item example ([a63c233](https://github.com/gastong256/mono256_sic_web/commit/a63c233))
+* feat: add mayor & trial balance modules with routes, filters, api and msw mocks ([66b5955](https://github.com/gastong256/mono256_sic_web/commit/66b5955))
+* feat: enforce owneronly ops and add readonly teacheradmin supervision with accounttree visibility ui ([1837fd3](https://github.com/gastong256/mono256_sic_web/commit/1837fd3))
+* feat: lbl diario to asientos, add readonly twoentry and companyaccount summaries in teacher panel ([46880f9](https://github.com/gastong256/mono256_sic_web/commit/46880f9))
+* feat: sync frontend and msw with openapi contract ([e86528b](https://github.com/gastong256/mono256_sic_web/commit/e86528b))
+* fix: align frontend types and api contracts with real drf backend ([6ad7e1c](https://github.com/gastong256/mono256_sic_web/commit/6ad7e1c))
+
 ## 1.0.0 (2026-03-02)
 
 * feat: build sic frontend — auth adapter, companies, and accounts ([3ad4351](https://github.com/gastong256/mono256_sic_web/commit/3ad4351))
