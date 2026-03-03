@@ -10,6 +10,7 @@ import { canManageRoles, canViewTeacherDashboard } from '@/shared/lib/authorizat
 export function Layout() {
   const { accessToken, user } = useAuthStore()
   const [asientosOpen, setAsientosOpen] = useState(false)
+  const [librosOpen, setLibrosOpen] = useState(false)
   useMe()
   const handleLogout = useLogout()
   const canViewTeacher = canViewTeacherDashboard(user)
@@ -80,6 +81,55 @@ export function Layout() {
                       >
                         Por documento contable
                       </span>
+                    </div>
+                  )}
+                </div>
+                <div className="relative">
+                  <button
+                    onClick={() => setLibrosOpen((v) => !v)}
+                    onBlur={() => setTimeout(() => setLibrosOpen(false), 150)}
+                    className="flex items-center gap-1 text-sm text-gray-600 transition-colors hover:text-gray-900"
+                  >
+                    Libros
+                    <svg
+                      className={[
+                        'size-3.5 transition-transform',
+                        librosOpen ? 'rotate-180' : '',
+                      ].join(' ')}
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                  {librosOpen && (
+                    <div className="absolute top-full right-0 z-20 mt-1 w-52 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                      <Link
+                        to="/reports/journal-book"
+                        onClick={() => setLibrosOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        Libro Diario
+                      </Link>
+                      <Link
+                        to="/reports/ledger"
+                        onClick={() => setLibrosOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        Libro Mayor
+                      </Link>
+                      <Link
+                        to="/reports/trial-balance"
+                        onClick={() => setLibrosOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        Balance de comprobación
+                      </Link>
                     </div>
                   )}
                 </div>

@@ -8,6 +8,8 @@ export interface User {
   last_name: string
   is_staff: boolean
   role: Role
+  course_id?: number | null
+  date_joined?: string
 }
 
 export interface CourseSummary {

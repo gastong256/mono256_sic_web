@@ -13,7 +13,26 @@ export const adminHandlers = [
     if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
     if (user.role !== 'admin') return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
 
-    return HttpResponse.json(listUsers())
+    const url = new URL(request.url)
+    const role = url.searchParams.get('role')
+    const search = (url.searchParams.get('search') ?? '').trim().toLowerCase()
+    const pageRaw = url.searchParams.get('page')
+    const page = pageRaw ? Number(pageRaw) : 1
+
+    let users = listUsers()
+
+    if (role === 'admin' || role === 'teacher' || role === 'student') {
+      users = users.filter((candidate) => candidate.role === role)
+    }
+
+    if (search.length > 0) {
+      users = users.filter((candidate) => candidate.username.toLowerCase().includes(search))
+    }
+
+    // Keep response shape as array (per OpenAPI), with lightweight page slicing for mocks.
+    const PAGE_SIZE = 20
+    const start = Math.max(0, (Number.isFinite(page) ? page : 1) - 1) * PAGE_SIZE
+    return HttpResponse.json(users.slice(start, start + PAGE_SIZE))
   }),
 
   http.patch(`${BASE}/admin/users/:userId/role/`, async ({ request, params }) => {

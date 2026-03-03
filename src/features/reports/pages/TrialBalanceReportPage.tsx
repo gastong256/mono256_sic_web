@@ -1,0 +1,179 @@
+import { Fragment, useMemo, useState } from 'react'
+import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
+import { useTrialBalanceReport } from '@/features/reports/hooks/useTrialBalanceReport'
+import { Spinner } from '@/shared/ui/Spinner'
+
+const arsFormatter = new Intl.NumberFormat('es-AR', {
+  style: 'currency',
+  currency: 'ARS',
+})
+
+function formatAmount(value: number) {
+  return arsFormatter.format(value)
+}
+
+export function TrialBalanceReportPage() {
+  const { activeCompanyId } = useActiveCompanyStore()
+  const [dateFromInput, setDateFromInput] = useState('')
+  const [dateToInput, setDateToInput] = useState('')
+  const [filters, setFilters] = useState<{ dateFrom?: string; dateTo?: string }>({})
+
+  const hasInvalidRange = useMemo(
+    () => Boolean(dateFromInput && dateToInput && dateFromInput > dateToInput),
+    [dateFromInput, dateToInput]
+  )
+
+  const { data, isLoading, isError, error } = useTrialBalanceReport(activeCompanyId, filters)
+  const canSearch = !hasInvalidRange && activeCompanyId !== null
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Balance de Comprobación</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Saldos por colectiva y subcuenta para verificar consistencia del período.
+        </p>
+      </div>
+
+      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+          <label className="text-sm text-gray-600">
+            Desde
+            <input
+              type="date"
+              value={dateFromInput}
+              onChange={(e) => setDateFromInput(e.target.value)}
+              className="mt-1 w-full rounded-md border border-gray-200 px-2 py-1.5"
+            />
+          </label>
+          <label className="text-sm text-gray-600">
+            Hasta
+            <input
+              type="date"
+              value={dateToInput}
+              onChange={(e) => setDateToInput(e.target.value)}
+              className="mt-1 w-full rounded-md border border-gray-200 px-2 py-1.5"
+            />
+          </label>
+          <div className="flex items-end gap-2 md:col-span-2">
+            <button
+              type="button"
+              disabled={!canSearch}
+              onClick={() =>
+                setFilters({
+                  dateFrom: dateFromInput || undefined,
+                  dateTo: dateToInput || undefined,
+                })
+              }
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+            >
+              Aplicar filtros
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDateFromInput('')
+                setDateToInput('')
+                setFilters({})
+              }}
+              className="rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700"
+            >
+              Limpiar
+            </button>
+          </div>
+        </div>
+        {hasInvalidRange && (
+          <p className="mt-2 text-sm text-red-600">La fecha desde no puede ser mayor a hasta.</p>
+        )}
+      </section>
+
+      {activeCompanyId === null && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          Seleccioná una empresa para ver el Balance de Comprobación.
+        </div>
+      )}
+
+      {activeCompanyId !== null && isLoading && (
+        <div className="flex justify-center py-12">
+          <Spinner className="size-8 text-blue-600" label="Cargando balance de comprobación…" />
+        </div>
+      )}
+
+      {activeCompanyId !== null && isError && !isLoading && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error instanceof Error ? error.message : 'No se pudo cargar el balance de comprobación.'}
+        </div>
+      )}
+
+      {activeCompanyId !== null && !isLoading && !isError && data && (
+        <section className="space-y-4">
+          <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm">
+            <p className="font-semibold text-blue-900">Totales generales</p>
+            <div className="mt-1 flex flex-wrap gap-4 text-blue-900">
+              <span>Debe: {formatAmount(data.grand_total_debit)}</span>
+              <span>Haber: {formatAmount(data.grand_total_credit)}</span>
+              <span>
+                Diferencia: {formatAmount(data.grand_total_debit - data.grand_total_credit)}
+              </span>
+            </div>
+          </div>
+
+          {data.rows.length === 0 ? (
+            <div className="rounded-md border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500">
+              No hay movimientos para los filtros seleccionados.
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr className="text-left text-xs text-gray-500">
+                    <th className="px-3 py-2">Cuenta</th>
+                    <th className="px-3 py-2 text-right">Debe</th>
+                    <th className="px-3 py-2 text-right">Haber</th>
+                    <th className="px-3 py-2 text-right">Saldo</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {data.rows.map((row) => (
+                    <Fragment key={`g-${row.level2_id}`}>
+                      <tr className="bg-gray-50">
+                        <td className="px-3 py-2 font-semibold text-gray-800">
+                          {row.code} · {row.name}
+                        </td>
+                        <td className="px-3 py-2 text-right font-medium text-gray-800">
+                          {formatAmount(row.total_debit)}
+                        </td>
+                        <td className="px-3 py-2 text-right font-medium text-gray-800">
+                          {formatAmount(row.total_credit)}
+                        </td>
+                        <td className="px-3 py-2 text-right font-semibold text-gray-900">
+                          {formatAmount(row.balance)}
+                        </td>
+                      </tr>
+                      {row.accounts.map((account) => (
+                        <tr key={`a-${account.account_id}`}>
+                          <td className="px-3 py-2 pl-8 text-gray-700">
+                            {account.code} · {account.name}
+                          </td>
+                          <td className="px-3 py-2 text-right text-gray-700">
+                            {formatAmount(account.total_debit)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-gray-700">
+                            {formatAmount(account.total_credit)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-gray-700">
+                            {formatAmount(account.balance)}
+                          </td>
+                        </tr>
+                      ))}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+    </div>
+  )
+}

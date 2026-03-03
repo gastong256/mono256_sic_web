@@ -13,8 +13,12 @@ type MockUserRecord = User & { password: string }
 type Course = {
   id: number
   name: string
+  code: string | null
+  teacher_id: number
   teacher_username: string
   student_usernames: string[]
+  created_at: string
+  updated_at: string
 }
 
 type Session = {
@@ -31,6 +35,8 @@ const users: MockUserRecord[] = [
     last_name: 'Admin',
     is_staff: true,
     role: 'admin',
+    course_id: null,
+    date_joined: '2024-01-10T10:00:00Z',
     password: 'password',
   },
   {
@@ -41,6 +47,8 @@ const users: MockUserRecord[] = [
     last_name: 'Teacher',
     is_staff: true,
     role: 'teacher',
+    course_id: null,
+    date_joined: '2024-01-15T11:00:00Z',
     password: 'password',
   },
   {
@@ -51,6 +59,8 @@ const users: MockUserRecord[] = [
     last_name: 'Student',
     is_staff: false,
     role: 'student',
+    course_id: 1,
+    date_joined: '2024-02-01T09:00:00Z',
     password: 'password',
   },
   {
@@ -61,6 +71,8 @@ const users: MockUserRecord[] = [
     last_name: 'Student',
     is_staff: false,
     role: 'student',
+    course_id: 1,
+    date_joined: '2024-02-03T09:30:00Z',
     password: 'password',
   },
 ]
@@ -69,8 +81,12 @@ const courses: Course[] = [
   {
     id: 1,
     name: 'Contabilidad I',
+    code: 'CONT-I',
+    teacher_id: 2,
     teacher_username: 'teacher1',
     student_usernames: ['student1', 'student2'],
+    created_at: '2024-02-01T08:00:00Z',
+    updated_at: '2024-02-01T08:00:00Z',
   },
 ]
 
@@ -82,6 +98,7 @@ const companies: Company[] = [
     tax_id: '20-12345678-9',
     owner_username: 'student1',
     account_count: 3,
+    books_closed_until: null,
     created_at: '2024-03-01T10:00:00Z',
     updated_at: '2024-03-01T10:00:00Z',
   },
@@ -91,6 +108,7 @@ const companies: Company[] = [
     tax_id: null,
     owner_username: 'student1',
     account_count: 2,
+    books_closed_until: null,
     created_at: '2024-03-15T14:30:00Z',
     updated_at: '2024-03-15T14:30:00Z',
   },
@@ -100,6 +118,7 @@ const companies: Company[] = [
     tax_id: '27-98765432-1',
     owner_username: 'student2',
     account_count: 0,
+    books_closed_until: null,
     created_at: '2024-04-01T09:00:00Z',
     updated_at: '2024-04-01T09:00:00Z',
   },
@@ -109,6 +128,7 @@ const companies: Company[] = [
     tax_id: '30-77889966-3',
     owner_username: 'admin',
     account_count: 1,
+    books_closed_until: null,
     created_at: '2024-04-20T09:00:00Z',
     updated_at: '2024-04-20T09:00:00Z',
   },
@@ -124,6 +144,8 @@ const journalEntries: JournalEntryDetail[] = [
     source_type: 'MANUAL',
     source_ref: '',
     created_by: 'student1',
+    reversal_of_id: 0,
+    reversed_by_id: null,
     total_debit: 50000,
     total_credit: 50000,
     lines: [
@@ -151,6 +173,8 @@ const journalEntries: JournalEntryDetail[] = [
     source_type: 'MANUAL',
     source_ref: '',
     created_by: 'student1',
+    reversal_of_id: 0,
+    reversed_by_id: null,
     total_debit: 120000,
     total_credit: 120000,
     lines: [
@@ -178,6 +202,8 @@ const journalEntries: JournalEntryDetail[] = [
     source_type: 'MANUAL',
     source_ref: '',
     created_by: 'student2',
+    reversal_of_id: 0,
+    reversed_by_id: null,
     total_debit: 30000,
     total_credit: 30000,
     lines: [
@@ -401,6 +427,7 @@ export function createCompany(
     tax_id: payload.tax_id ?? null,
     owner_username: ownerUsername,
     account_count: 0,
+    books_closed_until: null,
     created_at: now,
     updated_at: now,
   }
@@ -530,6 +557,8 @@ export function createJournalEntry(
     source_type: 'MANUAL',
     source_ref: '',
     created_by: createdBy,
+    reversal_of_id: 0,
+    reversed_by_id: null,
     total_debit: totalDebit,
     total_credit: totalCredit,
     lines,
@@ -539,6 +568,132 @@ export function createJournalEntry(
   journalCompanyMap[entry.id] = companyId
 
   return entry
+}
+
+function canAccessCourse(user: User, course: Course): boolean {
+  if (user.role === 'admin') return true
+  if (user.role === 'teacher') return course.teacher_username === user.username
+  return false
+}
+
+export function listCoursesForUser(user: User): Array<{
+  id: number
+  name: string
+  code: string | null
+  teacher_id: number
+  teacher_username: string
+  student_count: number
+  created_at: string
+  updated_at: string
+}> {
+  const visibleCourses = courses.filter((course) => canAccessCourse(user, course))
+
+  return visibleCourses.map((course) => ({
+    id: course.id,
+    name: course.name,
+    code: course.code,
+    teacher_id: course.teacher_id,
+    teacher_username: course.teacher_username,
+    student_count: course.student_usernames.length,
+    created_at: course.created_at,
+    updated_at: course.updated_at,
+  }))
+}
+
+export function listTeacherCourseCompanies(
+  user: User,
+  courseId: number
+): {
+  course_id: number
+  course_name: string
+  students: Array<{
+    student_id: number
+    student_username: string
+    student_full_name: string
+    companies: Company[]
+  }>
+} | null {
+  const course = courses.find((candidate) => candidate.id === courseId)
+  if (!course) return null
+  if (!canAccessCourse(user, course)) return null
+
+  return {
+    course_id: course.id,
+    course_name: course.name,
+    students: course.student_usernames
+      .map((username) => users.find((candidate) => candidate.username === username))
+      .filter((candidate): candidate is MockUserRecord => candidate !== undefined)
+      .map((student) => ({
+        student_id: student.id,
+        student_username: student.username,
+        student_full_name: `${student.first_name} ${student.last_name}`.trim(),
+        companies: companies.filter((company) => company.owner_username === student.username),
+      })),
+  }
+}
+
+export function listTeacherCourseJournalEntries(
+  user: User,
+  courseId: number,
+  filters: {
+    student_id?: number
+    company_id?: number
+    date_from?: string
+    date_to?: string
+  }
+): {
+  count: number
+  next: null
+  previous: null
+  results: JournalEntryDetail[]
+} | null {
+  const course = courses.find((candidate) => candidate.id === courseId)
+  if (!course) return null
+  if (!canAccessCourse(user, course)) return null
+
+  const courseStudentSet = new Set(course.student_usernames)
+  const allowedCompanies = companies
+    .filter((company) => courseStudentSet.has(company.owner_username))
+    .map((company) => company.id)
+
+  let entries = journalEntries.filter((entry) =>
+    allowedCompanies.includes(journalCompanyMap[entry.id])
+  )
+
+  if (filters.student_id) {
+    const student = users.find((candidate) => candidate.id === filters.student_id)
+    if (!student) {
+      entries = []
+    } else {
+      entries = entries.filter((entry) => {
+        const company = getCompanyById(journalCompanyMap[entry.id])
+        return company?.owner_username === student.username
+      })
+    }
+  }
+
+  if (filters.company_id) {
+    entries = entries.filter((entry) => journalCompanyMap[entry.id] === filters.company_id)
+  }
+
+  if (filters.date_from) {
+    entries = entries.filter((entry) => entry.date >= filters.date_from!)
+  }
+  if (filters.date_to) {
+    entries = entries.filter((entry) => entry.date <= filters.date_to!)
+  }
+
+  const sorted = [...entries].sort((a, b) => {
+    if (a.date === b.date) return a.entry_number - b.entry_number
+    return a.date.localeCompare(b.date)
+  })
+
+  return {
+    count: sorted.length,
+    next: null,
+    previous: null,
+    results: sorted,
+  }
 }
 
 export function buildTeacherDashboard(user: User): TeacherDashboardResponse | null {
@@ -589,6 +744,16 @@ export function getAccountChartConfig(): AccountLevelConfig[] {
 export function patchAccountChartConfig(items: AccountLevelConfig[]): AccountLevelConfig[] {
   accountChartConfig = items.map((item) => ({ ...item }))
   return getAccountChartConfig()
+}
+
+export function patchSingleAccountVisibility(
+  accountId: number,
+  isVisible: boolean
+): AccountLevelConfig | null {
+  const idx = accountChartConfig.findIndex((item) => item.account_id === accountId)
+  if (idx === -1) return null
+  accountChartConfig[idx] = { ...accountChartConfig[idx], visible: isVisible }
+  return { ...accountChartConfig[idx] }
 }
 
 export function updateUserRole(userId: number, role: Exclude<Role, 'admin'>): User | null {

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useParams } from 'react-router'
+import { useParams, useSearchParams } from 'react-router'
 import { useTeacherStudentCompanies } from '@/features/teacher/hooks/useTeacherStudentCompanies'
 import { useTeacherCompanyJournalEntries } from '@/features/teacher/hooks/useTeacherCompanyJournalEntries'
 import { Spinner } from '@/shared/ui/Spinner'
@@ -53,9 +53,15 @@ function lineAmount(line: JournalLine): string {
 
 export function TeacherStudentDetailPage() {
   const { studentId } = useParams<{ studentId: string }>()
+  const [searchParams] = useSearchParams()
   const parsedStudentId = Number(studentId)
+  const parsedCourseId = Number(searchParams.get('courseId'))
 
-  const { data: companies = [], isLoading, error } = useTeacherStudentCompanies(parsedStudentId)
+  const {
+    data: companies = [],
+    isLoading,
+    error,
+  } = useTeacherStudentCompanies(parsedCourseId, parsedStudentId)
 
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null)
 
@@ -63,7 +69,7 @@ export function TeacherStudentDetailPage() {
     data: journalEntries = [],
     isLoading: journalLoading,
     error: journalError,
-  } = useTeacherCompanyJournalEntries(selectedCompanyId)
+  } = useTeacherCompanyJournalEntries(parsedCourseId, parsedStudentId, selectedCompanyId)
 
   const selectedCompany = useMemo(
     () => companies.find((company) => company.id === selectedCompanyId) ?? null,
@@ -87,6 +93,15 @@ export function TeacherStudentDetailPage() {
         <h1 className="text-2xl font-bold text-gray-900">Detalle de alumno</h1>
         <p className="mt-1 text-sm text-gray-500">Alumno #{parsedStudentId}</p>
       </div>
+
+      {(Number.isNaN(parsedCourseId) || parsedCourseId <= 0) && (
+        <div
+          className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+          role="alert"
+        >
+          Falta el contexto de curso. Volvé al panel docente y reintentá.
+        </div>
+      )}
 
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Empresas del alumno</h2>

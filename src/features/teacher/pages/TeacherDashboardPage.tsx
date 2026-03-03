@@ -57,7 +57,7 @@ export function TeacherDashboardPage() {
                     </div>
 
                     <Link
-                      to={`/teacher/students/${student.id}`}
+                      to={`/teacher/students/${student.id}?courseId=${course.id}`}
                       className="rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100"
                     >
                       Ver detalle

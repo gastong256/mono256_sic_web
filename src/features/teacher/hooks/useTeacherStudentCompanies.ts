@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { teacherApi } from '@/features/teacher/api/teacher.api'
 
-export const teacherStudentCompaniesQueryKey = (studentId: number) =>
-  ['teacher', 'students', studentId, 'companies'] as const
+export const teacherStudentCompaniesQueryKey = (courseId: number, studentId: number) =>
+  ['teacher', 'courses', courseId, 'students', studentId, 'companies'] as const
 
-export function useTeacherStudentCompanies(studentId: number) {
+export function useTeacherStudentCompanies(courseId: number, studentId: number) {
   return useQuery({
-    queryKey: teacherStudentCompaniesQueryKey(studentId),
-    queryFn: () => teacherApi.studentCompanies(studentId),
-    enabled: studentId > 0,
+    queryKey: teacherStudentCompaniesQueryKey(courseId, studentId),
+    queryFn: () => teacherApi.studentCompanies(courseId, studentId),
+    enabled: courseId > 0 && studentId > 0,
   })
 }

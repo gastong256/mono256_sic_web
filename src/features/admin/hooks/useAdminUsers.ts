@@ -1,13 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { adminApi } from '@/features/admin/api/admin.api'
 import type { AdminRoleUpdatePayload } from '@/shared/types'
+import type { AdminListUsersParams } from '@/features/admin/api/admin.api'
 
 export const ADMIN_USERS_QUERY_KEY = ['admin', 'users'] as const
 
-export function useAdminUsers() {
+export function useAdminUsers(params?: AdminListUsersParams) {
   return useQuery({
-    queryKey: ADMIN_USERS_QUERY_KEY,
-    queryFn: adminApi.listUsers,
+    queryKey: [...ADMIN_USERS_QUERY_KEY, params ?? {}] as const,
+    queryFn: () => adminApi.listUsers(params),
   })
 }
 

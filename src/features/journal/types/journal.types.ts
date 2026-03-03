@@ -16,6 +16,8 @@ export interface JournalEntry {
   source_type: string
   source_ref: string
   created_by: string
+  reversal_of_id?: number | null
+  reversed_by_id?: number | null
   total_debit: number
   total_credit: number
 }

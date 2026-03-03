@@ -1,0 +1,175 @@
+import { useMemo, useState } from 'react'
+import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
+import { useJournalBookReport } from '@/features/reports/hooks/useJournalBookReport'
+import { Spinner } from '@/shared/ui/Spinner'
+
+const arsFormatter = new Intl.NumberFormat('es-AR', {
+  style: 'currency',
+  currency: 'ARS',
+})
+
+function formatAmount(value: string | number) {
+  const amount = typeof value === 'number' ? value : Number(value)
+  return arsFormatter.format(Number.isFinite(amount) ? amount : 0)
+}
+
+export function JournalBookReportPage() {
+  const { activeCompanyId } = useActiveCompanyStore()
+  const [dateFromInput, setDateFromInput] = useState('')
+  const [dateToInput, setDateToInput] = useState('')
+  const [filters, setFilters] = useState<{ dateFrom?: string; dateTo?: string }>({})
+
+  const hasInvalidRange = useMemo(
+    () => Boolean(dateFromInput && dateToInput && dateFromInput > dateToInput),
+    [dateFromInput, dateToInput]
+  )
+
+  const { data, isLoading, isError, error } = useJournalBookReport(activeCompanyId, filters)
+
+  const canSearch = !hasInvalidRange && activeCompanyId !== null
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Libro Diario</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Consultá asientos cronológicos y sus líneas de doble entrada.
+        </p>
+      </div>
+
+      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+          <label className="text-sm text-gray-600">
+            Desde
+            <input
+              type="date"
+              value={dateFromInput}
+              onChange={(e) => setDateFromInput(e.target.value)}
+              className="mt-1 w-full rounded-md border border-gray-200 px-2 py-1.5"
+            />
+          </label>
+          <label className="text-sm text-gray-600">
+            Hasta
+            <input
+              type="date"
+              value={dateToInput}
+              onChange={(e) => setDateToInput(e.target.value)}
+              className="mt-1 w-full rounded-md border border-gray-200 px-2 py-1.5"
+            />
+          </label>
+          <div className="flex items-end gap-2 md:col-span-2">
+            <button
+              type="button"
+              disabled={!canSearch}
+              onClick={() =>
+                setFilters({
+                  dateFrom: dateFromInput || undefined,
+                  dateTo: dateToInput || undefined,
+                })
+              }
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+            >
+              Aplicar filtros
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDateFromInput('')
+                setDateToInput('')
+                setFilters({})
+              }}
+              className="rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700"
+            >
+              Limpiar
+            </button>
+          </div>
+        </div>
+        {hasInvalidRange && (
+          <p className="mt-2 text-sm text-red-600">La fecha desde no puede ser mayor a hasta.</p>
+        )}
+      </section>
+
+      {activeCompanyId === null && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          Seleccioná una empresa para ver el Libro Diario.
+        </div>
+      )}
+
+      {activeCompanyId !== null && isLoading && (
+        <div className="flex justify-center py-12">
+          <Spinner className="size-8 text-blue-600" label="Cargando libro diario…" />
+        </div>
+      )}
+
+      {activeCompanyId !== null && isError && !isLoading && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error instanceof Error ? error.message : 'No se pudo cargar el Libro Diario.'}
+        </div>
+      )}
+
+      {activeCompanyId !== null && !isLoading && !isError && data && (
+        <section className="space-y-4">
+          <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm">
+            <p className="font-semibold text-blue-900">Resumen del período</p>
+            <div className="mt-1 flex flex-wrap gap-4 text-blue-900">
+              <span>Asientos: {data.entries.length}</span>
+              <span>Debe: {formatAmount(data.grand_total_debit)}</span>
+              <span>Haber: {formatAmount(data.grand_total_credit)}</span>
+            </div>
+          </div>
+
+          {data.entries.length === 0 ? (
+            <div className="rounded-md border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500">
+              No hay asientos para los filtros seleccionados.
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {data.entries.map((entry) => (
+                <li
+                  key={entry.id}
+                  className="overflow-hidden rounded-lg border border-gray-200 bg-white"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2 text-sm">
+                    <span className="font-medium text-gray-800">
+                      Asiento #{entry.entry_number} · {entry.date} · {entry.description}
+                    </span>
+                    <span className="text-gray-700">
+                      Debe {formatAmount(entry.total_debit)} | Haber{' '}
+                      {formatAmount(entry.total_credit)}
+                    </span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-xs text-gray-500">
+                          <th className="px-3 py-2">Cuenta</th>
+                          <th className="px-3 py-2 text-right">Debe</th>
+                          <th className="px-3 py-2 text-right">Haber</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {entry.lines.map((line, index) => (
+                          <tr key={`${entry.id}-${index}`}>
+                            <td className="px-3 py-2 text-gray-700">
+                              {line.account_code} · {line.account_name}
+                            </td>
+                            <td className="px-3 py-2 text-right text-gray-700">
+                              {line.type === 'DEBIT' ? formatAmount(line.amount) : '—'}
+                            </td>
+                            <td className="px-3 py-2 text-right text-gray-700">
+                              {line.type === 'CREDIT' ? formatAmount(line.amount) : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+    </div>
+  )
+}

@@ -1,13 +1,30 @@
 import { useQuery } from '@tanstack/react-query'
 import { teacherApi } from '@/features/teacher/api/teacher.api'
 
-export const teacherCompanyJournalQueryKey = (companyId: number) =>
-  ['teacher', 'companies', companyId, 'journal'] as const
+export const teacherCompanyJournalQueryKey = (
+  courseId: number,
+  studentId: number,
+  companyId: number
+) =>
+  [
+    'teacher',
+    'courses',
+    courseId,
+    'students',
+    studentId,
+    'companies',
+    companyId,
+    'journal',
+  ] as const
 
-export function useTeacherCompanyJournalEntries(companyId: number | null) {
+export function useTeacherCompanyJournalEntries(
+  courseId: number,
+  studentId: number,
+  companyId: number | null
+) {
   return useQuery({
-    queryKey: teacherCompanyJournalQueryKey(companyId ?? 0),
-    queryFn: () => teacherApi.companyJournal(companyId!),
-    enabled: companyId !== null && companyId > 0,
+    queryKey: teacherCompanyJournalQueryKey(courseId, studentId, companyId ?? 0),
+    queryFn: () => teacherApi.companyJournal(courseId, studentId, companyId!),
+    enabled: courseId > 0 && studentId > 0 && companyId !== null && companyId > 0,
   })
 }

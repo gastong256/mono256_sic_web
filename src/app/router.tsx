@@ -47,6 +47,21 @@ const AccountChartVisibilityPage = lazy(() =>
 const AdminRolesPage = lazy(() =>
   import('@/features/admin/pages/AdminRolesPage').then((m) => ({ default: m.AdminRolesPage }))
 )
+const JournalBookReportPage = lazy(() =>
+  import('@/features/reports/pages/JournalBookReportPage').then((m) => ({
+    default: m.JournalBookReportPage,
+  }))
+)
+const LedgerReportPage = lazy(() =>
+  import('@/features/reports/pages/LedgerReportPage').then((m) => ({
+    default: m.LedgerReportPage,
+  }))
+)
+const TrialBalanceReportPage = lazy(() =>
+  import('@/features/reports/pages/TrialBalanceReportPage').then((m) => ({
+    default: m.TrialBalanceReportPage,
+  }))
+)
 
 const NotFoundPage = lazy(() =>
   import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
@@ -90,6 +105,18 @@ export const router = createBrowserRouter([
           {
             path: 'profile',
             element: page(<ProfilePage />),
+          },
+          {
+            path: 'reports/journal-book',
+            element: page(<JournalBookReportPage />),
+          },
+          {
+            path: 'reports/ledger',
+            element: page(<LedgerReportPage />),
+          },
+          {
+            path: 'reports/trial-balance',
+            element: page(<TrialBalanceReportPage />),
           },
           {
             element: <RequireRole roles={['teacher', 'admin']} />,

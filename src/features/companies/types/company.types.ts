@@ -4,6 +4,7 @@ export interface Company {
   tax_id: string | null
   owner_username: string
   account_count: number
+  books_closed_until?: string | null
   created_at: string
   updated_at: string
 }
