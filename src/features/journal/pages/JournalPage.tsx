@@ -5,11 +5,11 @@ import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.
 import { useJournalEntries } from '@/features/journal/hooks/useJournalEntries'
 import { JournalEntryCard } from '@/features/journal/components/JournalEntryCard'
 import { NewJournalEntryForm } from '@/features/journal/components/NewJournalEntryForm'
-import { Spinner } from '@/shared/ui/Spinner'
 import { Button } from '@/shared/ui/Button'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { Alert } from '@/shared/ui/Alert'
+import { Skeleton } from '@/shared/ui/Skeleton'
 
 export function JournalPage() {
   const { accessToken, refreshToken } = useAuthStore()
@@ -44,8 +44,19 @@ export function JournalPage() {
 
       {/* Content */}
       {isLoading && (
-        <div className="flex justify-center py-16">
-          <Spinner className="size-8 text-[var(--brand-500)]" />
+        <div className="space-y-3">
+          {[1, 2, 3].map((row) => (
+            <div key={row} className="surface-card overflow-hidden p-5">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-4 w-36" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-10/12" />
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

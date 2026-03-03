@@ -28,7 +28,7 @@ export function JournalEntryCard({ entry, companyId }: JournalEntryCardProps) {
   const totalHaber = entry.total_credit
 
   return (
-    <div className="surface-card overflow-hidden">
+    <div className="surface-card ui-fade-in ui-lift overflow-hidden">
       {/* Header row */}
       <button
         type="button"

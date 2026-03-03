@@ -16,7 +16,7 @@ export function CompanyTable({
   onDelete,
 }: CompanyTableProps) {
   return (
-    <div className="surface-card overflow-hidden">
+    <div className="surface-card ui-fade-in overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[760px] text-sm">
           <thead className="sticky top-0 border-b border-[var(--border-soft)] bg-[var(--bg-subtle)]">

@@ -128,7 +128,7 @@ export function JournalBookReportPage() {
               {data.entries.map((entry) => (
                 <li
                   key={entry.id}
-                  className="overflow-hidden rounded-lg border border-gray-200 bg-white"
+                  className="ui-fade-in ui-lift overflow-hidden rounded-lg border border-gray-200 bg-white"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2 text-sm">
                     <span className="font-medium text-gray-800">

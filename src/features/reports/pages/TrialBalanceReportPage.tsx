@@ -127,7 +127,7 @@ export function TrialBalanceReportPage() {
               className="py-8"
             />
           ) : (
-            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+            <div className="ui-fade-in overflow-hidden rounded-lg border border-gray-200 bg-white">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50">
                   <tr className="text-left text-xs text-gray-500">

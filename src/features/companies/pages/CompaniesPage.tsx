@@ -5,11 +5,11 @@ import { CompanyTable } from '@/features/companies/components/CompanyTable'
 import { CompanyForm } from '@/features/companies/components/CompanyForm'
 import { DeleteCompanyDialog } from '@/features/companies/components/DeleteCompanyDialog'
 import { Button } from '@/shared/ui/Button'
-import { Spinner } from '@/shared/ui/Spinner'
 import type { Company } from '@/features/companies/types/company.types'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
+import { Skeleton } from '@/shared/ui/Skeleton'
 
 export function CompaniesPage() {
   const navigate = useNavigate()
@@ -44,8 +44,25 @@ export function CompaniesPage() {
 
       {/* Loading */}
       {isLoading && (
-        <div className="flex justify-center py-16">
-          <Spinner className="size-8 text-[var(--brand-500)]" label="Cargando empresas..." />
+        <div className="surface-card overflow-hidden p-4">
+          <div className="mb-3 grid grid-cols-5 gap-3">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-3 w-12" />
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="ml-auto h-3 w-16" />
+          </div>
+          <div className="space-y-2">
+            {[1, 2, 3, 4].map((row) => (
+              <div key={row} className="grid grid-cols-5 gap-3">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="ml-auto h-8 w-24" />
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

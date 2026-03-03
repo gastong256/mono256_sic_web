@@ -141,7 +141,7 @@ export function LedgerReportPage() {
             data.cards.map((card) => (
               <article
                 key={card.account_id}
-                className="overflow-hidden rounded-lg border border-gray-200 bg-white"
+                className="ui-fade-in ui-lift overflow-hidden rounded-lg border border-gray-200 bg-white"
               >
                 <div className="border-b border-gray-100 bg-gray-50 px-3 py-2">
                   <p className="font-medium text-gray-900">

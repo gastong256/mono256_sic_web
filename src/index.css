@@ -95,3 +95,51 @@ textarea {
     transform: translateY(0);
   }
 }
+
+@keyframes skeleton-pulse {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -80% 0;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(0.35rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  .ui-fade-in {
+    animation: fade-up 220ms ease-out both;
+  }
+
+  .ui-lift {
+    transition:
+      transform 200ms ease,
+      box-shadow 200ms ease;
+  }
+
+  .ui-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 30px -18px rgb(15 40 78 / 38%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
