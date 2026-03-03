@@ -4,11 +4,13 @@ import { env } from '@/shared/config/env'
 const BASE = env.VITE_API_BASE_URL
 
 const MOCK_USER = {
-  id: 'usr_01',
+  id: 1,
   username: 'admin',
   email: 'admin@example.com',
-  name: 'Admin',
+  first_name: 'Admin',
+  last_name: 'User',
   is_staff: false,
+  role: 'teacher',
 }
 
 // Track the current valid refresh token in memory (reset between test runs via server.resetHandlers)
@@ -81,14 +83,14 @@ export const authHandlers = [
     return HttpResponse.json({ detail: 'Token is invalid or expired' }, { status: 401 })
   }),
 
-  // GET /me
-  http.get(`${BASE}/me`, async ({ request }) => {
+  // GET /auth/me/
+  http.get(`${BASE}/auth/me/`, async ({ request }) => {
     await delay(100)
 
     if (!isAuthorized(request)) {
       return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
     }
 
-    return HttpResponse.json({ user: MOCK_USER })
+    return HttpResponse.json(MOCK_USER)
   }),
 ]

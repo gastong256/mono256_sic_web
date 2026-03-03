@@ -25,7 +25,7 @@ function renderLoginForm() {
       <QueryClientProvider client={queryClient}>
         <LoginForm />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </MemoryRouter>
   )
   return { ...utils, queryClient }
 }
@@ -43,42 +43,31 @@ beforeEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('LoginForm', () => {
-  it('renders email, password fields and submit button', () => {
+  it('renders username, password fields and submit button', () => {
     renderLoginForm()
 
-    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/usuario/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /ingresar/i })).toBeInTheDocument()
   })
 
   it('shows validation errors when submitted with empty fields', async () => {
     const user = userEvent.setup()
     renderLoginForm()
 
-    await user.click(screen.getByRole('button', { name: /sign in/i }))
+    await user.click(screen.getByRole('button', { name: /ingresar/i }))
 
-    expect(await screen.findByText(/email is required/i)).toBeInTheDocument()
-    expect(await screen.findByText(/password is required/i)).toBeInTheDocument()
-  })
-
-  it('shows validation error for invalid email format', async () => {
-    const user = userEvent.setup()
-    renderLoginForm()
-
-    await user.type(screen.getByLabelText(/email address/i), 'not-an-email')
-    await user.type(screen.getByLabelText(/password/i), 'password')
-    await user.click(screen.getByRole('button', { name: /sign in/i }))
-
-    expect(await screen.findByText(/valid email/i)).toBeInTheDocument()
+    expect(await screen.findByText(/el usuario es obligatorio/i)).toBeInTheDocument()
+    expect(await screen.findByText(/la contraseña es obligatoria/i)).toBeInTheDocument()
   })
 
   it('submits with valid credentials and stores tokens', async () => {
     const user = userEvent.setup()
     renderLoginForm()
 
-    await user.type(screen.getByLabelText(/email address/i), 'user@example.com')
-    await user.type(screen.getByLabelText(/password/i), 'password')
-    await user.click(screen.getByRole('button', { name: /sign in/i }))
+    await user.type(screen.getByLabelText(/usuario/i), 'admin')
+    await user.type(screen.getByLabelText(/contraseña/i), 'password')
+    await user.click(screen.getByRole('button', { name: /ingresar/i }))
 
     // Wait for the mutation to resolve and tokens to be in store
     await waitFor(() => {
@@ -92,9 +81,9 @@ describe('LoginForm', () => {
     const user = userEvent.setup()
     renderLoginForm()
 
-    await user.type(screen.getByLabelText(/email address/i), 'wrong@example.com')
-    await user.type(screen.getByLabelText(/password/i), 'wrongpassword')
-    await user.click(screen.getByRole('button', { name: /sign in/i }))
+    await user.type(screen.getByLabelText(/usuario/i), 'wrong')
+    await user.type(screen.getByLabelText(/contraseña/i), 'wrongpassword')
+    await user.click(screen.getByRole('button', { name: /ingresar/i }))
 
     expect(await screen.findByRole('alert')).toBeInTheDocument()
   })
@@ -103,10 +92,10 @@ describe('LoginForm', () => {
     const user = userEvent.setup()
     renderLoginForm()
 
-    await user.type(screen.getByLabelText(/email address/i), 'user@example.com')
-    await user.type(screen.getByLabelText(/password/i), 'password')
+    await user.type(screen.getByLabelText(/usuario/i), 'admin')
+    await user.type(screen.getByLabelText(/contraseña/i), 'password')
 
-    const button = screen.getByRole('button', { name: /sign in/i })
+    const button = screen.getByRole('button', { name: /ingresar/i })
     await user.click(button)
 
     // Button should be disabled during pending state

@@ -24,10 +24,11 @@ registerTokenProvider({
     const payload = decodeJwtPayload(access)
     if (payload) {
       useAuthStore.getState().setUser({
-        id: String(payload.user_id ?? ''),
+        id: payload.user_id ?? 0,
         username: payload.username ?? '',
         email: '',
-        name: payload.username ?? '',
+        first_name: '',
+        last_name: '',
         is_staff: payload.is_staff ?? false,
       })
     }

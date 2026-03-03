@@ -15,10 +15,6 @@ export interface AuthTokens {
 
 export type LoginResponse = AuthTokens
 
-export interface MeResponse {
-  user: User
-}
-
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 /**
@@ -47,5 +43,5 @@ export const authApi = {
    * GET /me
    * Returns the current authenticated user. Requires Authorization header.
    */
-  me: (): Promise<MeResponse> => httpClient.get<MeResponse>('/me').then((r) => r.data),
+  me: (): Promise<User> => httpClient.get<User>('/auth/me/').then((r) => r.data),
 }

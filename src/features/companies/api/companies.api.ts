@@ -6,7 +6,10 @@ import type {
 } from '@/features/companies/types/company.types'
 
 export const companiesApi = {
-  list: (): Promise<Company[]> => httpClient.get<Company[]>('/companies/').then((r) => r.data),
+  list: (): Promise<Company[]> =>
+    httpClient
+      .get<{ count: number; results: Company[] }>('/companies/')
+      .then((r) => r.data.results),
 
   get: (id: number): Promise<Company> =>
     httpClient.get<Company>(`/companies/${id}/`).then((r) => r.data),

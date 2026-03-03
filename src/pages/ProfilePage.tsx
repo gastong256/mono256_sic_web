@@ -26,11 +26,13 @@ export function ProfilePage() {
     )
   }
 
+  const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-        <p className="mt-1 text-sm text-gray-500">Your account information.</p>
+        <h1 className="text-2xl font-bold text-gray-900">Perfil</h1>
+        <p className="mt-1 text-sm text-gray-500">Tu información de cuenta.</p>
       </div>
 
       {/* Profile card */}
@@ -39,10 +41,10 @@ export function ProfilePage() {
         <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-8">
           <div className="flex items-center gap-4">
             <div className="flex size-16 items-center justify-center rounded-full bg-white/20 text-2xl font-bold text-white">
-              {user.name.charAt(0).toUpperCase()}
+              {displayName.charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="text-xl font-semibold text-white">{user.name}</p>
+              <p className="text-xl font-semibold text-white">{displayName}</p>
               <p className="text-sm text-blue-100">{user.email}</p>
             </div>
           </div>
@@ -50,10 +52,12 @@ export function ProfilePage() {
 
         {/* Details */}
         <div className="divide-y divide-gray-100">
-          <ProfileField label="Full name" value={user.name} />
-          <ProfileField label="Email address" value={user.email} />
-          <ProfileField label="User ID" value={user.id} mono />
-          <ProfileField label="Session request ID" value={getRequestId()} mono />
+          <ProfileField label="Usuario" value={user.username} />
+          <ProfileField label="Nombre completo" value={displayName} />
+          <ProfileField label="Email" value={user.email} />
+          {user.role && <ProfileField label="Rol" value={user.role} />}
+          <ProfileField label="ID de usuario" value={String(user.id)} mono />
+          <ProfileField label="Request ID de sesión" value={getRequestId()} mono />
         </div>
       </div>
     </div>

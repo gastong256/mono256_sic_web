@@ -13,10 +13,11 @@ import { registerTokenProvider } from '@/shared/lib/http'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 
 export const TEST_USER = {
-  id: 'usr_test',
-  email: 'user@example.com',
-  name: 'Test User',
+  id: 1,
   username: 'admin',
+  email: 'user@example.com',
+  first_name: 'Test',
+  last_name: 'User',
   is_staff: false,
 }
 

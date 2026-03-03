@@ -31,9 +31,7 @@ export function CompanyTable({ companies, isStaff, onView, onEdit, onDelete }: C
               <td className="px-4 py-3 text-gray-500">
                 {new Date(company.created_at).toLocaleDateString('es-AR')}
               </td>
-              {isStaff && (
-                <td className="px-4 py-3 text-gray-500">{company.owner?.username ?? '—'}</td>
-              )}
+              {isStaff && <td className="px-4 py-3 text-gray-500">{company.owner_username}</td>}
               <td className="px-4 py-3">
                 <div className="flex items-center justify-end gap-1">
                   {/* Ver */}

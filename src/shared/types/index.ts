@@ -1,9 +1,11 @@
 export interface User {
-  id: string
-  email: string
-  name: string
+  id: number
   username: string
+  email: string
+  first_name: string
+  last_name: string
   is_staff: boolean
+  role?: string
 }
 
 export interface ApiError {

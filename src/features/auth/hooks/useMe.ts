@@ -15,7 +15,7 @@ export function useMe() {
   return useQuery({
     queryKey: ME_QUERY_KEY,
     queryFn: async () => {
-      const { user } = await authApi.me()
+      const user = await authApi.me()
       setUser(user)
       return user
     },

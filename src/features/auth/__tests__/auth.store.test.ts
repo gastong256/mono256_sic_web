@@ -36,10 +36,11 @@ describe('auth store', () => {
 
   it('setUser stores the user', () => {
     const mockUser = {
-      id: '1',
-      email: 'a@b.com',
-      name: 'Alice',
+      id: 1,
       username: 'alice',
+      email: 'a@b.com',
+      first_name: 'Alice',
+      last_name: '',
       is_staff: false,
     }
 
@@ -53,9 +54,14 @@ describe('auth store', () => {
   it('logout clears accessToken, refreshToken, and user', () => {
     act(() => {
       useAuthStore.getState().setTokens('access-abc', 'refresh-xyz')
-      useAuthStore
-        .getState()
-        .setUser({ id: '1', email: 'a@b.com', name: 'Alice', username: 'alice', is_staff: false })
+      useAuthStore.getState().setUser({
+        id: 1,
+        username: 'alice',
+        email: 'a@b.com',
+        first_name: 'Alice',
+        last_name: '',
+        is_staff: false,
+      })
     })
 
     act(() => {

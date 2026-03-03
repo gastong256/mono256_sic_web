@@ -21,10 +21,11 @@ export function useLogin() {
       // 2. Decode is_staff and username from the SimpleJWT access token payload
       const payload = decodeJwtPayload(data.access)
       setUser({
-        id: String(payload?.user_id ?? ''),
+        id: payload?.user_id ?? 0,
         username: payload?.username ?? '',
         email: '',
-        name: payload?.username ?? '',
+        first_name: '',
+        last_name: '',
         is_staff: payload?.is_staff ?? false,
       })
 

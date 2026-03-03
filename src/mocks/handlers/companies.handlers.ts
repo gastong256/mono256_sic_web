@@ -11,22 +11,28 @@ let mockCompanies: Company[] = [
     id: 1,
     name: 'Ferretería Los Andes',
     tax_id: '20-12345678-9',
+    owner_username: 'admin',
+    account_count: 3,
     created_at: '2024-03-01T10:00:00Z',
-    owner: { username: 'admin' },
+    updated_at: '2024-03-01T10:00:00Z',
   },
   {
     id: 2,
     name: 'Librería del Centro',
     tax_id: null,
+    owner_username: 'admin',
+    account_count: 2,
     created_at: '2024-03-15T14:30:00Z',
-    owner: { username: 'admin' },
+    updated_at: '2024-03-15T14:30:00Z',
   },
   {
     id: 3,
     name: 'Panadería San Martín',
     tax_id: '27-98765432-1',
+    owner_username: 'student1',
+    account_count: 0,
     created_at: '2024-04-01T09:00:00Z',
-    owner: { username: 'student1' },
+    updated_at: '2024-04-01T09:00:00Z',
   },
 ]
 
@@ -37,22 +43,28 @@ export function resetCompaniesMock() {
       id: 1,
       name: 'Ferretería Los Andes',
       tax_id: '20-12345678-9',
+      owner_username: 'admin',
+      account_count: 3,
       created_at: '2024-03-01T10:00:00Z',
-      owner: { username: 'admin' },
+      updated_at: '2024-03-01T10:00:00Z',
     },
     {
       id: 2,
       name: 'Librería del Centro',
       tax_id: null,
+      owner_username: 'admin',
+      account_count: 2,
       created_at: '2024-03-15T14:30:00Z',
-      owner: { username: 'admin' },
+      updated_at: '2024-03-15T14:30:00Z',
     },
     {
       id: 3,
       name: 'Panadería San Martín',
       tax_id: '27-98765432-1',
+      owner_username: 'student1',
+      account_count: 0,
       created_at: '2024-04-01T09:00:00Z',
-      owner: { username: 'student1' },
+      updated_at: '2024-04-01T09:00:00Z',
     },
   ]
 }
@@ -71,7 +83,12 @@ export const companiesHandlers = [
       return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
     }
 
-    return HttpResponse.json(mockCompanies)
+    return HttpResponse.json({
+      count: mockCompanies.length,
+      next: null,
+      previous: null,
+      results: mockCompanies,
+    })
   }),
 
   // POST /companies/
@@ -92,8 +109,10 @@ export const companiesHandlers = [
       id: nextId++,
       name: body.name,
       tax_id: body.tax_id ?? null,
+      owner_username: 'admin',
+      account_count: 0,
       created_at: new Date().toISOString(),
-      owner: { username: 'admin' },
+      updated_at: new Date().toISOString(),
     }
     mockCompanies.push(newCompany)
 
