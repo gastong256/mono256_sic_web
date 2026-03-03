@@ -60,7 +60,9 @@ export function AppBreadcrumbs() {
                 {crumb.label}
               </Link>
             ) : (
-              <span className="font-semibold text-[var(--text-strong)]">{crumb.label}</span>
+              <span aria-current="page" className="font-semibold text-[var(--text-strong)]">
+                {crumb.label}
+              </span>
             )}
             {index < crumbs.length - 1 && <span aria-hidden="true">/</span>}
           </li>

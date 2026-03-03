@@ -4,8 +4,10 @@ import { Spinner } from '@/shared/ui/Spinner'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
+import { useToast } from '@/shared/ui/ToastProvider'
 
 export function AdminRolesPage() {
+  const { pushToast } = useToast()
   const { data: users = [], isLoading, error } = useAdminUsers()
   const { mutate: updateRole, isPending } = useUpdateUserRole()
 
@@ -37,16 +39,28 @@ export function AdminRolesPage() {
             <table className="w-full min-w-[760px] text-sm">
               <thead className="border-b border-[var(--border-soft)] bg-[var(--bg-subtle)]">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase"
+                  >
                     Usuario
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase"
+                  >
                     Nombre
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase"
+                  >
                     Rol actual
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-right text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase"
+                  >
                     Nuevo rol
                   </th>
                 </tr>
@@ -65,10 +79,16 @@ export function AdminRolesPage() {
                       <select
                         value={user.role === 'admin' ? 'teacher' : user.role}
                         onChange={(e) =>
-                          updateRole({
-                            userId: user.id,
-                            payload: { role: e.target.value as Exclude<Role, 'admin'> },
-                          })
+                          updateRole(
+                            {
+                              userId: user.id,
+                              payload: { role: e.target.value as Exclude<Role, 'admin'> },
+                            },
+                            {
+                              onSuccess: () => pushToast('Rol actualizado.', 'success'),
+                              onError: () => pushToast('No se pudo actualizar el rol.', 'error'),
+                            }
+                          )
                         }
                         disabled={isPending || user.role === 'admin'}
                         className="rounded-md border border-[var(--border-strong)] px-2 py-1 text-sm text-[var(--text-strong)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"

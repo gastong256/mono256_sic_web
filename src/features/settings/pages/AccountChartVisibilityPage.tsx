@@ -8,6 +8,7 @@ import { Spinner } from '@/shared/ui/Spinner'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Button } from '@/shared/ui/Button'
 import { Alert } from '@/shared/ui/Alert'
+import { useToast } from '@/shared/ui/ToastProvider'
 
 type ChartTreeNode = AccountLevelConfig & { children: AccountLevelConfig[] }
 
@@ -22,6 +23,7 @@ function buildTree(items: AccountLevelConfig[]): ChartTreeNode[] {
 }
 
 export function AccountChartVisibilityPage() {
+  const { pushToast } = useToast()
   const { data = [], isLoading, error } = useAccountChartConfig()
   const { mutate: saveConfig, isPending: saving } = useUpdateAccountChartConfig()
 
@@ -106,7 +108,15 @@ export function AccountChartVisibilityPage() {
           </div>
 
           <div className="flex justify-end border-t border-gray-100 px-4 py-3">
-            <Button onClick={() => saveConfig(draft)} disabled={saving}>
+            <Button
+              onClick={() =>
+                saveConfig(draft, {
+                  onSuccess: () => pushToast('Visibilidad actualizada.', 'success'),
+                  onError: () => pushToast('No se pudo guardar la configuracion.', 'error'),
+                })
+              }
+              disabled={saving}
+            >
               {saving ? 'Guardando...' : 'Guardar cambios'}
             </Button>
           </div>

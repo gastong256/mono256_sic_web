@@ -131,10 +131,18 @@ export function TrialBalanceReportPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50">
                   <tr className="text-left text-xs text-gray-500">
-                    <th className="px-3 py-2">Cuenta</th>
-                    <th className="px-3 py-2 text-right">Debe</th>
-                    <th className="px-3 py-2 text-right">Haber</th>
-                    <th className="px-3 py-2 text-right">Saldo</th>
+                    <th scope="col" className="px-3 py-2">
+                      Cuenta
+                    </th>
+                    <th scope="col" className="px-3 py-2 text-right">
+                      Debe
+                    </th>
+                    <th scope="col" className="px-3 py-2 text-right">
+                      Haber
+                    </th>
+                    <th scope="col" className="px-3 py-2 text-right">
+                      Saldo
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">

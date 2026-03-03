@@ -9,6 +9,7 @@ import { useCreateJournalEntry } from '@/features/journal/hooks/useCreateJournal
 import { useJournalAccounts } from '@/features/journal/hooks/useJournalAccounts'
 import type { CreateJournalLinePayload } from '@/features/journal/types/journal.types'
 import { Alert } from '@/shared/ui/Alert'
+import { useToast } from '@/shared/ui/ToastProvider'
 
 // ── Zod schema ────────────────────────────────────────────────────────────────
 
@@ -54,6 +55,7 @@ interface NewJournalEntryFormProps {
 }
 
 export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEntryFormProps) {
+  const { pushToast } = useToast()
   const studentMutation = useCreateJournalEntry(companyId)
   const mutateAsync = studentMutation.mutateAsync
   const isPending = studentMutation.isPending
@@ -119,8 +121,10 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
         description: values.description,
         lines: normalizedLines,
       })
+      pushToast('Asiento registrado correctamente.', 'success')
       onClose()
     } catch (error) {
+      pushToast('No se pudo guardar el asiento.', 'error')
       setSubmitError(error instanceof Error ? error.message : 'No se pudo guardar el asiento.')
     }
   }
@@ -170,13 +174,22 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
             <table className="w-full text-sm">
               <thead className="bg-[var(--bg-subtle)]">
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                  <th
+                    scope="col"
+                    className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase"
+                  >
                     Cuenta
                   </th>
-                  <th className="w-36 px-3 py-2 text-right text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                  <th
+                    scope="col"
+                    className="w-36 px-3 py-2 text-right text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase"
+                  >
                     Debe
                   </th>
-                  <th className="w-36 px-3 py-2 text-right text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                  <th
+                    scope="col"
+                    className="w-36 px-3 py-2 text-right text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase"
+                  >
                     Haber
                   </th>
                   <th className="w-10 px-3 py-2" />

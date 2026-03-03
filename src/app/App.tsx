@@ -10,6 +10,7 @@ import { decodeJwtPayload } from '@/shared/lib/jwt'
 import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
 import { env } from '@/shared/config/env'
 import { logger } from '@/shared/lib/logger'
+import { ToastProvider } from '@/shared/ui/ToastProvider'
 
 function setUserFromToken(accessToken: string): void {
   const payload = decodeJwtPayload(accessToken)
@@ -82,7 +83,9 @@ export function App() {
   return (
     <ErrorBoundary>
       <QueryProvider>
-        <RouterProvider router={router} />
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
       </QueryProvider>
     </ErrorBoundary>
   )

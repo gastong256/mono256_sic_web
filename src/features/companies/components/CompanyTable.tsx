@@ -21,21 +21,36 @@ export function CompanyTable({
         <table className="w-full min-w-[760px] text-sm">
           <thead className="sticky top-0 border-b border-[var(--border-soft)] bg-[var(--bg-subtle)]">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+              <th
+                scope="col"
+                className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase"
+              >
                 Nombre
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+              <th
+                scope="col"
+                className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase"
+              >
                 CUIT
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+              <th
+                scope="col"
+                className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase"
+              >
                 Fecha de alta
               </th>
               {showOwner && (
-                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase"
+                >
                   Propietario
                 </th>
               )}
-              <th className="px-4 py-3 text-right text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+              <th
+                scope="col"
+                className="px-4 py-3 text-right text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase"
+              >
                 Acciones
               </th>
             </tr>

@@ -156,12 +156,24 @@ export function LedgerReportPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left text-xs text-gray-500">
-                        <th className="px-3 py-2">Asiento</th>
-                        <th className="px-3 py-2">Fecha</th>
-                        <th className="px-3 py-2">Detalle</th>
-                        <th className="px-3 py-2 text-right">Debe</th>
-                        <th className="px-3 py-2 text-right">Haber</th>
-                        <th className="px-3 py-2 text-right">Saldo</th>
+                        <th scope="col" className="px-3 py-2">
+                          Asiento
+                        </th>
+                        <th scope="col" className="px-3 py-2">
+                          Fecha
+                        </th>
+                        <th scope="col" className="px-3 py-2">
+                          Detalle
+                        </th>
+                        <th scope="col" className="px-3 py-2 text-right">
+                          Debe
+                        </th>
+                        <th scope="col" className="px-3 py-2 text-right">
+                          Haber
+                        </th>
+                        <th scope="col" className="px-3 py-2 text-right">
+                          Saldo
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">

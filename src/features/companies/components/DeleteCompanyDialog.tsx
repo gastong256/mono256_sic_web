@@ -1,6 +1,7 @@
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { useDeleteCompany } from '@/features/companies/hooks/useDeleteCompany'
 import type { Company } from '@/features/companies/types/company.types'
+import { useToast } from '@/shared/ui/ToastProvider'
 
 interface DeleteCompanyDialogProps {
   company: Company | null
@@ -8,11 +9,20 @@ interface DeleteCompanyDialogProps {
 }
 
 export function DeleteCompanyDialog({ company, onClose }: DeleteCompanyDialogProps) {
+  const { pushToast } = useToast()
   const { mutate: deleteCompany, isPending } = useDeleteCompany()
 
   function handleConfirm() {
     if (!company) return
-    deleteCompany(company.id, { onSuccess: onClose })
+    deleteCompany(company.id, {
+      onSuccess: () => {
+        pushToast('Empresa eliminada.', 'success')
+        onClose()
+      },
+      onError: () => {
+        pushToast('No se pudo eliminar la empresa.', 'error')
+      },
+    })
   }
 
   return (

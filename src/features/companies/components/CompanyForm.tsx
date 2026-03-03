@@ -10,6 +10,7 @@ import { useCreateCompany } from '@/features/companies/hooks/useCreateCompany'
 import { useUpdateCompany } from '@/features/companies/hooks/useUpdateCompany'
 import type { Company } from '@/features/companies/types/company.types'
 import { Alert } from '@/shared/ui/Alert'
+import { useToast } from '@/shared/ui/ToastProvider'
 
 // ── Validation schema ─────────────────────────────────────────────────────────
 
@@ -29,6 +30,7 @@ interface CompanyFormProps {
 }
 
 export function CompanyForm({ isOpen, onClose, company }: CompanyFormProps) {
+  const { pushToast } = useToast()
   const isEditMode = company !== undefined
   const { mutate: createCompany, isPending: isCreating } = useCreateCompany()
   const { mutate: updateCompany, isPending: isUpdating } = useUpdateCompany()
@@ -89,9 +91,24 @@ export function CompanyForm({ isOpen, onClose, company }: CompanyFormProps) {
     }
 
     if (isEditMode) {
-      updateCompany({ id: company.id, payload }, { onSuccess: handleClose, onError: handleError })
+      updateCompany(
+        { id: company.id, payload },
+        {
+          onSuccess: () => {
+            pushToast('Empresa actualizada correctamente.', 'success')
+            handleClose()
+          },
+          onError: handleError,
+        }
+      )
     } else {
-      createCompany(payload, { onSuccess: handleClose, onError: handleError })
+      createCompany(payload, {
+        onSuccess: () => {
+          pushToast('Empresa creada correctamente.', 'success')
+          handleClose()
+        },
+        onError: handleError,
+      })
     }
   }
 

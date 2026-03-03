@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useMe } from '@/features/auth/hooks/useMe'
@@ -24,6 +24,7 @@ export function Layout() {
   const [asientosOpen, setAsientosOpen] = useState(false)
   const [librosOpen, setLibrosOpen] = useState(false)
   const [supervisionOpen, setSupervisionOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { pathname } = useLocation()
 
   useMe()
@@ -40,27 +41,49 @@ export function Layout() {
   const showBreadcrumbs =
     isAuthenticated && pathname !== '/login' && pathname !== '/register' && pathname !== '/'
 
+  function closeAllMenus() {
+    setAsientosOpen(false)
+    setLibrosOpen(false)
+    setSupervisionOpen(false)
+    setMobileMenuOpen(false)
+  }
+
+  useEffect(() => {
+    closeAllMenus()
+  }, [pathname])
+
+  useEffect(() => {
+    function onEsc(event: KeyboardEvent) {
+      if (event.key === 'Escape') closeAllMenus()
+    }
+    window.addEventListener('keydown', onEsc)
+    return () => window.removeEventListener('keydown', onEsc)
+  }, [])
+
   return (
     <div className="min-h-screen">
       <nav className="sticky top-0 z-30 border-b border-[var(--border-soft)] bg-white/90 shadow-sm backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+          <div className="flex min-w-0 items-center gap-4">
             <Link
               to="/"
-              className="text-lg font-bold tracking-tight text-[var(--text-strong)] transition-colors hover:text-[var(--brand-600)]"
+              className="shrink-0 text-lg font-bold tracking-tight text-[var(--text-strong)] transition-colors hover:text-[var(--brand-600)]"
             >
               {env.VITE_APP_NAME}
             </Link>
-            <CompanySelector />
+            <div className="hidden sm:block">
+              <CompanySelector />
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-3 md:flex">
             {accessToken ? (
               <>
                 <div className="relative">
                   <button
                     onClick={() => setAsientosOpen((v) => !v)}
-                    onBlur={() => setTimeout(() => setAsientosOpen(false), 150)}
+                    aria-expanded={asientosOpen}
+                    aria-controls="menu-asientos"
                     className="flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]"
                   >
                     Asientos
@@ -81,10 +104,12 @@ export function Layout() {
                     </svg>
                   </button>
                   {asientosOpen && (
-                    <div className="absolute top-full right-0 z-20 mt-1 w-56 rounded-xl border border-[var(--border-soft)] bg-white py-1 shadow-[var(--shadow-soft)]">
+                    <div
+                      id="menu-asientos"
+                      className="absolute top-full right-0 z-20 mt-1 w-56 rounded-xl border border-[var(--border-soft)] bg-white py-1 shadow-[var(--shadow-soft)]"
+                    >
                       <NavLink
                         to="/"
-                        onClick={() => setAsientosOpen(false)}
                         className={({ isActive }) =>
                           [
                             'block px-4 py-2 text-sm',
@@ -115,7 +140,8 @@ export function Layout() {
                 <div className="relative">
                   <button
                     onClick={() => setLibrosOpen((v) => !v)}
-                    onBlur={() => setTimeout(() => setLibrosOpen(false), 150)}
+                    aria-expanded={librosOpen}
+                    aria-controls="menu-libros"
                     className="flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]"
                   >
                     Libros
@@ -136,10 +162,12 @@ export function Layout() {
                     </svg>
                   </button>
                   {librosOpen && (
-                    <div className="absolute top-full right-0 z-20 mt-1 w-56 rounded-xl border border-[var(--border-soft)] bg-white py-1 shadow-[var(--shadow-soft)]">
+                    <div
+                      id="menu-libros"
+                      className="absolute top-full right-0 z-20 mt-1 w-56 rounded-xl border border-[var(--border-soft)] bg-white py-1 shadow-[var(--shadow-soft)]"
+                    >
                       <NavLink
                         to="/reports/journal-book"
-                        onClick={() => setLibrosOpen(false)}
                         className={({ isActive }) =>
                           [
                             'block px-4 py-2 text-sm',
@@ -153,7 +181,6 @@ export function Layout() {
                       </NavLink>
                       <NavLink
                         to="/reports/ledger"
-                        onClick={() => setLibrosOpen(false)}
                         className={({ isActive }) =>
                           [
                             'block px-4 py-2 text-sm',
@@ -167,7 +194,6 @@ export function Layout() {
                       </NavLink>
                       <NavLink
                         to="/reports/trial-balance"
-                        onClick={() => setLibrosOpen(false)}
                         className={({ isActive }) =>
                           [
                             'block px-4 py-2 text-sm',
@@ -191,7 +217,8 @@ export function Layout() {
                   <div className="relative">
                     <button
                       onClick={() => setSupervisionOpen((v) => !v)}
-                      onBlur={() => setTimeout(() => setSupervisionOpen(false), 150)}
+                      aria-expanded={supervisionOpen}
+                      aria-controls="menu-supervision"
                       className="flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]"
                     >
                       Supervision
@@ -212,10 +239,12 @@ export function Layout() {
                       </svg>
                     </button>
                     {supervisionOpen && (
-                      <div className="absolute top-full right-0 z-20 mt-1 w-56 rounded-xl border border-[var(--border-soft)] bg-white py-1 shadow-[var(--shadow-soft)]">
+                      <div
+                        id="menu-supervision"
+                        className="absolute top-full right-0 z-20 mt-1 w-56 rounded-xl border border-[var(--border-soft)] bg-white py-1 shadow-[var(--shadow-soft)]"
+                      >
                         <NavLink
                           to="/teacher/dashboard"
-                          onClick={() => setSupervisionOpen(false)}
                           className={({ isActive }) =>
                             [
                               'block px-4 py-2 text-sm',
@@ -229,7 +258,6 @@ export function Layout() {
                         </NavLink>
                         <NavLink
                           to="/settings/chart-visibility"
-                          onClick={() => setSupervisionOpen(false)}
                           className={({ isActive }) =>
                             [
                               'block px-4 py-2 text-sm',
@@ -244,7 +272,6 @@ export function Layout() {
                         {canAssignRoles && (
                           <NavLink
                             to="/admin/roles"
-                            onClick={() => setSupervisionOpen(false)}
                             className={({ isActive }) =>
                               [
                                 'block px-4 py-2 text-sm',
@@ -282,6 +309,33 @@ export function Layout() {
               </Link>
             )}
           </div>
+
+          {accessToken && (
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-subtle)] px-3 py-1.5 text-sm font-semibold text-[var(--text-muted)] md:hidden"
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
+              aria-label="Toggle navigation menu"
+            >
+              Menu
+              <svg
+                className={['size-4 transition-transform', mobileMenuOpen ? 'rotate-180' : ''].join(
+                  ' '
+                )}
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          )}
         </div>
 
         {isAuthenticated && (
@@ -292,7 +346,77 @@ export function Layout() {
                 {activeCompany?.name ?? 'Sin empresa seleccionada'}
               </span>
             </p>
-            <p className="muted-text">Ruta: {pathname}</p>
+            <p className="muted-text hidden sm:block">Ruta: {pathname}</p>
+          </div>
+        )}
+
+        {accessToken && mobileMenuOpen && (
+          <div
+            id="mobile-menu"
+            className="border-t border-[var(--border-soft)] px-4 py-3 md:hidden"
+          >
+            <div className="mb-3 block sm:hidden">
+              <CompanySelector />
+            </div>
+            <div className="grid gap-2">
+              <NavLink to="/" className={({ isActive }) => navLinkClassName(isActive)}>
+                Asientos
+              </NavLink>
+              <NavLink to="/companies" className={({ isActive }) => navLinkClassName(isActive)}>
+                Empresas
+              </NavLink>
+              <NavLink
+                to="/reports/journal-book"
+                className={({ isActive }) => navLinkClassName(isActive)}
+              >
+                Libro Diario
+              </NavLink>
+              <NavLink
+                to="/reports/ledger"
+                className={({ isActive }) => navLinkClassName(isActive)}
+              >
+                Libro Mayor
+              </NavLink>
+              <NavLink
+                to="/reports/trial-balance"
+                className={({ isActive }) => navLinkClassName(isActive)}
+              >
+                Balance de comprobacion
+              </NavLink>
+
+              {canViewTeacher && (
+                <>
+                  <NavLink
+                    to="/teacher/dashboard"
+                    className={({ isActive }) => navLinkClassName(isActive)}
+                  >
+                    Panel docente
+                  </NavLink>
+                  <NavLink
+                    to="/settings/chart-visibility"
+                    className={({ isActive }) => navLinkClassName(isActive)}
+                  >
+                    Plan de cuentas
+                  </NavLink>
+                </>
+              )}
+
+              {canAssignRoles && (
+                <NavLink to="/admin/roles" className={({ isActive }) => navLinkClassName(isActive)}>
+                  Roles
+                </NavLink>
+              )}
+
+              <NavLink to="/profile" className={({ isActive }) => navLinkClassName(isActive)}>
+                Perfil
+              </NavLink>
+              <button
+                onClick={handleLogout}
+                className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-subtle)] px-3 py-2 text-left text-sm font-semibold text-[var(--text-muted)] transition-colors hover:bg-red-50 hover:text-red-700"
+              >
+                Cerrar sesion
+              </button>
+            </div>
           </div>
         )}
       </nav>

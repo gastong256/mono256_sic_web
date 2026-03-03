@@ -86,9 +86,15 @@ export function JournalEntryCard({ entry, companyId }: JournalEntryCardProps) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">
-                  <th className="pb-2">Cuenta</th>
-                  <th className="pb-2 text-right">Debe</th>
-                  <th className="pb-2 text-right">Haber</th>
+                  <th scope="col" className="pb-2">
+                    Cuenta
+                  </th>
+                  <th scope="col" className="pb-2 text-right">
+                    Debe
+                  </th>
+                  <th scope="col" className="pb-2 text-right">
+                    Haber
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-soft)]">
