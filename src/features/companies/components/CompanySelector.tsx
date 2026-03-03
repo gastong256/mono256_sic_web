@@ -22,20 +22,27 @@ export function CompanySelector() {
   if (!isAuthenticated || isLoading || !companies || companies.length === 0) return null
 
   if (companies.length === 1) {
-    return <span className="px-2 text-sm font-medium text-gray-700">{companies[0].name}</span>
+    return (
+      <span className="rounded-md border border-[var(--border-soft)] bg-[var(--bg-subtle)] px-2 py-1 text-xs font-semibold text-[var(--text-strong)]">
+        Empresa activa: {companies[0].name}
+      </span>
+    )
   }
 
   return (
-    <select
-      value={activeCompanyId ?? ''}
-      onChange={(e) => setActiveCompanyId(Number(e.target.value))}
-      className="rounded-md border border-gray-200 bg-white px-2 py-1 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-    >
-      {companies.map((company) => (
-        <option key={company.id} value={company.id}>
-          {company.name}
-        </option>
-      ))}
-    </select>
+    <label className="flex items-center gap-2 text-xs font-semibold text-[var(--text-muted)]">
+      Empresa activa
+      <select
+        value={activeCompanyId ?? ''}
+        onChange={(e) => setActiveCompanyId(Number(e.target.value))}
+        className="rounded-md border border-[var(--border-strong)] bg-white px-2 py-1 text-sm font-medium text-[var(--text-strong)] shadow-sm focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
+      >
+        {companies.map((company) => (
+          <option key={company.id} value={company.id}>
+            {company.name}
+          </option>
+        ))}
+      </select>
+    </label>
   )
 }

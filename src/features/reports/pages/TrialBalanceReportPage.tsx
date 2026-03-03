@@ -2,6 +2,8 @@ import { Fragment, useMemo, useState } from 'react'
 import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
 import { useTrialBalanceReport } from '@/features/reports/hooks/useTrialBalanceReport'
 import { Spinner } from '@/shared/ui/Spinner'
+import { PageHeader } from '@/shared/ui/PageHeader'
+import { Button } from '@/shared/ui/Button'
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
   style: 'currency',
@@ -28,14 +30,12 @@ export function TrialBalanceReportPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Balance de Comprobación</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Saldos por colectiva y subcuenta para verificar consistencia del período.
-        </p>
-      </div>
+      <PageHeader
+        title="Balance de Comprobacion"
+        subtitle="Saldos por colectiva y subcuenta para verificar consistencia del periodo."
+      />
 
-      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <section className="surface-card p-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
           <label className="text-sm text-gray-600">
             Desde
@@ -56,7 +56,7 @@ export function TrialBalanceReportPage() {
             />
           </label>
           <div className="flex items-end gap-2 md:col-span-2">
-            <button
+            <Button
               type="button"
               disabled={!canSearch}
               onClick={() =>
@@ -65,21 +65,20 @@ export function TrialBalanceReportPage() {
                   dateTo: dateToInput || undefined,
                 })
               }
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
             >
               Aplicar filtros
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => {
                 setDateFromInput('')
                 setDateToInput('')
                 setFilters({})
               }}
-              className="rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700"
             >
               Limpiar
-            </button>
+            </Button>
           </div>
         </div>
         {hasInvalidRange && (
@@ -95,7 +94,10 @@ export function TrialBalanceReportPage() {
 
       {activeCompanyId !== null && isLoading && (
         <div className="flex justify-center py-12">
-          <Spinner className="size-8 text-blue-600" label="Cargando balance de comprobación…" />
+          <Spinner
+            className="size-8 text-[var(--brand-500)]"
+            label="Cargando balance de comprobacion..."
+          />
         </div>
       )}
 

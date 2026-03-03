@@ -5,6 +5,7 @@ import { useTeacherCompanyJournalEntries } from '@/features/teacher/hooks/useTea
 import { Spinner } from '@/shared/ui/Spinner'
 import type { JournalLine } from '@/features/journal/types/journal.types'
 import type { TeacherCourseJournalEntry } from '@/features/teacher/types/teacher.types'
+import { PageHeader } from '@/shared/ui/PageHeader'
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
   style: 'currency',
@@ -109,10 +110,7 @@ export function TeacherStudentDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Detalle de alumno</h1>
-        <p className="mt-1 text-sm text-gray-500">Alumno #{parsedStudentId}</p>
-      </div>
+      <PageHeader title="Detalle de alumno" subtitle={`Alumno #${parsedStudentId}`} />
 
       {(Number.isNaN(parsedCourseId) || parsedCourseId <= 0) && (
         <div

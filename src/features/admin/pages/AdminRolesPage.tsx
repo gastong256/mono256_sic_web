@@ -1,6 +1,7 @@
 import { useAdminUsers, useUpdateUserRole } from '@/features/admin/hooks/useAdminUsers'
 import type { Role } from '@/shared/types'
 import { Spinner } from '@/shared/ui/Spinner'
+import { PageHeader } from '@/shared/ui/PageHeader'
 
 export function AdminRolesPage() {
   const { data: users = [], isLoading, error } = useAdminUsers()
@@ -8,14 +9,14 @@ export function AdminRolesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Asignación de roles</h1>
-        <p className="mt-1 text-sm text-gray-500">Promové o revertí usuarios al rol docente.</p>
-      </div>
+      <PageHeader
+        title="Asignacion de roles"
+        subtitle="Promove o revierte usuarios al rol docente."
+      />
 
       {isLoading && (
         <div className="flex justify-center py-16">
-          <Spinner className="size-8 text-blue-600" label="Cargando usuarios…" />
+          <Spinner className="size-8 text-[var(--brand-500)]" label="Cargando usuarios..." />
         </div>
       )}
 

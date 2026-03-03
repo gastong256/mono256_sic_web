@@ -3,6 +3,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { Spinner } from '@/shared/ui/Spinner'
 import { getRequestId } from '@/shared/lib/tracing'
 import { RegistrationCodeCard } from '@/features/auth/components/RegistrationCodeCard'
+import { PageHeader } from '@/shared/ui/PageHeader'
 
 export function ProfilePage() {
   const { user } = useAuthStore()
@@ -11,7 +12,7 @@ export function ProfilePage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-16">
-        <Spinner className="size-8 text-blue-600" label="Loading profile…" />
+        <Spinner className="size-8 text-[var(--brand-500)]" label="Loading profile..." />
       </div>
     )
   }
@@ -31,10 +32,7 @@ export function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Perfil</h1>
-        <p className="mt-1 text-sm text-gray-500">Tu información de cuenta.</p>
-      </div>
+      <PageHeader title="Perfil" subtitle="Tu informacion de cuenta." />
 
       {/* Profile card */}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">

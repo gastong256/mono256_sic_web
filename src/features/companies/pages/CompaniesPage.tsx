@@ -7,6 +7,7 @@ import { DeleteCompanyDialog } from '@/features/companies/components/DeleteCompa
 import { Button } from '@/shared/ui/Button'
 import { Spinner } from '@/shared/ui/Spinner'
 import type { Company } from '@/features/companies/types/company.types'
+import { PageHeader } from '@/shared/ui/PageHeader'
 
 export function CompaniesPage() {
   const navigate = useNavigate()
@@ -33,18 +34,16 @@ export function CompaniesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Empresas</h1>
-          <p className="mt-1 text-sm text-gray-500">Sus empresas registradas.</p>
-        </div>
-        <Button onClick={openCreate}>Nueva empresa</Button>
-      </div>
+      <PageHeader
+        title="Empresas"
+        subtitle="Sus empresas registradas."
+        actions={<Button onClick={openCreate}>Nueva empresa</Button>}
+      />
 
       {/* Loading */}
       {isLoading && (
         <div className="flex justify-center py-16">
-          <Spinner className="size-8 text-blue-600" label="Cargando empresas…" />
+          <Spinner className="size-8 text-[var(--brand-500)]" label="Cargando empresas..." />
         </div>
       )}
 
@@ -60,9 +59,9 @@ export function CompaniesPage() {
 
       {/* Empty */}
       {!isLoading && !error && companies.length === 0 && (
-        <div className="rounded-xl border-2 border-dashed border-gray-200 py-16 text-center">
-          <p className="text-sm font-medium text-gray-500">No hay empresas registradas.</p>
-          <p className="mt-1 text-xs text-gray-400">
+        <div className="rounded-xl border-2 border-dashed border-[var(--border-soft)] py-16 text-center">
+          <p className="muted-text text-sm font-medium">No hay empresas registradas.</p>
+          <p className="muted-text mt-1 text-xs">
             Haga clic en &quot;Nueva empresa&quot; para comenzar.
           </p>
         </div>

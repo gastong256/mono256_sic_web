@@ -7,6 +7,7 @@ import { JournalEntryCard } from '@/features/journal/components/JournalEntryCard
 import { NewJournalEntryForm } from '@/features/journal/components/NewJournalEntryForm'
 import { Spinner } from '@/shared/ui/Spinner'
 import { Button } from '@/shared/ui/Button'
+import { PageHeader } from '@/shared/ui/PageHeader'
 
 export function JournalPage() {
   const { accessToken, refreshToken } = useAuthStore()
@@ -31,15 +32,16 @@ export function JournalPage() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Asientos</h1>
-        <Button onClick={() => setIsFormOpen(true)}>+ Nuevo asiento</Button>
-      </div>
+      <PageHeader
+        title="Asientos"
+        subtitle="Registro cronologico de asientos de la empresa activa."
+        actions={<Button onClick={() => setIsFormOpen(true)}>+ Nuevo asiento</Button>}
+      />
 
       {/* Content */}
       {isLoading && (
         <div className="flex justify-center py-16">
-          <Spinner />
+          <Spinner className="size-8 text-[var(--brand-500)]" />
         </div>
       )}
 
@@ -50,13 +52,13 @@ export function JournalPage() {
       )}
 
       {!isLoading && !isError && entries && entries.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 py-20 text-center">
-          <p className="text-gray-500">No hay asientos registrados.</p>
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border-soft)] py-20 text-center">
+          <p className="muted-text">No hay asientos registrados.</p>
           <button
             onClick={() => setIsFormOpen(true)}
-            className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-800"
+            className="mt-3 text-sm font-medium text-[var(--brand-600)] hover:text-[var(--brand-700)]"
           >
-            Crear el primer asiento →
+            Crear el primer asiento
           </button>
         </div>
       )}

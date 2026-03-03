@@ -1,20 +1,18 @@
 import { Link } from 'react-router'
 import { useTeacherDashboard } from '@/features/teacher/hooks/useTeacherDashboard'
 import { Spinner } from '@/shared/ui/Spinner'
+import { PageHeader } from '@/shared/ui/PageHeader'
 
 export function TeacherDashboardPage() {
   const { data, isLoading, error } = useTeacherDashboard()
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Panel docente</h1>
-        <p className="mt-1 text-sm text-gray-500">Resumen de cursos y alumnos asignados.</p>
-      </div>
+      <PageHeader title="Panel docente" subtitle="Resumen de cursos y alumnos asignados." />
 
       {isLoading && (
         <div className="flex justify-center py-16">
-          <Spinner className="size-8 text-blue-600" label="Cargando panel…" />
+          <Spinner className="size-8 text-[var(--brand-500)]" label="Cargando panel..." />
         </div>
       )}
 

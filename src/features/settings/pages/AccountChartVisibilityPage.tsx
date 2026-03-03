@@ -5,6 +5,8 @@ import {
 } from '@/features/settings/hooks/useAccountChartConfig'
 import type { AccountLevelConfig } from '@/shared/types'
 import { Spinner } from '@/shared/ui/Spinner'
+import { PageHeader } from '@/shared/ui/PageHeader'
+import { Button } from '@/shared/ui/Button'
 
 type ChartTreeNode = AccountLevelConfig & { children: AccountLevelConfig[] }
 
@@ -38,14 +40,14 @@ export function AccountChartVisibilityPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Visibilidad del plan de cuentas</h1>
-        <p className="mt-1 text-sm text-gray-500">Mostrá u ocultá niveles 1 y 2 globalmente.</p>
-      </div>
+      <PageHeader
+        title="Visibilidad del plan de cuentas"
+        subtitle="Mostra u oculta niveles 1 y 2 globalmente."
+      />
 
       {isLoading && (
         <div className="flex justify-center py-16">
-          <Spinner className="size-8 text-blue-600" label="Cargando configuración…" />
+          <Spinner className="size-8 text-[var(--brand-500)]" label="Cargando configuracion..." />
         </div>
       )}
 
@@ -108,13 +110,9 @@ export function AccountChartVisibilityPage() {
           </div>
 
           <div className="flex justify-end border-t border-gray-100 px-4 py-3">
-            <button
-              onClick={() => saveConfig(draft)}
-              disabled={saving}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-            >
-              {saving ? 'Guardando…' : 'Guardar cambios'}
-            </button>
+            <Button onClick={() => saveConfig(draft)} disabled={saving}>
+              {saving ? 'Guardando...' : 'Guardar cambios'}
+            </Button>
           </div>
         </div>
       )}
