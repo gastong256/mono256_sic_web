@@ -37,24 +37,24 @@ export function TrialBalanceReportPage() {
         subtitle="Saldos por colectiva y subcuenta para verificar consistencia del periodo."
       />
 
-      <section className="surface-card p-4">
+      <section className="filter-panel p-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-          <label className="text-sm text-gray-600">
+          <label className="text-sm font-semibold text-[var(--text-muted)]">
             Desde
             <input
               type="date"
               value={dateFromInput}
               onChange={(e) => setDateFromInput(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-200 px-2 py-1.5"
+              className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-white px-2 py-1.5 focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
             />
           </label>
-          <label className="text-sm text-gray-600">
+          <label className="text-sm font-semibold text-[var(--text-muted)]">
             Hasta
             <input
               type="date"
               value={dateToInput}
               onChange={(e) => setDateToInput(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-200 px-2 py-1.5"
+              className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-white px-2 py-1.5 focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
             />
           </label>
           <div className="flex items-end gap-2 md:col-span-2">
@@ -109,12 +109,12 @@ export function TrialBalanceReportPage() {
 
       {activeCompanyId !== null && !isLoading && !isError && data && (
         <section className="space-y-4">
-          <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm">
-            <p className="font-semibold text-blue-900">Totales generales</p>
-            <div className="mt-1 flex flex-wrap gap-4 text-blue-900">
-              <span>Debe: {formatAmount(data.grand_total_debit)}</span>
-              <span>Haber: {formatAmount(data.grand_total_credit)}</span>
-              <span>
+          <div className="glass-panel rounded-xl p-3 text-sm">
+            <p className="font-semibold text-[var(--text-strong)]">Totales generales</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="metric-chip">Debe: {formatAmount(data.grand_total_debit)}</span>
+              <span className="metric-chip">Haber: {formatAmount(data.grand_total_credit)}</span>
+              <span className="metric-chip">
                 Diferencia: {formatAmount(data.grand_total_debit - data.grand_total_credit)}
               </span>
             </div>
@@ -127,10 +127,10 @@ export function TrialBalanceReportPage() {
               className="py-8"
             />
           ) : (
-            <div className="ui-fade-in overflow-hidden rounded-lg border border-gray-200 bg-white">
+            <div className="ui-fade-in data-table-shell">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50">
-                  <tr className="text-left text-xs text-gray-500">
+                <thead className="data-table-head">
+                  <tr className="text-left">
                     <th scope="col" className="px-3 py-2">
                       Cuenta
                     </th>
@@ -145,35 +145,35 @@ export function TrialBalanceReportPage() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-[var(--border-soft)]">
                   {data.rows.map((row) => (
                     <Fragment key={`g-${row.level2_id}`}>
-                      <tr className="bg-gray-50">
-                        <td className="px-3 py-2 font-semibold text-gray-800">
+                      <tr className="data-table-head">
+                        <td className="px-3 py-2 font-semibold text-[var(--text-strong)]">
                           {row.code} · {row.name}
                         </td>
-                        <td className="px-3 py-2 text-right font-medium text-gray-800">
+                        <td className="px-3 py-2 text-right font-semibold text-[var(--text-strong)]">
                           {formatAmount(row.total_debit)}
                         </td>
-                        <td className="px-3 py-2 text-right font-medium text-gray-800">
+                        <td className="px-3 py-2 text-right font-semibold text-[var(--text-strong)]">
                           {formatAmount(row.total_credit)}
                         </td>
-                        <td className="px-3 py-2 text-right font-semibold text-gray-900">
+                        <td className="px-3 py-2 text-right font-semibold text-[var(--text-strong)]">
                           {formatAmount(row.balance)}
                         </td>
                       </tr>
                       {row.accounts.map((account) => (
                         <tr key={`a-${account.account_id}`}>
-                          <td className="px-3 py-2 pl-8 text-gray-700">
+                          <td className="px-3 py-2 pl-8 text-[var(--text-strong)]">
                             {account.code} · {account.name}
                           </td>
-                          <td className="px-3 py-2 text-right text-gray-700">
+                          <td className="px-3 py-2 text-right font-medium text-[var(--text-muted)]">
                             {formatAmount(account.total_debit)}
                           </td>
-                          <td className="px-3 py-2 text-right text-gray-700">
+                          <td className="px-3 py-2 text-right font-medium text-[var(--text-muted)]">
                             {formatAmount(account.total_credit)}
                           </td>
-                          <td className="px-3 py-2 text-right text-gray-700">
+                          <td className="px-3 py-2 text-right font-medium text-[var(--text-muted)]">
                             {formatAmount(account.balance)}
                           </td>
                         </tr>

@@ -45,32 +45,32 @@ export function LedgerReportPage() {
         subtitle="Movimientos por cuenta con saldo acumulado en el periodo."
       />
 
-      <section className="surface-card p-4">
+      <section className="filter-panel p-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-          <label className="text-sm text-gray-600">
+          <label className="text-sm font-semibold text-[var(--text-muted)]">
             Desde
             <input
               type="date"
               value={dateFromInput}
               onChange={(e) => setDateFromInput(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-200 px-2 py-1.5"
+              className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-white px-2 py-1.5 focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
             />
           </label>
-          <label className="text-sm text-gray-600">
+          <label className="text-sm font-semibold text-[var(--text-muted)]">
             Hasta
             <input
               type="date"
               value={dateToInput}
               onChange={(e) => setDateToInput(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-200 px-2 py-1.5"
+              className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-white px-2 py-1.5 focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
             />
           </label>
-          <label className="text-sm text-gray-600">
+          <label className="text-sm font-semibold text-[var(--text-muted)]">
             Cuenta (opcional)
             <select
               value={accountIdInput}
               onChange={(e) => setAccountIdInput(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-200 bg-white px-2 py-1.5"
+              className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-white px-2 py-1.5 focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
             >
               <option value="">Todas</option>
               {accounts.map((account) => (
@@ -139,23 +139,23 @@ export function LedgerReportPage() {
             />
           ) : (
             data.cards.map((card) => (
-              <article
-                key={card.account_id}
-                className="ui-fade-in ui-lift overflow-hidden rounded-lg border border-gray-200 bg-white"
-              >
-                <div className="border-b border-gray-100 bg-gray-50 px-3 py-2">
-                  <p className="font-medium text-gray-900">
+              <article key={card.account_id} className="ui-fade-in ui-lift data-table-shell">
+                <div className="data-table-head border-b border-[var(--border-soft)] px-3 py-2">
+                  <p className="font-semibold text-[var(--text-strong)]">
                     {card.account_code} · {card.account_name}
                   </p>
-                  <p className="text-xs text-gray-600">
-                    Debe {formatAmount(card.total_debit)} | Haber {formatAmount(card.total_credit)}{' '}
-                    | Saldo final {formatAmount(card.ending_balance)}
-                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="metric-chip">Debe {formatAmount(card.total_debit)}</span>
+                    <span className="metric-chip">Haber {formatAmount(card.total_credit)}</span>
+                    <span className="metric-chip">
+                      Saldo final {formatAmount(card.ending_balance)}
+                    </span>
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-xs text-gray-500">
+                    <thead className="data-table-head">
+                      <tr className="text-left">
                         <th scope="col" className="px-3 py-2">
                           Asiento
                         </th>
@@ -176,21 +176,25 @@ export function LedgerReportPage() {
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-[var(--border-soft)]">
                       {card.movements.map((movement) => (
                         <tr
                           key={`${card.account_id}-${movement.entry_id}-${movement.entry_number}`}
                         >
-                          <td className="px-3 py-2 text-gray-700">#{movement.entry_number}</td>
-                          <td className="px-3 py-2 text-gray-700">{movement.date}</td>
-                          <td className="px-3 py-2 text-gray-700">{movement.description}</td>
-                          <td className="px-3 py-2 text-right text-gray-700">
+                          <td className="px-3 py-2 text-[var(--text-strong)]">
+                            #{movement.entry_number}
+                          </td>
+                          <td className="px-3 py-2 text-[var(--text-strong)]">{movement.date}</td>
+                          <td className="px-3 py-2 text-[var(--text-strong)]">
+                            {movement.description}
+                          </td>
+                          <td className="px-3 py-2 text-right font-medium text-[var(--text-muted)]">
                             {movement.debit > 0 ? formatAmount(movement.debit) : '—'}
                           </td>
-                          <td className="px-3 py-2 text-right text-gray-700">
+                          <td className="px-3 py-2 text-right font-medium text-[var(--text-muted)]">
                             {movement.credit > 0 ? formatAmount(movement.credit) : '—'}
                           </td>
-                          <td className="px-3 py-2 text-right font-medium text-gray-800">
+                          <td className="px-3 py-2 text-right font-semibold text-[var(--text-strong)]">
                             {formatAmount(movement.balance)}
                           </td>
                         </tr>

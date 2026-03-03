@@ -39,25 +39,32 @@ export function TeacherDashboardPage() {
         <div className="space-y-5">
           {data.courses.map((course) => (
             <section key={course.id} className="surface-card ui-fade-in overflow-hidden">
-              <header className="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                <h2 className="font-semibold text-gray-900">{course.name}</h2>
-                <p className="text-xs text-gray-500">{course.students_count} alumno(s)</p>
+              <header className="data-table-head border-b border-[var(--border-soft)] px-4 py-3">
+                <h2 className="font-semibold text-[var(--text-strong)]">{course.name}</h2>
+                <p className="muted-text text-xs">{course.students_count} alumno(s)</p>
               </header>
 
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-[var(--border-soft)]">
                 {course.students.map((student) => (
                   <li key={student.id} className="flex items-center justify-between px-4 py-3">
-                    <div>
-                      <p className="font-medium text-gray-900">{student.full_name}</p>
-                      <p className="text-xs text-gray-500">
-                        @{student.username} · {student.company_count} empresa(s) ·{' '}
-                        {student.journal_entry_count} asiento(s)
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex size-9 items-center justify-center rounded-full bg-[linear-gradient(120deg,var(--brand-500),var(--accent-500))] text-xs font-bold text-white">
+                        {student.full_name.slice(0, 2).toUpperCase()}
+                      </span>
+                      <div>
+                        <p className="font-semibold text-[var(--text-strong)]">
+                          {student.full_name}
+                        </p>
+                        <p className="muted-text text-xs">
+                          @{student.username} · {student.company_count} empresa(s) ·{' '}
+                          {student.journal_entry_count} asiento(s)
+                        </p>
+                      </div>
                     </div>
 
                     <Link
                       to={`/teacher/students/${student.id}?courseId=${course.id}`}
-                      className="rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100"
+                      className="rounded-full border border-[var(--border-strong)] bg-white px-3 py-1.5 text-sm font-semibold text-[var(--brand-600)] transition-colors hover:bg-[var(--bg-subtle)]"
                     >
                       Ver detalle
                     </Link>

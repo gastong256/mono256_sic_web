@@ -39,24 +39,24 @@ export function JournalBookReportPage() {
         subtitle="Consulta asientos cronologicos y sus lineas de doble entrada."
       />
 
-      <section className="surface-card p-4">
+      <section className="filter-panel p-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-          <label className="text-sm text-gray-600">
+          <label className="text-sm font-semibold text-[var(--text-muted)]">
             Desde
             <input
               type="date"
               value={dateFromInput}
               onChange={(e) => setDateFromInput(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-200 px-2 py-1.5"
+              className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-white px-2 py-1.5 focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
             />
           </label>
-          <label className="text-sm text-gray-600">
+          <label className="text-sm font-semibold text-[var(--text-muted)]">
             Hasta
             <input
               type="date"
               value={dateToInput}
               onChange={(e) => setDateToInput(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-200 px-2 py-1.5"
+              className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-white px-2 py-1.5 focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
             />
           </label>
           <div className="flex items-end gap-2 md:col-span-2">
@@ -108,12 +108,12 @@ export function JournalBookReportPage() {
 
       {activeCompanyId !== null && !isLoading && !isError && data && (
         <section className="space-y-4">
-          <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm">
-            <p className="font-semibold text-blue-900">Resumen del período</p>
-            <div className="mt-1 flex flex-wrap gap-4 text-blue-900">
-              <span>Asientos: {data.entries.length}</span>
-              <span>Debe: {formatAmount(data.grand_total_debit)}</span>
-              <span>Haber: {formatAmount(data.grand_total_credit)}</span>
+          <div className="glass-panel rounded-xl p-3 text-sm">
+            <p className="font-semibold text-[var(--text-strong)]">Resumen del periodo</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="metric-chip">Asientos: {data.entries.length}</span>
+              <span className="metric-chip">Debe: {formatAmount(data.grand_total_debit)}</span>
+              <span className="metric-chip">Haber: {formatAmount(data.grand_total_credit)}</span>
             </div>
           </div>
 
@@ -126,23 +126,20 @@ export function JournalBookReportPage() {
           ) : (
             <ul className="space-y-3">
               {data.entries.map((entry) => (
-                <li
-                  key={entry.id}
-                  className="ui-fade-in ui-lift overflow-hidden rounded-lg border border-gray-200 bg-white"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2 text-sm">
-                    <span className="font-medium text-gray-800">
+                <li key={entry.id} className="ui-fade-in ui-lift data-table-shell">
+                  <div className="data-table-head flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-soft)] px-3 py-2 text-sm">
+                    <span className="font-semibold text-[var(--text-strong)]">
                       Asiento #{entry.entry_number} · {entry.date} · {entry.description}
                     </span>
-                    <span className="text-gray-700">
+                    <span className="font-medium text-[var(--text-muted)]">
                       Debe {formatAmount(entry.total_debit)} | Haber{' '}
                       {formatAmount(entry.total_credit)}
                     </span>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-left text-xs text-gray-500">
+                      <thead className="data-table-head">
+                        <tr className="text-left">
                           <th scope="col" className="px-3 py-2">
                             Cuenta
                           </th>
@@ -154,16 +151,16 @@ export function JournalBookReportPage() {
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y divide-[var(--border-soft)]">
                         {entry.lines.map((line, index) => (
                           <tr key={`${entry.id}-${index}`}>
-                            <td className="px-3 py-2 text-gray-700">
+                            <td className="px-3 py-2 text-[var(--text-strong)]">
                               {line.account_code} · {line.account_name}
                             </td>
-                            <td className="px-3 py-2 text-right text-gray-700">
+                            <td className="px-3 py-2 text-right font-medium text-[var(--text-muted)]">
                               {line.type === 'DEBIT' ? formatAmount(line.amount) : '—'}
                             </td>
-                            <td className="px-3 py-2 text-right text-gray-700">
+                            <td className="px-3 py-2 text-right font-medium text-[var(--text-muted)]">
                               {line.type === 'CREDIT' ? formatAmount(line.amount) : '—'}
                             </td>
                           </tr>
