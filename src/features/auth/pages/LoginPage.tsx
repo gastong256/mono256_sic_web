@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { LoginForm } from '@/features/auth/components/LoginForm'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 
@@ -31,6 +31,12 @@ export function LoginPage() {
           </div>
 
           <LoginForm />
+          <p className="mt-4 text-center text-sm text-gray-500">
+            ¿No tenés cuenta?{' '}
+            <Link to="/register" className="font-medium text-blue-600 hover:text-blue-700">
+              Registrate
+            </Link>
+          </p>
 
           {/* Mock hint */}
           {import.meta.env.VITE_USE_MOCK_API === 'true' && (

@@ -1,11 +1,37 @@
 import { http, HttpResponse, delay } from 'msw'
 import { env } from '@/shared/config/env'
-import { getRequestUser, listUsers, updateUserRole } from '@/mocks/data/mockDb'
+import {
+  getRegistrationCode,
+  getRequestUser,
+  listUsers,
+  rotateRegistrationCode,
+  updateUserRole,
+} from '@/mocks/data/mockDb'
 import type { Role } from '@/shared/types'
 
 const BASE = env.VITE_API_BASE_URL
 
 export const adminHandlers = [
+  http.get(`${BASE}/admin/registration-code/`, async ({ request }) => {
+    await delay(100)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+    if (user.role !== 'admin') return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+
+    return HttpResponse.json(getRegistrationCode())
+  }),
+
+  http.post(`${BASE}/admin/registration-code/rotate/`, async ({ request }) => {
+    await delay(120)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+    if (user.role !== 'admin') return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+
+    return HttpResponse.json(rotateRegistrationCode())
+  }),
+
   http.get(`${BASE}/admin/users/`, async ({ request }) => {
     await delay(100)
 

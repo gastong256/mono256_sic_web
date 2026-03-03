@@ -1,7 +1,11 @@
 import { httpClient } from '@/shared/lib/http'
-import type { Company } from '@/features/companies/types/company.types'
-import type { JournalEntryDetail } from '@/features/journal/types/journal.types'
 import type { TeacherDashboardResponse } from '@/shared/types'
+import type {
+  TeacherCompanyItem,
+  TeacherCourseCompaniesResponse,
+  TeacherCourseJournalEntriesResponse,
+  TeacherCourseJournalEntry,
+} from '@/features/teacher/types/teacher.types'
 
 type Course = {
   id: number
@@ -9,34 +13,8 @@ type Course = {
   teacher_username?: string
 }
 
-type CourseStudentCompanies = {
-  student_id: number
-  student_username: string
-  student_full_name?: string
-  companies: Company[]
-}
-
-type CourseCompaniesResponse = {
-  course_id: number
-  course_name?: string
-  students: CourseStudentCompanies[]
-}
-
-type Paginated<T> = {
-  count?: number
-  next?: string | null
-  previous?: string | null
-  results?: T[]
-}
-
-function toArray<T>(payload: T[] | Paginated<T>): T[] {
-  if (Array.isArray(payload)) return payload
-  return payload.results ?? []
-}
-
-function extractCount<T>(payload: T[] | Paginated<T>, fallback: number): number {
-  if (Array.isArray(payload)) return payload.length
-  return typeof payload.count === 'number' ? payload.count : fallback
+function extractCount(payload: TeacherCourseJournalEntriesResponse): number {
+  return typeof payload.count === 'number' ? payload.count : payload.results.length
 }
 
 export const teacherApi = {
@@ -46,26 +24,28 @@ export const teacherApi = {
     const dashboardCourses = await Promise.all(
       courses.map(async (course) => {
         const courseCompanies = await httpClient
-          .get<CourseCompaniesResponse>(`/teacher/courses/${course.id}/companies/`)
+          .get<TeacherCourseCompaniesResponse>(`/teacher/courses/${course.id}/companies/`)
           .then((r) => r.data)
 
         const students = await Promise.all(
           courseCompanies.students.map(async (student) => {
             const journalPayload = await httpClient
-              .get<
-                JournalEntryDetail[] | Paginated<JournalEntryDetail>
-              >(`/teacher/courses/${course.id}/journal-entries/`, { params: { student_id: student.student_id } })
+              .get<TeacherCourseJournalEntriesResponse>(
+                `/teacher/courses/${course.id}/journal-entries/`,
+                {
+                  params: { student_id: student.student_id },
+                }
+              )
               .then((r) => r.data)
 
-            const journalEntries = toArray(journalPayload)
             return {
               id: student.student_id,
               username: student.student_username,
-              full_name: student.student_full_name ?? student.student_username,
+              full_name: student.student_full_name,
               course_id: course.id,
               course_name: course.name,
               company_count: student.companies.length,
-              journal_entry_count: extractCount(journalPayload, journalEntries.length),
+              journal_entry_count: extractCount(journalPayload),
             }
           })
         )
@@ -83,9 +63,9 @@ export const teacherApi = {
     return { courses: dashboardCourses }
   },
 
-  studentCompanies: async (courseId: number, studentId: number): Promise<Company[]> => {
+  studentCompanies: async (courseId: number, studentId: number): Promise<TeacherCompanyItem[]> => {
     const grouped = await httpClient
-      .get<CourseCompaniesResponse>(`/teacher/courses/${courseId}/companies/`)
+      .get<TeacherCourseCompaniesResponse>(`/teacher/courses/${courseId}/companies/`)
       .then((r) => r.data)
     const student = grouped.students.find((candidate) => candidate.student_id === studentId)
     return student?.companies ?? []
@@ -95,10 +75,10 @@ export const teacherApi = {
     courseId: number,
     studentId: number,
     companyId: number
-  ): Promise<JournalEntryDetail[]> =>
+  ): Promise<TeacherCourseJournalEntry[]> =>
     httpClient
-      .get<
-        JournalEntryDetail[] | Paginated<JournalEntryDetail>
-      >(`/teacher/courses/${courseId}/journal-entries/`, { params: { student_id: studentId, company_id: companyId } })
-      .then((r) => toArray(r.data).map((entry) => ({ ...entry, lines: entry.lines ?? [] }))),
+      .get<TeacherCourseJournalEntriesResponse>(`/teacher/courses/${courseId}/journal-entries/`, {
+        params: { student_id: studentId, company_id: companyId },
+      })
+      .then((r) => r.data.results.map((entry) => ({ ...entry, lines: entry.lines ?? [] }))),
 }

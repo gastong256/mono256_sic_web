@@ -1,10 +1,51 @@
 import { http, HttpResponse, delay } from 'msw'
 import { env } from '@/shared/config/env'
-import { authenticate, getRequestUser, refreshAccessToken } from '@/mocks/data/mockDb'
+import {
+  authenticate,
+  getRequestUser,
+  refreshAccessToken,
+  registerStudent,
+} from '@/mocks/data/mockDb'
 
 const BASE = env.VITE_API_BASE_URL
 
 export const authHandlers = [
+  http.post(`${BASE}/auth/register/`, async ({ request }) => {
+    await delay(160)
+
+    const body = (await request.json()) as {
+      username?: string
+      password?: string
+      password_confirm?: string
+      email?: string
+      first_name?: string
+      last_name?: string
+      registration_code?: string
+    }
+
+    const result = registerStudent({
+      username: body.username ?? '',
+      password: body.password ?? '',
+      password_confirm: body.password_confirm ?? '',
+      email: body.email,
+      first_name: body.first_name,
+      last_name: body.last_name,
+      registration_code: body.registration_code ?? '',
+    })
+
+    if (result.status === 400) {
+      return HttpResponse.json(result.errors, { status: 400 })
+    }
+    if (result.status === 429) {
+      return HttpResponse.json(
+        { detail: 'Too many attempts', retry_after: result.retry_after },
+        { status: 429 }
+      )
+    }
+
+    return HttpResponse.json(result.user, { status: 201 })
+  }),
+
   http.post(`${BASE}/auth/token/`, async ({ request }) => {
     await delay(120)
 

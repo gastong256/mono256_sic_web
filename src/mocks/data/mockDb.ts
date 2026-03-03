@@ -26,6 +26,16 @@ type Session = {
   refresh: string
 }
 
+type RegisterPayload = {
+  username: string
+  password: string
+  password_confirm: string
+  email?: string
+  first_name?: string
+  last_name?: string
+  registration_code: string
+}
+
 const users: MockUserRecord[] = [
   {
     id: 1,
@@ -89,6 +99,19 @@ const courses: Course[] = [
     updated_at: '2024-02-01T08:00:00Z',
   },
 ]
+
+let nextUserId = 5
+const REGISTER_RATE_LIMIT_MAX_ATTEMPTS = 5
+const REGISTER_RATE_LIMIT_WINDOW_MS = 60_000
+let registerAttemptsTimestamps: number[] = []
+
+let registrationCodeState = {
+  code: 'SIC-2026',
+  window_minutes: 60,
+  allow_previous_window: true,
+  valid_from: new Date().toISOString(),
+  valid_until: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+}
 
 let nextCompanyId = 5
 const companies: Company[] = [
@@ -293,6 +316,131 @@ export function getUserByUsername(username: string): User | null {
 
 export function listUsers(): User[] {
   return users.map(toPublicUser)
+}
+
+function trimRegisterAttemptsWindow(now: number) {
+  registerAttemptsTimestamps = registerAttemptsTimestamps.filter(
+    (timestamp) => now - timestamp < REGISTER_RATE_LIMIT_WINDOW_MS
+  )
+}
+
+function getRateLimitRetryAfter(now: number): number {
+  if (!registerAttemptsTimestamps.length) return 0
+  const oldest = Math.min(...registerAttemptsTimestamps)
+  const retryAfterMs = REGISTER_RATE_LIMIT_WINDOW_MS - (now - oldest)
+  return retryAfterMs > 0 ? Math.ceil(retryAfterMs / 1000) : 0
+}
+
+function bumpRegisterAttempts(now: number) {
+  registerAttemptsTimestamps.push(now)
+  trimRegisterAttemptsWindow(now)
+}
+
+function ensureRegistrationCodeValidity() {
+  const now = Date.now()
+  if (new Date(registrationCodeState.valid_until).getTime() > now) return
+  rotateRegistrationCode()
+}
+
+export function getRegistrationCode(): {
+  code: string
+  window_minutes: number
+  allow_previous_window: boolean
+  valid_from: string
+  valid_until: string
+} {
+  ensureRegistrationCodeValidity()
+  return { ...registrationCodeState }
+}
+
+function generateRegistrationCode(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let out = 'SIC-'
+  for (let i = 0; i < 6; i += 1) {
+    out += alphabet[Math.floor(Math.random() * alphabet.length)]
+  }
+  return out
+}
+
+export function rotateRegistrationCode(): {
+  code: string
+  window_minutes: number
+  allow_previous_window: boolean
+  valid_from: string
+  valid_until: string
+} {
+  const validFrom = new Date()
+  const windowMinutes = 60
+  registrationCodeState = {
+    code: generateRegistrationCode(),
+    window_minutes: windowMinutes,
+    allow_previous_window: true,
+    valid_from: validFrom.toISOString(),
+    valid_until: new Date(validFrom.getTime() + windowMinutes * 60 * 1000).toISOString(),
+  }
+  return getRegistrationCode()
+}
+
+export function registerStudent(
+  payload: RegisterPayload
+):
+  | { status: 201; user: User }
+  | { status: 400; errors: Record<string, string[]> }
+  | { status: 429; retry_after: number } {
+  const now = Date.now()
+  trimRegisterAttemptsWindow(now)
+  if (registerAttemptsTimestamps.length >= REGISTER_RATE_LIMIT_MAX_ATTEMPTS) {
+    return { status: 429, retry_after: getRateLimitRetryAfter(now) || 10 }
+  }
+
+  const errors: Record<string, string[]> = {}
+
+  if (!payload.username?.trim()) errors.username = ['Este campo es obligatorio.']
+  if (!payload.password) errors.password = ['Este campo es obligatorio.']
+  if (!payload.password_confirm) errors.password_confirm = ['Este campo es obligatorio.']
+  if (!payload.registration_code) errors.registration_code = ['Este campo es obligatorio.']
+
+  if (
+    payload.password &&
+    payload.password_confirm &&
+    payload.password !== payload.password_confirm
+  ) {
+    errors.password_confirm = ['Las contraseñas no coinciden.']
+  }
+
+  ensureRegistrationCodeValidity()
+  if (payload.registration_code && payload.registration_code !== registrationCodeState.code) {
+    errors.registration_code = ['Código de registro inválido.']
+  }
+
+  if (
+    users.some((candidate) => candidate.username.toLowerCase() === payload.username.toLowerCase())
+  ) {
+    errors.username = ['No se pudo completar el registro con ese usuario.']
+  }
+
+  if (Object.keys(errors).length > 0) {
+    bumpRegisterAttempts(now)
+    return { status: 400, errors }
+  }
+
+  registerAttemptsTimestamps = []
+
+  const user: MockUserRecord = {
+    id: nextUserId++,
+    username: payload.username.trim(),
+    email: payload.email?.trim() ?? '',
+    first_name: payload.first_name?.trim() ?? '',
+    last_name: payload.last_name?.trim() ?? '',
+    is_staff: false,
+    role: 'student',
+    course_id: null,
+    date_joined: new Date().toISOString(),
+    password: payload.password,
+  }
+
+  users.push(user)
+  return { status: 201, user: toPublicUser(user) }
 }
 
 export function authenticate(
@@ -610,7 +758,12 @@ export function listTeacherCourseCompanies(
     student_id: number
     student_username: string
     student_full_name: string
-    companies: Company[]
+    companies: Array<{
+      id: number
+      name: string
+      tax_id: string
+      created_at: string
+    }>
   }>
 } | null {
   const course = courses.find((candidate) => candidate.id === courseId)
@@ -627,7 +780,14 @@ export function listTeacherCourseCompanies(
         student_id: student.id,
         student_username: student.username,
         student_full_name: `${student.first_name} ${student.last_name}`.trim(),
-        companies: companies.filter((company) => company.owner_username === student.username),
+        companies: companies
+          .filter((company) => company.owner_username === student.username)
+          .map((company) => ({
+            id: company.id,
+            name: company.name,
+            tax_id: company.tax_id ?? '',
+            created_at: company.created_at,
+          })),
       })),
   }
 }
@@ -645,7 +805,22 @@ export function listTeacherCourseJournalEntries(
   count: number
   next: null
   previous: null
-  results: JournalEntryDetail[]
+  results: Array<{
+    id: number
+    entry_number: number
+    date: string
+    description: string
+    source_type: string
+    source_ref: string
+    company_id: number
+    company_name: string
+    student_id: number
+    student_username: string
+    created_by: string
+    reversal_of_id: number
+    reversed_by_id: number | null
+    lines: JournalLine[]
+  }>
 } | null {
   const course = courses.find((candidate) => candidate.id === courseId)
   if (!course) return null
@@ -688,11 +863,38 @@ export function listTeacherCourseJournalEntries(
     return a.date.localeCompare(b.date)
   })
 
+  const results = sorted
+    .map((entry) => {
+      const companyId = journalCompanyMap[entry.id]
+      const company = getCompanyById(companyId)
+      if (!company) return null
+      const student = users.find((candidate) => candidate.username === company.owner_username)
+      if (!student) return null
+
+      return {
+        id: entry.id,
+        entry_number: entry.entry_number,
+        date: entry.date,
+        description: entry.description,
+        source_type: entry.source_type,
+        source_ref: entry.source_ref,
+        company_id: company.id,
+        company_name: company.name,
+        student_id: student.id,
+        student_username: student.username,
+        created_by: entry.created_by,
+        reversal_of_id: entry.reversal_of_id ?? 0,
+        reversed_by_id: entry.reversed_by_id ?? null,
+        lines: entry.lines,
+      }
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+
   return {
-    count: sorted.length,
+    count: results.length,
     next: null,
     previous: null,
-    results: sorted,
+    results,
   }
 }
 

@@ -2,6 +2,7 @@ import { useMe } from '@/features/auth/hooks/useMe'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { Spinner } from '@/shared/ui/Spinner'
 import { getRequestId } from '@/shared/lib/tracing'
+import { RegistrationCodeCard } from '@/features/auth/components/RegistrationCodeCard'
 
 export function ProfilePage() {
   const { user } = useAuthStore()
@@ -60,6 +61,8 @@ export function ProfilePage() {
           <ProfileField label="Request ID de sesión" value={getRequestId()} mono />
         </div>
       </div>
+
+      <RegistrationCodeCard />
     </div>
   )
 }

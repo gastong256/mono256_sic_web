@@ -15,6 +15,9 @@ const JournalPage = lazy(() =>
 const LoginPage = lazy(() =>
   import('@/features/auth/pages/LoginPage').then((m) => ({ default: m.LoginPage }))
 )
+const RegisterPage = lazy(() =>
+  import('@/features/auth/pages/RegisterPage').then((m) => ({ default: m.RegisterPage }))
+)
 
 const ProfilePage = lazy(() =>
   import('@/pages/ProfilePage').then((m) => ({ default: m.ProfilePage }))
@@ -88,6 +91,10 @@ export const router = createBrowserRouter([
       {
         path: 'login',
         element: page(<LoginPage />),
+      },
+      {
+        path: 'register',
+        element: page(<RegisterPage />),
       },
 
       // ── Protected routes — wrapped by ProtectedRoute ───────

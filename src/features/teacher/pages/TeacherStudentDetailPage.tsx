@@ -3,7 +3,8 @@ import { useParams, useSearchParams } from 'react-router'
 import { useTeacherStudentCompanies } from '@/features/teacher/hooks/useTeacherStudentCompanies'
 import { useTeacherCompanyJournalEntries } from '@/features/teacher/hooks/useTeacherCompanyJournalEntries'
 import { Spinner } from '@/shared/ui/Spinner'
-import type { JournalEntryDetail, JournalLine } from '@/features/journal/types/journal.types'
+import type { JournalLine } from '@/features/journal/types/journal.types'
+import type { TeacherCourseJournalEntry } from '@/features/teacher/types/teacher.types'
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
   style: 'currency',
@@ -15,7 +16,7 @@ function parseAmount(value: string): number {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-function summarizeByAccount(entries: JournalEntryDetail[]) {
+function summarizeByAccount(entries: TeacherCourseJournalEntry[]) {
   const summary = new Map<
     number,
     { code: string; name: string; debit: number; credit: number; balance: number }
@@ -51,6 +52,18 @@ function lineAmount(line: JournalLine): string {
   return arsFormatter.format(parseAmount(line.amount))
 }
 
+function entryTotals(entry: TeacherCourseJournalEntry): { debit: number; credit: number } {
+  return entry.lines.reduce(
+    (acc, line) => {
+      const amount = parseAmount(line.amount)
+      if (line.type === 'DEBIT') acc.debit += amount
+      if (line.type === 'CREDIT') acc.credit += amount
+      return acc
+    },
+    { debit: 0, credit: 0 }
+  )
+}
+
 export function TeacherStudentDetailPage() {
   const { studentId } = useParams<{ studentId: string }>()
   const [searchParams] = useSearchParams()
@@ -76,13 +89,20 @@ export function TeacherStudentDetailPage() {
     [companies, selectedCompanyId]
   )
   const companySummary = useMemo(() => {
-    const totalDebit = journalEntries.reduce((sum, entry) => sum + entry.total_debit, 0)
-    const totalCredit = journalEntries.reduce((sum, entry) => sum + entry.total_credit, 0)
+    const totals = journalEntries.reduce(
+      (acc, entry) => {
+        const entryTotal = entryTotals(entry)
+        acc.debit += entryTotal.debit
+        acc.credit += entryTotal.credit
+        return acc
+      },
+      { debit: 0, credit: 0 }
+    )
     return {
       entries: journalEntries.length,
-      totalDebit,
-      totalCredit,
-      balanceDiff: totalDebit - totalCredit,
+      totalDebit: totals.debit,
+      totalCredit: totals.credit,
+      balanceDiff: totals.debit - totals.credit,
       byAccount: summarizeByAccount(journalEntries),
     }
   }, [journalEntries])
@@ -229,51 +249,50 @@ export function TeacherStudentDetailPage() {
             </div>
 
             <ul className="space-y-3">
-              {journalEntries.map((entry) => (
-                <li key={entry.id} className="rounded-md border border-gray-200">
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2 text-sm">
-                    <span className="font-medium text-gray-800">
-                      Asiento #{entry.entry_number} · {entry.date} · {entry.description}
-                    </span>
-                    <span
-                      className={
-                        entry.total_debit === entry.total_credit
-                          ? 'text-emerald-700'
-                          : 'text-red-700'
-                      }
-                    >
-                      Debe {arsFormatter.format(entry.total_debit)} | Haber{' '}
-                      {arsFormatter.format(entry.total_credit)}
-                    </span>
-                  </div>
-                  <div className="overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-left text-xs text-gray-500">
-                          <th className="px-3 py-2">Cuenta</th>
-                          <th className="px-3 py-2 text-right">Debe</th>
-                          <th className="px-3 py-2 text-right">Haber</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {entry.lines.map((line, index) => (
-                          <tr key={`${entry.id}-${index}`}>
-                            <td className="px-3 py-2 text-gray-700">
-                              {line.account_code} · {line.account_name}
-                            </td>
-                            <td className="px-3 py-2 text-right text-gray-700">
-                              {line.type === 'DEBIT' ? lineAmount(line) : '—'}
-                            </td>
-                            <td className="px-3 py-2 text-right text-gray-700">
-                              {line.type === 'CREDIT' ? lineAmount(line) : '—'}
-                            </td>
+              {journalEntries.map((entry) => {
+                const totals = entryTotals(entry)
+                const balanced = totals.debit === totals.credit
+
+                return (
+                  <li key={entry.id} className="rounded-md border border-gray-200">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2 text-sm">
+                      <span className="font-medium text-gray-800">
+                        Asiento #{entry.entry_number} · {entry.date} · {entry.description}
+                      </span>
+                      <span className={balanced ? 'text-emerald-700' : 'text-red-700'}>
+                        Debe {arsFormatter.format(totals.debit)} | Haber{' '}
+                        {arsFormatter.format(totals.credit)}
+                      </span>
+                    </div>
+                    <div className="overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-left text-xs text-gray-500">
+                            <th className="px-3 py-2">Cuenta</th>
+                            <th className="px-3 py-2 text-right">Debe</th>
+                            <th className="px-3 py-2 text-right">Haber</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </li>
-              ))}
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {entry.lines.map((line, index) => (
+                            <tr key={`${entry.id}-${index}`}>
+                              <td className="px-3 py-2 text-gray-700">
+                                {line.account_code} · {line.account_name}
+                              </td>
+                              <td className="px-3 py-2 text-right text-gray-700">
+                                {line.type === 'DEBIT' ? lineAmount(line) : '—'}
+                              </td>
+                              <td className="px-3 py-2 text-right text-gray-700">
+                                {line.type === 'CREDIT' ? lineAmount(line) : '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
           </div>
         )}
