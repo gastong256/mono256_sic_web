@@ -1,1 +1,86 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+:root {
+  color-scheme: light;
+  --font-sans:
+    'Plus Jakarta Sans', 'Manrope', 'Avenir Next', 'Segoe UI Variable', 'Segoe UI', sans-serif;
+  --bg-canvas: #f3f6fb;
+  --bg-surface: #ffffff;
+  --bg-subtle: #eef3fb;
+  --border-soft: #d9e2ef;
+  --border-strong: #c3d2e6;
+  --text-strong: #10243f;
+  --text-muted: #4f6484;
+  --brand-500: #1d5fd3;
+  --brand-600: #174db0;
+  --brand-700: #123f8f;
+  --danger-500: #d64545;
+  --danger-600: #b93838;
+  --shadow-soft: 0 12px 30px -18px rgb(15 40 78 / 32%);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--text-strong);
+  background:
+    radial-gradient(90rem 60rem at 5% -20%, rgb(100 157 245 / 14%), transparent 60%),
+    radial-gradient(70rem 50rem at 95% -25%, rgb(67 172 210 / 10%), transparent 60%),
+    var(--bg-canvas);
+}
+
+::selection {
+  color: #fff;
+  background: var(--brand-500);
+}
+
+a {
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+@layer utilities {
+  .surface-card {
+    border: 1px solid var(--border-soft);
+    border-radius: 0.9rem;
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .subtle-panel {
+    border: 1px solid var(--border-soft);
+    border-radius: 0.75rem;
+    background: linear-gradient(180deg, #f9fbff, var(--bg-subtle));
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    line-height: 1.5rem;
+    font-weight: 700;
+    color: var(--text-strong);
+    letter-spacing: -0.01em;
+  }
+
+  .muted-text {
+    color: var(--text-muted);
+  }
+}

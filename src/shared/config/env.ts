@@ -3,6 +3,7 @@ import { z } from 'zod'
 const envSchema = z.object({
   VITE_APP_NAME: z.string().min(1).default('App'),
   VITE_API_BASE_URL: z.string().min(1).default('http://localhost:8000/api/v1'),
+  VITE_MOCK_SCENARIO: z.enum(['default', 'demo']).default('default'),
   VITE_USE_MOCK_API: z
     .string()
     .default('true')

@@ -46,7 +46,7 @@ export function LoginForm() {
       {isError && (
         <div
           role="alert"
-          className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-[var(--danger-600)]"
         >
           Usuario o contraseña incorrectos.
         </div>

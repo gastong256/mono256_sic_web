@@ -30,22 +30,27 @@ export function Modal({ isOpen, onClose, title, children, className = '' }: Moda
       aria-labelledby="modal-title"
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 z-40 bg-black/50" onClick={onClose} aria-hidden="true" />
+      <div
+        className="absolute inset-0 z-40 bg-[#0a1730]/45 backdrop-blur-[2px]"
+        onClick={onClose}
+        aria-hidden="true"
+      />
       {/* Panel */}
       <div
-        className={['relative z-50 w-full max-w-lg rounded-xl bg-white shadow-xl', className].join(
-          ' '
-        )}
+        className={[
+          'relative z-50 w-full max-w-lg rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-surface)] shadow-[var(--shadow-soft)]',
+          className,
+        ].join(' ')}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-          <h2 id="modal-title" className="text-lg font-semibold text-gray-900">
+        <div className="flex items-center justify-between border-b border-[var(--border-soft)] px-6 py-4">
+          <h2 id="modal-title" className="text-lg font-semibold text-[var(--text-strong)]">
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-md p-1 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-subtle)] hover:text-[var(--text-strong)]"
             aria-label="Cerrar"
           >
             <svg className="size-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
