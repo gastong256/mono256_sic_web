@@ -1,3 +1,11 @@
+## 1.2.0 (2026-03-03)
+
+* feat: add global toasts, accessibility improvements and responsive mobile navigation ([a94db4e](https://github.com/gastong256/mono256_sic_web/commit/a94db4e))
+* feat: establish design foundation with tokens and shared component styling ([8e70957](https://github.com/gastong256/mono256_sic_web/commit/8e70957))
+* feat: improve navigation hierarchy and page information architecture ([ca70d50](https://github.com/gastong256/mono256_sic_web/commit/ca70d50))
+* feat: imstandardize forms, tables and empty/error states with shared ux patterns ([5a42429](https://github.com/gastong256/mono256_sic_web/commit/5a42429))
+* feat: polish ux with skeleton loading, microinteractions and optimized chunking ([5f1823e](https://github.com/gastong256/mono256_sic_web/commit/5f1823e))
+
 ## 1.1.0 (2026-03-03)
 
 * feat: add journal flow, improve performance and delete item example ([a63c233](https://github.com/gastong256/mono256_sic_web/commit/a63c233))
