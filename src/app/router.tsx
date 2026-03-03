@@ -4,6 +4,7 @@ import { createBrowserRouter } from 'react-router'
 import { Layout } from '@/app/components/Layout'
 import { PageLoader } from '@/app/components/PageLoader'
 import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute'
+import { RequireRole } from '@/features/auth/components/RequireRole'
 
 // ── Lazy-loaded pages — enables code splitting per route ──────────────────────
 
@@ -27,6 +28,24 @@ const CompanyDetailPage = lazy(() =>
   import('@/features/accounts/pages/CompanyDetailPage').then((m) => ({
     default: m.CompanyDetailPage,
   }))
+)
+const TeacherDashboardPage = lazy(() =>
+  import('@/features/teacher/pages/TeacherDashboardPage').then((m) => ({
+    default: m.TeacherDashboardPage,
+  }))
+)
+const TeacherStudentDetailPage = lazy(() =>
+  import('@/features/teacher/pages/TeacherStudentDetailPage').then((m) => ({
+    default: m.TeacherStudentDetailPage,
+  }))
+)
+const AccountChartVisibilityPage = lazy(() =>
+  import('@/features/settings/pages/AccountChartVisibilityPage').then((m) => ({
+    default: m.AccountChartVisibilityPage,
+  }))
+)
+const AdminRolesPage = lazy(() =>
+  import('@/features/admin/pages/AdminRolesPage').then((m) => ({ default: m.AdminRolesPage }))
 )
 
 const NotFoundPage = lazy(() =>
@@ -71,6 +90,32 @@ export const router = createBrowserRouter([
           {
             path: 'profile',
             element: page(<ProfilePage />),
+          },
+          {
+            element: <RequireRole roles={['teacher', 'admin']} />,
+            children: [
+              {
+                path: 'teacher/dashboard',
+                element: page(<TeacherDashboardPage />),
+              },
+              {
+                path: 'teacher/students/:studentId',
+                element: page(<TeacherStudentDetailPage />),
+              },
+              {
+                path: 'settings/chart-visibility',
+                element: page(<AccountChartVisibilityPage />),
+              },
+            ],
+          },
+          {
+            element: <RequireRole roles={['admin']} />,
+            children: [
+              {
+                path: 'admin/roles',
+                element: page(<AdminRolesPage />),
+              },
+            ],
           },
         ],
       },

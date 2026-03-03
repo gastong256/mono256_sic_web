@@ -27,6 +27,7 @@ export function useLogin() {
         first_name: '',
         last_name: '',
         is_staff: payload?.is_staff ?? false,
+        role: payload?.role ?? 'student',
       })
 
       logger.info({ message: 'User logged in', userId: String(payload?.user_id) })
@@ -37,6 +38,9 @@ export function useLogin() {
         queryClient.invalidateQueries({ queryKey: ['companies'] }),
         queryClient.invalidateQueries({ queryKey: ['accounts'] }),
         queryClient.invalidateQueries({ queryKey: ['journal'] }),
+        queryClient.invalidateQueries({ queryKey: ['teacher'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin'] }),
+        queryClient.invalidateQueries({ queryKey: ['account-chart'] }),
       ])
 
       // 4. Redirect: honour ?returnTo=, fall back to home

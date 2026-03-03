@@ -2,6 +2,7 @@ export interface JwtPayload {
   user_id?: number
   username?: string
   is_staff?: boolean
+  role?: 'admin' | 'teacher' | 'student'
   exp?: number
   [key: string]: unknown
 }

@@ -5,12 +5,15 @@ import { useMe } from '@/features/auth/hooks/useMe'
 import { useLogout } from '@/features/auth/hooks/useLogout'
 import { env } from '@/shared/config/env'
 import { CompanySelector } from '@/features/companies/components/CompanySelector'
+import { canManageRoles, canViewTeacherDashboard } from '@/shared/lib/authorization'
 
 export function Layout() {
-  const { accessToken } = useAuthStore()
+  const { accessToken, user } = useAuthStore()
   const [diarioOpen, setDiarioOpen] = useState(false)
   useMe()
   const handleLogout = useLogout()
+  const canViewTeacher = canViewTeacherDashboard(user)
+  const canAssignRoles = canManageRoles(user)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -93,6 +96,30 @@ export function Layout() {
                 >
                   Perfil
                 </Link>
+                {canViewTeacher && (
+                  <>
+                    <Link
+                      to="/teacher/dashboard"
+                      className="text-sm text-gray-600 transition-colors hover:text-gray-900"
+                    >
+                      Panel docente
+                    </Link>
+                    <Link
+                      to="/settings/chart-visibility"
+                      className="text-sm text-gray-600 transition-colors hover:text-gray-900"
+                    >
+                      Árbol global
+                    </Link>
+                  </>
+                )}
+                {canAssignRoles && (
+                  <Link
+                    to="/admin/roles"
+                    className="text-sm text-gray-600 transition-colors hover:text-gray-900"
+                  >
+                    Roles
+                  </Link>
+                )}
                 <button
                   onClick={handleLogout}
                   className="rounded-md bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-red-50 hover:text-red-700"

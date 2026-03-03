@@ -2,13 +2,19 @@ import type { Company } from '@/features/companies/types/company.types'
 
 interface CompanyTableProps {
   companies: Company[]
-  isStaff: boolean
+  showOwner?: boolean
   onView: (company: Company) => void
   onEdit: (company: Company) => void
   onDelete: (company: Company) => void
 }
 
-export function CompanyTable({ companies, isStaff, onView, onEdit, onDelete }: CompanyTableProps) {
+export function CompanyTable({
+  companies,
+  showOwner = false,
+  onView,
+  onEdit,
+  onDelete,
+}: CompanyTableProps) {
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       <table className="w-full text-sm">
@@ -17,7 +23,7 @@ export function CompanyTable({ companies, isStaff, onView, onEdit, onDelete }: C
             <th className="px-4 py-3 text-left font-medium text-gray-600">Nombre</th>
             <th className="px-4 py-3 text-left font-medium text-gray-600">CUIT</th>
             <th className="px-4 py-3 text-left font-medium text-gray-600">Fecha de alta</th>
-            {isStaff && (
+            {showOwner && (
               <th className="px-4 py-3 text-left font-medium text-gray-600">Propietario</th>
             )}
             <th className="px-4 py-3 text-right font-medium text-gray-600">Acciones</th>
@@ -31,7 +37,7 @@ export function CompanyTable({ companies, isStaff, onView, onEdit, onDelete }: C
               <td className="px-4 py-3 text-gray-500">
                 {new Date(company.created_at).toLocaleDateString('es-AR')}
               </td>
-              {isStaff && <td className="px-4 py-3 text-gray-500">{company.owner_username}</td>}
+              {showOwner && <td className="px-4 py-3 text-gray-500">{company.owner_username}</td>}
               <td className="px-4 py-3">
                 <div className="flex items-center justify-end gap-1">
                   {/* Ver */}

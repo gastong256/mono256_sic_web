@@ -1,6 +1,7 @@
 import { http, HttpResponse, delay } from 'msw'
 import { env } from '@/shared/config/env'
 import type { Account } from '@/features/accounts/types/account.types'
+import { canAccessCompany, getCompanyById, getRequestUser } from '@/mocks/data/mockDb'
 
 const BASE = env.VITE_API_BASE_URL
 
@@ -189,6 +190,19 @@ function isAuthorized(request: Request): boolean {
   return auth !== null && auth.startsWith('Bearer ')
 }
 
+function ensureCompanyAccess(request: Request, companyId: number): Response | null {
+  const user = getRequestUser(request)
+  if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+
+  const company = getCompanyById(companyId)
+  if (!company) return HttpResponse.json({ detail: 'Company not found.' }, { status: 404 })
+  if (!canAccessCompany(user, company)) {
+    return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+  }
+
+  return null
+}
+
 export const accountsHandlers = [
   // GET /accounts/chart/
   http.get(`${BASE}/accounts/chart/`, async ({ request }) => {
@@ -206,6 +220,8 @@ export const accountsHandlers = [
       return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
     }
     const cId = Number(params.companyId)
+    const accessError = ensureCompanyAccess(request, cId)
+    if (accessError) return accessError
     return HttpResponse.json(buildCompanyTree(cId))
   }),
 
@@ -216,6 +232,8 @@ export const accountsHandlers = [
       return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
     }
     const cId = Number(params.companyId)
+    const accessError = ensureCompanyAccess(request, cId)
+    if (accessError) return accessError
     const body = (await request.json()) as {
       name?: string
       code?: string
@@ -257,6 +275,8 @@ export const accountsHandlers = [
       return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
     }
     const cId = Number(params.companyId)
+    const accessError = ensureCompanyAccess(request, cId)
+    if (accessError) return accessError
     const aId = Number(params.accountId)
     const list = companyLevel3Accounts[cId] ?? []
     const idx = list.findIndex((a) => a.id === aId)
@@ -282,6 +302,8 @@ export const accountsHandlers = [
       return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
     }
     const cId = Number(params.companyId)
+    const accessError = ensureCompanyAccess(request, cId)
+    if (accessError) return accessError
     const aId = Number(params.accountId)
 
     // Simulate 409 for account with transactions

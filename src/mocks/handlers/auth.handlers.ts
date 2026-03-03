@@ -1,96 +1,53 @@
 import { http, HttpResponse, delay } from 'msw'
 import { env } from '@/shared/config/env'
+import { authenticate, getRequestUser, refreshAccessToken } from '@/mocks/data/mockDb'
 
 const BASE = env.VITE_API_BASE_URL
 
-const MOCK_USER = {
-  id: 1,
-  username: 'admin',
-  email: 'admin@example.com',
-  first_name: 'Admin',
-  last_name: 'User',
-  is_staff: false,
-  role: 'teacher',
-}
-
-// Track the current valid refresh token in memory (reset between test runs via server.resetHandlers)
-let currentRefreshToken = 'mock-refresh-token'
-
-function makeMockJwt(payload: Record<string, unknown>): string {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '')
-  const body = btoa(JSON.stringify(payload))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '')
-  return `${header}.${body}.mock-signature`
-}
-
-function makeAccessToken(isStaff = false): string {
-  return makeMockJwt({
-    user_id: 1,
-    username: MOCK_USER.username,
-    is_staff: isStaff,
-    exp: 9999999999,
-  })
-}
-
-function isAuthorized(request: Request): boolean {
-  const auth = request.headers.get('Authorization')
-  return auth !== null && auth.startsWith('Bearer ')
-}
-
 export const authHandlers = [
-  // POST /auth/token/
   http.post(`${BASE}/auth/token/`, async ({ request }) => {
-    await delay(150)
+    await delay(120)
 
     const body = (await request.json()) as { username?: string; password?: string }
-
-    if (body.username === 'admin' && body.password === 'password') {
-      currentRefreshToken = 'mock-refresh-token'
-
-      return HttpResponse.json({
-        access: makeAccessToken(false),
-        refresh: currentRefreshToken,
-      })
+    if (!body.username || !body.password) {
+      return HttpResponse.json({ detail: 'Missing credentials' }, { status: 400 })
     }
 
-    return HttpResponse.json(
-      { detail: 'No active account found with the given credentials' },
-      { status: 401 }
-    )
+    const tokens = authenticate(body.username, body.password)
+    if (!tokens) {
+      return HttpResponse.json(
+        { detail: 'No active account found with the given credentials' },
+        { status: 401 }
+      )
+    }
+
+    return HttpResponse.json(tokens)
   }),
 
-  // POST /auth/token/refresh/
   http.post(`${BASE}/auth/token/refresh/`, async ({ request }) => {
-    await delay(100)
+    await delay(90)
 
     const body = (await request.json()) as { refresh?: string }
-
-    if (body.refresh && body.refresh === currentRefreshToken) {
-      const newRefresh = `mock-refresh-${Date.now()}`
-      currentRefreshToken = newRefresh
-
-      return HttpResponse.json({
-        access: makeAccessToken(false),
-        refresh: newRefresh,
-      })
+    if (!body.refresh) {
+      return HttpResponse.json({ detail: 'Refresh token required' }, { status: 400 })
     }
 
-    return HttpResponse.json({ detail: 'Token is invalid or expired' }, { status: 401 })
+    const tokens = refreshAccessToken(body.refresh)
+    if (!tokens) {
+      return HttpResponse.json({ detail: 'Token is invalid or expired' }, { status: 401 })
+    }
+
+    return HttpResponse.json(tokens)
   }),
 
-  // GET /auth/me/
   http.get(`${BASE}/auth/me/`, async ({ request }) => {
-    await delay(100)
+    await delay(90)
 
-    if (!isAuthorized(request)) {
+    const user = getRequestUser(request)
+    if (!user) {
       return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
     }
 
-    return HttpResponse.json(MOCK_USER)
+    return HttpResponse.json(user)
   }),
 ]

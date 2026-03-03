@@ -1,182 +1,102 @@
 import { http, HttpResponse, delay } from 'msw'
 import { env } from '@/shared/config/env'
-import type { Company } from '@/features/companies/types/company.types'
+import {
+  canAccessCompany,
+  createCompany,
+  deleteCompany,
+  getCompanyById,
+  getRequestUser,
+  listCompaniesForUser,
+  updateCompany,
+} from '@/mocks/data/mockDb'
 
 const BASE = env.VITE_API_BASE_URL
 
-let nextId = 4
-
-let mockCompanies: Company[] = [
-  {
-    id: 1,
-    name: 'Ferretería Los Andes',
-    tax_id: '20-12345678-9',
-    owner_username: 'admin',
-    account_count: 3,
-    created_at: '2024-03-01T10:00:00Z',
-    updated_at: '2024-03-01T10:00:00Z',
-  },
-  {
-    id: 2,
-    name: 'Librería del Centro',
-    tax_id: null,
-    owner_username: 'admin',
-    account_count: 2,
-    created_at: '2024-03-15T14:30:00Z',
-    updated_at: '2024-03-15T14:30:00Z',
-  },
-  {
-    id: 3,
-    name: 'Panadería San Martín',
-    tax_id: '27-98765432-1',
-    owner_username: 'student1',
-    account_count: 0,
-    created_at: '2024-04-01T09:00:00Z',
-    updated_at: '2024-04-01T09:00:00Z',
-  },
-]
-
-export function resetCompaniesMock() {
-  nextId = 4
-  mockCompanies = [
-    {
-      id: 1,
-      name: 'Ferretería Los Andes',
-      tax_id: '20-12345678-9',
-      owner_username: 'admin',
-      account_count: 3,
-      created_at: '2024-03-01T10:00:00Z',
-      updated_at: '2024-03-01T10:00:00Z',
-    },
-    {
-      id: 2,
-      name: 'Librería del Centro',
-      tax_id: null,
-      owner_username: 'admin',
-      account_count: 2,
-      created_at: '2024-03-15T14:30:00Z',
-      updated_at: '2024-03-15T14:30:00Z',
-    },
-    {
-      id: 3,
-      name: 'Panadería San Martín',
-      tax_id: '27-98765432-1',
-      owner_username: 'student1',
-      account_count: 0,
-      created_at: '2024-04-01T09:00:00Z',
-      updated_at: '2024-04-01T09:00:00Z',
-    },
-  ]
-}
-
-function isAuthorized(request: Request): boolean {
-  const auth = request.headers.get('Authorization')
-  return auth !== null && auth.startsWith('Bearer ')
-}
-
 export const companiesHandlers = [
-  // GET /companies/
   http.get(`${BASE}/companies/`, async ({ request }) => {
-    await delay(150)
+    await delay(140)
 
-    if (!isAuthorized(request)) {
-      return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
-    }
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
 
-    return HttpResponse.json({
-      count: mockCompanies.length,
-      next: null,
-      previous: null,
-      results: mockCompanies,
-    })
+    const results = listCompaniesForUser(user)
+    return HttpResponse.json({ count: results.length, next: null, previous: null, results })
   }),
 
-  // POST /companies/
   http.post(`${BASE}/companies/`, async ({ request }) => {
-    await delay(200)
+    await delay(180)
 
-    if (!isAuthorized(request)) {
-      return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
-    }
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
 
     const body = (await request.json()) as { name?: string; tax_id?: string }
-
-    if (!body.name) {
+    if (!body.name || body.name.trim().length === 0) {
       return HttpResponse.json({ name: ['Este campo es obligatorio.'] }, { status: 400 })
     }
 
-    const newCompany: Company = {
-      id: nextId++,
-      name: body.name,
-      tax_id: body.tax_id ?? null,
-      owner_username: 'admin',
-      account_count: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }
-    mockCompanies.push(newCompany)
+    const ownerUsername = user.role === 'student' ? user.username : user.username
+    const created = createCompany(ownerUsername, {
+      name: body.name.trim(),
+      tax_id: body.tax_id?.trim() || undefined,
+    })
 
-    return HttpResponse.json(newCompany, { status: 201 })
+    return HttpResponse.json(created, { status: 201 })
   }),
 
-  // GET /companies/:id/
   http.get(`${BASE}/companies/:id/`, async ({ request, params }) => {
     await delay(100)
 
-    if (!isAuthorized(request)) {
-      return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
-    }
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
 
-    const company = mockCompanies.find((c) => c.id === Number(params.id))
-    if (!company) {
-      return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    const company = getCompanyById(Number(params.id))
+    if (!company) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    if (!canAccessCompany(user, company)) {
+      return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
     }
 
     return HttpResponse.json(company)
   }),
 
-  // PUT /companies/:id/
   http.put(`${BASE}/companies/:id/`, async ({ request, params }) => {
-    await delay(200)
+    await delay(180)
 
-    if (!isAuthorized(request)) {
-      return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
-    }
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
 
-    const idx = mockCompanies.findIndex((c) => c.id === Number(params.id))
-    if (idx === -1) {
-      return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
-    }
+    const companyId = Number(params.id)
+    const current = getCompanyById(companyId)
+    if (!current) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    if (!canAccessCompany(user, current))
+      return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
 
     const body = (await request.json()) as { name?: string; tax_id?: string }
-
-    if (!body.name) {
+    if (!body.name || body.name.trim().length === 0) {
       return HttpResponse.json({ name: ['Este campo es obligatorio.'] }, { status: 400 })
     }
 
-    mockCompanies[idx] = {
-      ...mockCompanies[idx],
-      name: body.name,
-      tax_id: body.tax_id ?? null,
-    }
+    const updated = updateCompany(companyId, {
+      name: body.name.trim(),
+      tax_id: body.tax_id?.trim() || null,
+    })
 
-    return HttpResponse.json(mockCompanies[idx])
+    if (!updated) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    return HttpResponse.json(updated)
   }),
 
-  // DELETE /companies/:id/
   http.delete(`${BASE}/companies/:id/`, async ({ request, params }) => {
-    await delay(200)
+    await delay(180)
 
-    if (!isAuthorized(request)) {
-      return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
-    }
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
 
-    const idx = mockCompanies.findIndex((c) => c.id === Number(params.id))
-    if (idx === -1) {
-      return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
-    }
+    const companyId = Number(params.id)
+    const current = getCompanyById(companyId)
+    if (!current) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    if (!canAccessCompany(user, current))
+      return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
 
-    mockCompanies.splice(idx, 1)
+    deleteCompany(companyId)
     return new HttpResponse(null, { status: 204 })
   }),
 ]

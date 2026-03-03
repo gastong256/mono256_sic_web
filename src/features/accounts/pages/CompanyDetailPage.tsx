@@ -4,6 +4,8 @@ import { useCompanyAccounts } from '@/features/accounts/hooks/useCompanyAccounts
 import { AccountTree } from '@/features/accounts/components/AccountTree'
 import { AccountForm } from '@/features/accounts/components/AccountForm'
 import { DeleteAccountDialog } from '@/features/accounts/components/DeleteAccountDialog'
+import { useAccountChartConfig } from '@/features/settings/hooks/useAccountChartConfig'
+import { applyChartVisibility } from '@/shared/lib/accountTreeVisibility'
 import { Spinner } from '@/shared/ui/Spinner'
 import type { Account } from '@/features/accounts/types/account.types'
 
@@ -13,6 +15,8 @@ export function CompanyDetailPage() {
   const id = Number(companyId)
 
   const { data: accounts = [], isLoading, error } = useCompanyAccounts(id)
+  const { data: chartConfig = [] } = useAccountChartConfig()
+  const visibleAccounts = applyChartVisibility(accounts, chartConfig)
 
   const [accountFormOpen, setAccountFormOpen] = useState(false)
   const [selectedParent, setSelectedParent] = useState<Account | null>(null)
@@ -71,16 +75,16 @@ export function CompanyDetailPage() {
       )}
 
       {/* Empty */}
-      {!isLoading && !error && accounts.length === 0 && (
+      {!isLoading && !error && visibleAccounts.length === 0 && (
         <div className="rounded-xl border-2 border-dashed border-gray-200 py-16 text-center">
           <p className="text-sm font-medium text-gray-500">No hay cuentas registradas.</p>
         </div>
       )}
 
       {/* Tree */}
-      {!isLoading && !error && accounts.length > 0 && (
+      {!isLoading && !error && visibleAccounts.length > 0 && (
         <AccountTree
-          accounts={accounts}
+          accounts={visibleAccounts}
           onAddChild={openCreate}
           onEdit={openEdit}
           onDelete={(a) => setDeletingAccount(a)}

@@ -4,7 +4,7 @@ import { useCompanies } from '@/features/companies/hooks/useCompanies'
 import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
 
 export function CompanySelector() {
-  const { accessToken, user } = useAuthStore()
+  const { accessToken } = useAuthStore()
   const { activeCompanyId, setActiveCompanyId } = useActiveCompanyStore()
   const isAuthenticated = Boolean(accessToken)
   const { data: companies, isLoading } = useCompanies({ enabled: isAuthenticated })
@@ -21,8 +21,6 @@ export function CompanySelector() {
 
   if (!isAuthenticated || isLoading || !companies || companies.length === 0) return null
 
-  const isStaff = user?.is_staff ?? false
-
   if (companies.length === 1) {
     return <span className="px-2 text-sm font-medium text-gray-700">{companies[0].name}</span>
   }
@@ -35,7 +33,7 @@ export function CompanySelector() {
     >
       {companies.map((company) => (
         <option key={company.id} value={company.id}>
-          {isStaff ? `${company.name} (${company.owner_username})` : company.name}
+          {company.name}
         </option>
       ))}
     </select>

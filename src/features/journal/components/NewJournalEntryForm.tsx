@@ -6,6 +6,7 @@ import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
 import { useCreateJournalEntry } from '@/features/journal/hooks/useCreateJournalEntry'
+import { useCreateTeacherJournalEntry } from '@/features/teacher/hooks/useCreateTeacherJournalEntry'
 import { useJournalAccounts } from '@/features/journal/hooks/useJournalAccounts'
 import type { CreateJournalLinePayload } from '@/features/journal/types/journal.types'
 
@@ -50,10 +51,19 @@ interface NewJournalEntryFormProps {
   isOpen: boolean
   onClose: () => void
   companyId: number
+  mode?: 'student' | 'teacher'
 }
 
-export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEntryFormProps) {
-  const { mutateAsync, isPending } = useCreateJournalEntry(companyId)
+export function NewJournalEntryForm({
+  isOpen,
+  onClose,
+  companyId,
+  mode = 'student',
+}: NewJournalEntryFormProps) {
+  const studentMutation = useCreateJournalEntry(companyId)
+  const teacherMutation = useCreateTeacherJournalEntry(companyId)
+  const mutateAsync = mode === 'teacher' ? teacherMutation.mutateAsync : studentMutation.mutateAsync
+  const isPending = mode === 'teacher' ? teacherMutation.isPending : studentMutation.isPending
   const { data: accounts, isLoading: accountsLoading } = useJournalAccounts(companyId)
 
   const {

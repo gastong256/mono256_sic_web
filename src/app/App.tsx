@@ -22,6 +22,7 @@ function setUserFromToken(accessToken: string): void {
     first_name: '',
     last_name: '',
     is_staff: payload.is_staff ?? false,
+    role: payload.role ?? 'student',
   })
 }
 

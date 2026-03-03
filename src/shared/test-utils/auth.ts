@@ -19,6 +19,7 @@ export const TEST_USER = {
   first_name: 'Test',
   last_name: 'User',
   is_staff: false,
+  role: 'student' as const,
 }
 
 export const TEST_ACCESS_TOKEN = 'mock-access-token'

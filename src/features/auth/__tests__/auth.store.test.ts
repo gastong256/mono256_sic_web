@@ -42,6 +42,7 @@ describe('auth store', () => {
       first_name: 'Alice',
       last_name: '',
       is_staff: false,
+      role: 'student' as const,
     }
 
     act(() => {
@@ -61,6 +62,7 @@ describe('auth store', () => {
         first_name: 'Alice',
         last_name: '',
         is_staff: false,
+        role: 'student',
       })
     })
 

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useCompanies } from '@/features/companies/hooks/useCompanies'
-import { useAuthStore } from '@/features/auth/store/auth.store'
 import { CompanyTable } from '@/features/companies/components/CompanyTable'
 import { CompanyForm } from '@/features/companies/components/CompanyForm'
 import { DeleteCompanyDialog } from '@/features/companies/components/DeleteCompanyDialog'
@@ -12,7 +11,6 @@ import type { Company } from '@/features/companies/types/company.types'
 export function CompaniesPage() {
   const navigate = useNavigate()
   const { data: companies = [], isLoading, error } = useCompanies()
-  const isStaff = useAuthStore((s) => s.user?.is_staff ?? false)
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingCompany, setEditingCompany] = useState<Company | null>(null)
@@ -38,9 +36,7 @@ export function CompaniesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Empresas</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {isStaff ? 'Todas las empresas registradas.' : 'Sus empresas registradas.'}
-          </p>
+          <p className="mt-1 text-sm text-gray-500">Sus empresas registradas.</p>
         </div>
         <Button onClick={openCreate}>Nueva empresa</Button>
       </div>
@@ -76,7 +72,7 @@ export function CompaniesPage() {
       {!isLoading && !error && companies.length > 0 && (
         <CompanyTable
           companies={companies}
-          isStaff={isStaff}
+          showOwner={false}
           onView={(c) => void navigate(`/companies/${c.id}`)}
           onEdit={openEdit}
           onDelete={(c) => setDeletingCompany(c)}
