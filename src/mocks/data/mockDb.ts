@@ -1005,7 +1005,9 @@ export function listAvailableStudentsForCourse(
 
   let available = users.filter(
     (candidate) =>
-      candidate.role === 'student' && !course.student_usernames.includes(candidate.username)
+      candidate.role === 'student' &&
+      (candidate.course_id === null || candidate.course_id === undefined) &&
+      !course.student_usernames.includes(candidate.username)
   )
 
   if (search.length > 0) {
@@ -1045,6 +1047,14 @@ export function enrollStudentInCourse(
   const student = users.find((candidate) => candidate.id === studentId)
   if (!student || student.role !== 'student') {
     return { ok: false, status: 404, detail: 'Student not found' }
+  }
+
+  if (
+    student.course_id !== null &&
+    student.course_id !== undefined &&
+    student.course_id !== course.id
+  ) {
+    return { ok: false, status: 400, detail: 'Student already enrolled in another course' }
   }
 
   if (!course.student_usernames.includes(student.username)) {

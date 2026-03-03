@@ -130,6 +130,9 @@ export const teacherHandlers = [
 
     const result = enrollStudentInCourse(user, courseId, body.student_id)
     if (!result.ok) {
+      if (result.status === 400) {
+        return HttpResponse.json({ student_id: [result.detail] }, { status: 400 })
+      }
       return HttpResponse.json({ detail: result.detail }, { status: result.status })
     }
     return HttpResponse.json({ student_id: body.student_id }, { status: 201 })
