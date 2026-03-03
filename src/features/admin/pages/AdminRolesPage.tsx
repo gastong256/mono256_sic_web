@@ -14,6 +14,7 @@ export function AdminRolesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
+        icon="admin"
         title="Asignacion de roles"
         subtitle="Promove o revierte usuarios al rol docente."
       />
@@ -28,6 +29,7 @@ export function AdminRolesPage() {
 
       {!isLoading && !error && users.length === 0 && (
         <EmptyState
+          icon="admin"
           title="No hay usuarios disponibles"
           description="No se encontraron registros para administrar roles."
         />

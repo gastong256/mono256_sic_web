@@ -112,7 +112,11 @@ export function TeacherStudentDetailPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Detalle de alumno" subtitle={`Alumno #${parsedStudentId}`} />
+      <PageHeader
+        icon="student"
+        title="Detalle de alumno"
+        subtitle={`Alumno #${parsedStudentId}`}
+      />
 
       {(Number.isNaN(parsedCourseId) || parsedCourseId <= 0) && (
         <Alert tone="error">Falta el contexto de curso. Volvé al panel docente y reintentá.</Alert>
@@ -128,7 +132,11 @@ export function TeacherStudentDetailPage() {
         )}
 
         {!isLoading && !error && companies.length === 0 && (
-          <EmptyState title="Este alumno aun no tiene empresas" className="border-none py-6" />
+          <EmptyState
+            icon="companies"
+            title="Este alumno aun no tiene empresas"
+            className="border-none py-6"
+          />
         )}
 
         {!isLoading && !error && companies.length > 0 && (
@@ -159,6 +167,7 @@ export function TeacherStudentDetailPage() {
 
         {!selectedCompany && (
           <EmptyState
+            icon="companies"
             title="Selecciona una empresa"
             description="Necesitas una empresa seleccionada para revisar los asientos del alumno."
             className="border-none py-6"
@@ -175,6 +184,7 @@ export function TeacherStudentDetailPage() {
 
         {selectedCompany && !journalLoading && !journalError && journalEntries.length === 0 && (
           <EmptyState
+            icon="journal"
             title="No hay asientos registrados"
             description="Esta empresa todavia no tiene actividad contable."
             className="border-none py-6"

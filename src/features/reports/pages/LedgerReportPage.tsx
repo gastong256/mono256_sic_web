@@ -41,6 +41,7 @@ export function LedgerReportPage() {
   return (
     <div className="space-y-6">
       <PageHeader
+        icon="ledger"
         title="Libro Mayor"
         subtitle="Movimientos por cuenta con saldo acumulado en el periodo."
       />
@@ -133,6 +134,7 @@ export function LedgerReportPage() {
         <section className="space-y-4">
           {data.cards.length === 0 ? (
             <EmptyState
+              icon="ledger"
               title="Sin movimientos en el periodo"
               description="No hay movimientos para los filtros seleccionados."
               className="py-8"

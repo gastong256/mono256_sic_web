@@ -35,6 +35,7 @@ export function JournalBookReportPage() {
   return (
     <div className="space-y-6">
       <PageHeader
+        icon="book"
         title="Libro Diario"
         subtitle="Consulta asientos cronologicos y sus lineas de doble entrada."
       />
@@ -119,6 +120,7 @@ export function JournalBookReportPage() {
 
           {data.entries.length === 0 ? (
             <EmptyState
+              icon="book"
               title="Sin resultados en el periodo"
               description="No hay asientos para los filtros seleccionados."
               className="py-8"

@@ -10,7 +10,11 @@ export function TeacherDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Panel docente" subtitle="Resumen de cursos y alumnos asignados." />
+      <PageHeader
+        icon="teacher"
+        title="Panel docente"
+        subtitle="Resumen de cursos y alumnos asignados."
+      />
 
       {isLoading && (
         <div className="space-y-4 py-2">
@@ -32,7 +36,7 @@ export function TeacherDashboardPage() {
       {error && !isLoading && <Alert tone="error">Error al cargar el panel docente.</Alert>}
 
       {!isLoading && !error && data && data.courses.length === 0 && (
-        <EmptyState title="No hay cursos asignados" />
+        <EmptyState icon="teacher" title="No hay cursos asignados" />
       )}
 
       {!isLoading && !error && data && data.courses.length > 0 && (

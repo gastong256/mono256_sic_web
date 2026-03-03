@@ -39,6 +39,7 @@ export function CompaniesPage() {
       <PageHeader
         title="Empresas"
         subtitle="Sus empresas registradas."
+        icon="companies"
         actions={<Button onClick={openCreate}>Nueva empresa</Button>}
       />
 
@@ -74,6 +75,7 @@ export function CompaniesPage() {
       {/* Empty */}
       {!isLoading && !error && companies.length === 0 && (
         <EmptyState
+          icon="companies"
           title="No hay empresas registradas"
           description='Hace clic en "Nueva empresa" para comenzar.'
           action={<Button onClick={openCreate}>Nueva empresa</Button>}

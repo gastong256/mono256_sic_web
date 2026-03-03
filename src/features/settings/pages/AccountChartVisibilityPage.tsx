@@ -44,6 +44,7 @@ export function AccountChartVisibilityPage() {
   return (
     <div className="space-y-6">
       <PageHeader
+        icon="settings"
         title="Visibilidad del plan de cuentas"
         subtitle="Mostra u oculta niveles 1 y 2 globalmente."
       />

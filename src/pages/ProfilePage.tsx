@@ -26,7 +26,7 @@ export function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Perfil" subtitle="Tu informacion de cuenta." />
+      <PageHeader icon="profile" title="Perfil" subtitle="Tu informacion de cuenta." />
 
       {/* Profile card */}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">

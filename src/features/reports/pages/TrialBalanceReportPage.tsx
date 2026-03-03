@@ -33,6 +33,7 @@ export function TrialBalanceReportPage() {
   return (
     <div className="space-y-6">
       <PageHeader
+        icon="balance"
         title="Balance de Comprobacion"
         subtitle="Saldos por colectiva y subcuenta para verificar consistencia del periodo."
       />
@@ -122,6 +123,7 @@ export function TrialBalanceReportPage() {
 
           {data.rows.length === 0 ? (
             <EmptyState
+              icon="balance"
               title="Sin movimientos en el periodo"
               description="No hay movimientos para los filtros seleccionados."
               className="py-8"

@@ -26,6 +26,7 @@ export function JournalPage() {
   if (activeCompanyId === null) {
     return (
       <EmptyState
+        icon="companies"
         title="Selecciona una empresa"
         description="Necesitas una empresa activa para ver y registrar asientos."
         className="py-24"
@@ -37,6 +38,7 @@ export function JournalPage() {
     <div className="space-y-6">
       {/* Page header */}
       <PageHeader
+        icon="journal"
         title="Asientos"
         subtitle="Registro cronologico de asientos de la empresa activa."
         actions={<Button onClick={() => setIsFormOpen(true)}>+ Nuevo asiento</Button>}
@@ -64,6 +66,7 @@ export function JournalPage() {
 
       {!isLoading && !isError && entries && entries.length === 0 && (
         <EmptyState
+          icon="journal"
           title="No hay asientos registrados"
           description="Comenza registrando el primer asiento manual de esta empresa."
           action={<Button onClick={() => setIsFormOpen(true)}>Crear primer asiento</Button>}
