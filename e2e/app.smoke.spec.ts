@@ -28,7 +28,7 @@ test.describe('App baseline smoke', () => {
     await page.goto('/register')
 
     await page.getByLabel('Usuario').fill(uniqueUsername)
-    await page.getByLabel('Contraseña').fill('password123')
+    await page.getByLabel('Contraseña', { exact: true }).fill('password123')
     await page.getByLabel('Confirmar contraseña').fill('password123')
     await page.getByLabel('Código de registro').fill('SIC-2026')
     await page.getByRole('button', { name: 'Registrarme' }).click()
@@ -47,7 +47,7 @@ test.describe('App baseline smoke', () => {
     await page.getByRole('dialog').getByLabel('Nombre').fill(companyName)
     await page.getByRole('button', { name: 'Crear empresa' }).click()
 
-    await expect(page.getByText(companyName)).toBeVisible()
+    await expect(page.getByRole('cell', { name: companyName, exact: true })).toBeVisible()
   })
 
   test('navigates reports pages from libros menu', async ({ page }) => {
