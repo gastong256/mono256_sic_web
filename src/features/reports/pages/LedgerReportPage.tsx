@@ -1,12 +1,16 @@
 import { useMemo, useState } from 'react'
 import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
 import { useLedgerReport } from '@/features/reports/hooks/useLedgerReport'
+import { useDownloadLedgerReport } from '@/features/reports/hooks/useDownloadReports'
+import { getReportDownloadErrorMessage } from '@/features/reports/lib/downloadErrors'
 import { useJournalAccounts } from '@/features/journal/hooks/useJournalAccounts'
 import { Spinner } from '@/shared/ui/Spinner'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Button } from '@/shared/ui/Button'
 import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
+import { buildDefaultXlsxFilename, saveBlobAsFile } from '@/shared/lib/fileDownload'
+import { useToast } from '@/shared/ui/ToastProvider'
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
   style: 'currency',
@@ -18,6 +22,7 @@ function formatAmount(value: number) {
 }
 
 export function LedgerReportPage() {
+  const { pushToast } = useToast()
   const { activeCompanyId } = useActiveCompanyStore()
   const [dateFromInput, setDateFromInput] = useState('')
   const [dateToInput, setDateToInput] = useState('')
@@ -35,8 +40,24 @@ export function LedgerReportPage() {
 
   const { data: accounts = [] } = useJournalAccounts(activeCompanyId ?? 0)
   const { data, isLoading, isError, error } = useLedgerReport(activeCompanyId, filters)
+  const downloadMutation = useDownloadLedgerReport()
 
   const canSearch = !hasInvalidRange && activeCompanyId !== null
+
+  async function handleDownload() {
+    if (activeCompanyId === null) return
+    try {
+      const result = await downloadMutation.mutateAsync({
+        companyId: activeCompanyId,
+        params: filters,
+      })
+      const filename = result.filename ?? buildDefaultXlsxFilename('libro-mayor')
+      saveBlobAsFile(result.blob, filename)
+      pushToast('Descarga iniciada correctamente.', 'success')
+    } catch (downloadError) {
+      pushToast(getReportDownloadErrorMessage(downloadError), 'error')
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -44,6 +65,19 @@ export function LedgerReportPage() {
         icon="ledger"
         title="Libro Mayor"
         subtitle="Movimientos por cuenta con saldo acumulado en el periodo."
+        actions={
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={activeCompanyId === null || hasInvalidRange}
+            isLoading={downloadMutation.isPending}
+            onClick={() => {
+              void handleDownload()
+            }}
+          >
+            Descargar Excel
+          </Button>
+        }
       />
 
       <section className="filter-panel p-4">

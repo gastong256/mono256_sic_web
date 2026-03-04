@@ -1,5 +1,6 @@
 import { httpClient } from '@/shared/lib/http'
 import type { JournalEntryDetail } from '@/features/journal/types/journal.types'
+import { extractFilenameFromContentDisposition } from '@/shared/lib/fileDownload'
 import type {
   JournalBookReportParams,
   JournalBookReportResponse,
@@ -8,6 +9,11 @@ import type {
   TrialBalanceReportParams,
   TrialBalanceReportResponse,
 } from '@/features/reports/types/reports.types'
+
+type DownloadResponse = {
+  blob: Blob
+  filename: string | null
+}
 
 type JournalBookApiResponse =
   | JournalBookReportResponse
@@ -140,4 +146,68 @@ export const reportsApi = {
         },
       })
       .then((r) => normalizeTrialBalanceResponse(r.data, companyId, params)),
+
+  downloadJournalBookXlsx: (
+    companyId: number,
+    params: JournalBookReportParams = {}
+  ): Promise<DownloadResponse> =>
+    httpClient
+      .get<Blob>(`/companies/${companyId}/reports/journal-book.xlsx`, {
+        responseType: 'blob',
+        params: {
+          ...(params.dateFrom ? { date_from: params.dateFrom } : null),
+          ...(params.dateTo ? { date_to: params.dateTo } : null),
+        },
+      })
+      .then((response) => ({
+        blob: response.data,
+        filename: extractFilenameFromContentDisposition(
+          typeof response.headers['content-disposition'] === 'string'
+            ? response.headers['content-disposition']
+            : null
+        ),
+      })),
+
+  downloadLedgerXlsx: (
+    companyId: number,
+    params: LedgerReportParams = {}
+  ): Promise<DownloadResponse> =>
+    httpClient
+      .get<Blob>(`/companies/${companyId}/reports/ledger.xlsx`, {
+        responseType: 'blob',
+        params: {
+          ...(params.dateFrom ? { date_from: params.dateFrom } : null),
+          ...(params.dateTo ? { date_to: params.dateTo } : null),
+          ...(params.accountId ? { account_id: params.accountId } : null),
+        },
+      })
+      .then((response) => ({
+        blob: response.data,
+        filename: extractFilenameFromContentDisposition(
+          typeof response.headers['content-disposition'] === 'string'
+            ? response.headers['content-disposition']
+            : null
+        ),
+      })),
+
+  downloadTrialBalanceXlsx: (
+    companyId: number,
+    params: TrialBalanceReportParams = {}
+  ): Promise<DownloadResponse> =>
+    httpClient
+      .get<Blob>(`/companies/${companyId}/reports/trial-balance.xlsx`, {
+        responseType: 'blob',
+        params: {
+          ...(params.dateFrom ? { date_from: params.dateFrom } : null),
+          ...(params.dateTo ? { date_to: params.dateTo } : null),
+        },
+      })
+      .then((response) => ({
+        blob: response.data,
+        filename: extractFilenameFromContentDisposition(
+          typeof response.headers['content-disposition'] === 'string'
+            ? response.headers['content-disposition']
+            : null
+        ),
+      })),
 }

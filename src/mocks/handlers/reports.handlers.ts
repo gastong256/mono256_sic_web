@@ -10,6 +10,20 @@ import {
 
 const BASE = env.VITE_API_BASE_URL
 
+function buildMockWorkbookBinary(content: string): Uint8Array {
+  return new TextEncoder().encode(content)
+}
+
+function buildXlsxDownloadResponse(filename: string, content: string): Response {
+  return new HttpResponse<Uint8Array>(buildMockWorkbookBinary(content), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    },
+  })
+}
+
 function applyDateFilter(
   entries: ReturnType<typeof listJournalEntryDetailsByCompany>,
   dateFrom: string | null,
@@ -20,6 +34,41 @@ function applyDateFilter(
     if (dateTo && entry.date > dateTo) return false
     return true
   })
+}
+
+function parseAndValidateReportRequest(request: Request): {
+  dateFrom: string | null
+  dateTo: string | null
+  accountIdRaw: string | null
+  accountId: number | null
+  badRequestMessage: string | null
+} {
+  const url = new URL(request.url)
+  const dateFrom = url.searchParams.get('date_from')
+  const dateTo = url.searchParams.get('date_to')
+  const accountIdRaw = url.searchParams.get('account_id')
+  const accountId = accountIdRaw && accountIdRaw.trim().length > 0 ? Number(accountIdRaw) : null
+
+  if (dateFrom && dateTo && dateFrom > dateTo) {
+    return {
+      dateFrom,
+      dateTo,
+      accountIdRaw,
+      accountId,
+      badRequestMessage: 'date_from no puede ser mayor a date_to.',
+    }
+  }
+  if (accountIdRaw && (Number.isNaN(accountId) || accountId === null || accountId <= 0)) {
+    return {
+      dateFrom,
+      dateTo,
+      accountIdRaw,
+      accountId,
+      badRequestMessage: 'account_id inválido.',
+    }
+  }
+
+  return { dateFrom, dateTo, accountIdRaw, accountId, badRequestMessage: null }
 }
 
 export const reportsHandlers = [
@@ -61,6 +110,33 @@ export const reportsHandlers = [
       grand_total_credit: grandTotalCredit,
     })
   }),
+
+  http.get(
+    `${BASE}/companies/:companyId/reports/journal-book.xlsx`,
+    async ({ request, params }) => {
+      await delay(200)
+
+      const user = getRequestUser(request)
+      if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+
+      const companyId = Number(params.companyId)
+      const company = getCompanyById(companyId)
+      if (!company) return HttpResponse.json({ detail: 'Company not found' }, { status: 404 })
+      if (!canAccessCompany(user, company)) {
+        return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+      }
+
+      const { dateFrom, dateTo, badRequestMessage } = parseAndValidateReportRequest(request)
+      if (badRequestMessage) {
+        return HttpResponse.json({ detail: badRequestMessage }, { status: 400 })
+      }
+
+      return buildXlsxDownloadResponse(
+        `libro-diario-${companyId}.xlsx`,
+        `Mock XLSX - Libro Diario\ncompany_id=${companyId}\ndate_from=${dateFrom ?? ''}\ndate_to=${dateTo ?? ''}`
+      )
+    }
+  ),
 
   http.get(`${BASE}/companies/:companyId/reports/ledger/`, async ({ request, params }) => {
     await delay(170)
@@ -164,6 +240,31 @@ export const reportsHandlers = [
       account_id: accountId,
       cards,
     })
+  }),
+
+  http.get(`${BASE}/companies/:companyId/reports/ledger.xlsx`, async ({ request, params }) => {
+    await delay(200)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+
+    const companyId = Number(params.companyId)
+    const company = getCompanyById(companyId)
+    if (!company) return HttpResponse.json({ detail: 'Company not found' }, { status: 404 })
+    if (!canAccessCompany(user, company)) {
+      return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    }
+
+    const { dateFrom, dateTo, accountId, badRequestMessage } =
+      parseAndValidateReportRequest(request)
+    if (badRequestMessage) {
+      return HttpResponse.json({ detail: badRequestMessage }, { status: 400 })
+    }
+
+    return buildXlsxDownloadResponse(
+      `libro-mayor-${companyId}.xlsx`,
+      `Mock XLSX - Libro Mayor\ncompany_id=${companyId}\ndate_from=${dateFrom ?? ''}\ndate_to=${dateTo ?? ''}\naccount_id=${accountId ?? ''}`
+    )
   }),
 
   http.get(`${BASE}/companies/:companyId/reports/trial-balance/`, async ({ request, params }) => {
@@ -282,4 +383,31 @@ export const reportsHandlers = [
       grand_total_credit: grandTotalCredit,
     })
   }),
+
+  http.get(
+    `${BASE}/companies/:companyId/reports/trial-balance.xlsx`,
+    async ({ request, params }) => {
+      await delay(200)
+
+      const user = getRequestUser(request)
+      if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+
+      const companyId = Number(params.companyId)
+      const company = getCompanyById(companyId)
+      if (!company) return HttpResponse.json({ detail: 'Company not found' }, { status: 404 })
+      if (!canAccessCompany(user, company)) {
+        return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+      }
+
+      const { dateFrom, dateTo, badRequestMessage } = parseAndValidateReportRequest(request)
+      if (badRequestMessage) {
+        return HttpResponse.json({ detail: badRequestMessage }, { status: 400 })
+      }
+
+      return buildXlsxDownloadResponse(
+        `balance-comprobacion-${companyId}.xlsx`,
+        `Mock XLSX - Balance de Comprobacion\ncompany_id=${companyId}\ndate_from=${dateFrom ?? ''}\ndate_to=${dateTo ?? ''}`
+      )
+    }
+  ),
 ]

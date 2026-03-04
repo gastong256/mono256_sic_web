@@ -1,11 +1,15 @@
 import { Fragment, useMemo, useState } from 'react'
 import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
 import { useTrialBalanceReport } from '@/features/reports/hooks/useTrialBalanceReport'
+import { useDownloadTrialBalanceReport } from '@/features/reports/hooks/useDownloadReports'
+import { getReportDownloadErrorMessage } from '@/features/reports/lib/downloadErrors'
 import { Spinner } from '@/shared/ui/Spinner'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Button } from '@/shared/ui/Button'
 import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
+import { buildDefaultXlsxFilename, saveBlobAsFile } from '@/shared/lib/fileDownload'
+import { useToast } from '@/shared/ui/ToastProvider'
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
   style: 'currency',
@@ -17,6 +21,7 @@ function formatAmount(value: number) {
 }
 
 export function TrialBalanceReportPage() {
+  const { pushToast } = useToast()
   const { activeCompanyId } = useActiveCompanyStore()
   const [dateFromInput, setDateFromInput] = useState('')
   const [dateToInput, setDateToInput] = useState('')
@@ -28,7 +33,23 @@ export function TrialBalanceReportPage() {
   )
 
   const { data, isLoading, isError, error } = useTrialBalanceReport(activeCompanyId, filters)
+  const downloadMutation = useDownloadTrialBalanceReport()
   const canSearch = !hasInvalidRange && activeCompanyId !== null
+
+  async function handleDownload() {
+    if (activeCompanyId === null) return
+    try {
+      const result = await downloadMutation.mutateAsync({
+        companyId: activeCompanyId,
+        params: filters,
+      })
+      const filename = result.filename ?? buildDefaultXlsxFilename('balance-comprobacion')
+      saveBlobAsFile(result.blob, filename)
+      pushToast('Descarga iniciada correctamente.', 'success')
+    } catch (downloadError) {
+      pushToast(getReportDownloadErrorMessage(downloadError), 'error')
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -36,6 +57,19 @@ export function TrialBalanceReportPage() {
         icon="balance"
         title="Balance de Comprobacion"
         subtitle="Saldos por colectiva y subcuenta para verificar consistencia del periodo."
+        actions={
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={activeCompanyId === null || hasInvalidRange}
+            isLoading={downloadMutation.isPending}
+            onClick={() => {
+              void handleDownload()
+            }}
+          >
+            Descargar Excel
+          </Button>
+        }
       />
 
       <section className="filter-panel p-4">
