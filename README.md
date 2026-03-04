@@ -1,4 +1,4 @@
-# SIC (Angrisani)
+# ASIENTA
 
 > Accounting system that implements SIC (Angrisani) concepts. Web application.
 
@@ -66,13 +66,34 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Copy `.env.example` to `.env` (done automatically by `pnpm run init`):
 
-| Variable              | Default                        | Description                       |
-| --------------------- | ------------------------------ | --------------------------------- |
-| `VITE_APP_NAME`       | `SIC (Angrisani)`              | Application display name          |
-| `VITE_API_BASE_URL`   | `http://localhost:8000/api/v1` | Real backend base URL             |
-| `VITE_USE_MOCK_API`   | `true`                         | Use MSW mocks instead of real API |
-| `VITE_SENTRY_ENABLED` | `false`                        | Enable Sentry error tracking      |
-| `VITE_SENTRY_DSN`     | —                              | Sentry DSN (required if enabled)  |
+| Variable              | Default   | Description                              |
+| --------------------- | --------- | ---------------------------------------- |
+| `VITE_APP_NAME`       | `ASIENTA` | Application display name                 |
+| `VITE_API_BASE_URL`   | `/api/v1` | API base URL (use relative in demo mode) |
+| `VITE_USE_MOCK_API`   | `true`    | Use MSW mocks instead of real API        |
+| `VITE_SENTRY_ENABLED` | `false`   | Enable Sentry error tracking             |
+| `VITE_SENTRY_DSN`     | —         | Sentry DSN (required if enabled)         |
+
+---
+
+## Deploy Demo In Vercel
+
+This project can be deployed as a fully frontend demo (no backend) using MSW.
+
+1. Import the repository into Vercel.
+2. Framework preset: `Vite`.
+3. Build command: `pnpm build`.
+4. Output directory: `dist`.
+5. Configure these Production env vars in Vercel:
+   - `VITE_APP_NAME=ASIENTA`
+   - `VITE_ENV=production`
+   - `VITE_API_BASE_URL=/api/v1`
+   - `VITE_USE_MOCK_API=true`
+   - `VITE_MOCK_SCENARIO=demo`
+   - `VITE_SENTRY_ENABLED=false`
+6. Deploy.
+
+`vercel.json` already includes SPA rewrites so deep links like `/teacher/dashboard` load correctly.
 
 ---
 
