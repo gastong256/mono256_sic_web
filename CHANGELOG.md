@@ -1,3 +1,9 @@
+## <small>1.4.1 (2026-03-04)</small>
+
+* fix: add stable smoke coverage for register, companies and reports navigation ([7df7c7f](https://github.com/gastong256/mono256_sic_web/commit/7df7c7f))
+* test: replace flaky auth suite with stable baseline smoke tests ([a0184a6](https://github.com/gastong256/mono256_sic_web/commit/a0184a6))
+* chore: configure vercel demo mode with spa rewrites and env defaults ([8753bac](https://github.com/gastong256/mono256_sic_web/commit/8753bac))
+
 ## 1.4.0 (2026-03-04)
 
 * feat: introduce asienta branding, improve nav/forms layout, and fix breadcrumb routing ([81aef86](https://github.com/gastong256/mono256_sic_web/commit/81aef86))
