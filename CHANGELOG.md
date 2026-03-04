@@ -1,3 +1,16 @@
+## 1.3.0 (2026-03-04)
+
+* feat: add contextual icon system and refine report/dashboard visuals to modern saas style ([6149f1e](https://github.com/gastong256/mono256_sic_web/commit/6149f1e))
+* feat: add xlsx downloads and serve valid excel files in msw demo mode ([b4bbbab](https://github.com/gastong256/mono256_sic_web/commit/b4bbbab))
+* feat: dd teacher course management and xlsx report downloads with full msw mock support ([7d1d8d4](https://github.com/gastong256/mono256_sic_web/commit/7d1d8d4))
+* feat: evamp accounting tables and unify debit/credit alignment across journal, teacher and reports ([7bf0918](https://github.com/gastong256/mono256_sic_web/commit/7bf0918))
+* feat: modernize visual identity with glass nav, new typography and premium controls ([7346eb0](https://github.com/gastong256/mono256_sic_web/commit/7346eb0))
+* feat: refine report and teacher dashboards with modern filter panels and data-table styling ([5b86694](https://github.com/gastong256/mono256_sic_web/commit/5b86694))
+* feat: teachers can create new courses ([35f6c93](https://github.com/gastong256/mono256_sic_web/commit/35f6c93))
+* feat: teachers can enroll or unenroll students ([d9bf040](https://github.com/gastong256/mono256_sic_web/commit/d9bf040))
+* fix: implement backend rules in mock, 1to1 student-course relation ([9fa7138](https://github.com/gastong256/mono256_sic_web/commit/9fa7138))
+* fix: remove header context/status strip from layout navigation ([a38c082](https://github.com/gastong256/mono256_sic_web/commit/a38c082))
+
 ## 1.2.0 (2026-03-03)
 
 * feat: add global toasts, accessibility improvements and responsive mobile navigation ([a94db4e](https://github.com/gastong256/mono256_sic_web/commit/a94db4e))
