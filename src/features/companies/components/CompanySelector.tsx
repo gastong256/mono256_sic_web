@@ -23,19 +23,20 @@ export function CompanySelector() {
 
   if (companies.length === 1) {
     return (
-      <span className="glass-panel rounded-full px-3 py-1 text-xs font-semibold text-[var(--text-strong)]">
+      <span className="inline-flex max-w-[16rem] items-center truncate rounded-full border border-[var(--border-soft)] bg-white/90 px-3 py-1 text-xs font-semibold text-[var(--text-strong)]">
         Empresa activa: {companies[0].name}
       </span>
     )
   }
 
   return (
-    <label className="flex items-center gap-2 text-xs font-semibold text-[var(--text-muted)]">
-      Empresa activa
+    <label className="inline-flex max-w-[18rem] items-center gap-2 text-xs font-semibold text-[var(--text-muted)]">
+      <span className="hidden lg:inline">Empresa activa</span>
       <select
         value={activeCompanyId ?? ''}
         onChange={(e) => setActiveCompanyId(Number(e.target.value))}
-        className="rounded-full border border-[var(--border-strong)] bg-white/95 px-3 py-1 text-sm font-semibold text-[var(--text-strong)] shadow-sm focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
+        className="max-w-[12rem] truncate rounded-full border border-[var(--border-strong)] bg-white/95 px-3 py-1 text-sm font-semibold text-[var(--text-strong)] shadow-sm focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
+        title={companies.find((company) => company.id === activeCompanyId)?.name ?? ''}
       >
         {companies.map((company) => (
           <option key={company.id} value={company.id}>

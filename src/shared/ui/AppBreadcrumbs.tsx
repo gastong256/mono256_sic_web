@@ -21,6 +21,34 @@ const segmentLabels: Record<string, string> = {
   roles: 'Roles',
 }
 
+const routableStaticPaths = new Set([
+  '/',
+  '/companies',
+  '/profile',
+  '/reports/journal-book',
+  '/reports/ledger',
+  '/reports/trial-balance',
+  '/teacher/dashboard',
+  '/settings/chart-visibility',
+  '/admin/roles',
+])
+
+function isRoutablePath(path: string): boolean {
+  if (routableStaticPaths.has(path)) return true
+  if (/^\/companies\/\d+$/.test(path)) return true
+  if (/^\/teacher\/students\/\d+$/.test(path)) return true
+  return false
+}
+
+function normalizeCrumbTarget(path: string): string | undefined {
+  // Parent segments without dedicated routes should point to a valid landing route.
+  if (path === '/teacher') return '/teacher/dashboard'
+  if (path === '/settings') return '/settings/chart-visibility'
+  if (path === '/admin') return '/admin/roles'
+
+  return isRoutablePath(path) ? path : undefined
+}
+
 function buildCrumbs(pathname: string): Crumb[] {
   if (pathname === '/') return [{ label: 'Asientos' }]
 
@@ -40,7 +68,8 @@ function buildCrumbs(pathname: string): Crumb[] {
     if (!label) label = segment
 
     const isLast = index === segments.length - 1
-    crumbs.push({ label, to: isLast ? undefined : currentPath })
+    const target = isLast ? undefined : normalizeCrumbTarget(currentPath)
+    crumbs.push({ label, to: target })
   })
 
   return crumbs

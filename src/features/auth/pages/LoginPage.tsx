@@ -4,6 +4,7 @@ import { LoginForm } from '@/features/auth/components/LoginForm'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { DEMO_CREDENTIALS } from '@/shared/config/demoCredentials'
 import { env } from '@/shared/config/env'
+import { BrandMark } from '@/shared/ui/BrandMark'
 
 export function LoginPage() {
   const { accessToken, refreshToken } = useAuthStore()
@@ -24,11 +25,17 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-md">
         {/* Card */}
         <div className="surface-card p-8">
           {/* Header */}
-          <div className="mb-8 text-center">
+          <div className="mb-8 flex flex-col items-center text-center">
+            <div className="mb-3">
+              <BrandMark
+                variant="horizontal"
+                className="mx-auto block h-16 w-[18.5rem] max-w-full"
+              />
+            </div>
             <h1 className="text-2xl font-bold tracking-tight text-[var(--text-strong)]">
               Bienvenido
             </h1>

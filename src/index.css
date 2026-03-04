@@ -3,6 +3,8 @@
 
 :root {
   color-scheme: light;
+  --brand-name: 'ASIENTA';
+  --brand-tagline: 'Sistema de Informacion Contable';
   --font-sans: 'Manrope', 'Avenir Next', 'Segoe UI Variable', 'Segoe UI', sans-serif;
   --font-display: 'Space Grotesk', 'Manrope', 'Segoe UI Variable', 'Segoe UI', sans-serif;
   --bg-canvas: #edf2f9;
@@ -15,6 +17,7 @@
   --brand-500: #0068ea;
   --brand-600: #0058ca;
   --brand-700: #0046a3;
+  --brand-ink: #0b2552;
   --accent-500: #00b7c3;
   --danger-500: #d64545;
   --danger-600: #b93838;
@@ -350,9 +353,24 @@ textarea {
   }
 }
 
+@keyframes brand-pop {
+  from {
+    opacity: 0;
+    transform: translateY(0.16rem) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @layer utilities {
   .ui-fade-in {
     animation: fade-up 220ms ease-out both;
+  }
+
+  .brand-mark-enter {
+    animation: brand-pop 280ms ease-out both;
   }
 
   .ui-lift {

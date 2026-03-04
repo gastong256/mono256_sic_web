@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { env } from '@/shared/config/env'
+import { BrandMark } from '@/shared/ui/BrandMark'
 
 const FEATURES = [
   { icon: '⚛️', label: 'React 19', desc: 'Latest React with concurrent features' },
@@ -22,9 +23,9 @@ export function HomePage() {
       {/* Hero */}
       <section className="rounded-2xl bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-8 py-16 text-center">
         <div className="mx-auto max-w-2xl">
-          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
-            {env.VITE_APP_NAME}
-          </h1>
+          <div className="mb-4 flex justify-center">
+            <BrandMark variant="horizontal" className="h-16 w-auto max-w-[24rem]" />
+          </div>
           <p className="mt-4 text-lg text-gray-600">
             A production-ready React template. Feature-first architecture, strict TypeScript, full
             auth flow, and a complete test suite — ready to ship.

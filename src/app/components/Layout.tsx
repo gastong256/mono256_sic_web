@@ -3,10 +3,10 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useMe } from '@/features/auth/hooks/useMe'
 import { useLogout } from '@/features/auth/hooks/useLogout'
-import { env } from '@/shared/config/env'
 import { CompanySelector } from '@/features/companies/components/CompanySelector'
 import { canManageRoles, canViewTeacherDashboard } from '@/shared/lib/authorization'
 import { AppBreadcrumbs } from '@/shared/ui/AppBreadcrumbs'
+import { BrandMark } from '@/shared/ui/BrandMark'
 
 function navLinkClassName(isActive: boolean): string {
   return [
@@ -63,17 +63,18 @@ export function Layout() {
   }, [])
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <nav className="sticky top-0 z-30 px-3 pt-3 sm:px-4">
-        <div className="glass-panel mx-auto flex max-w-6xl items-center justify-between gap-3 rounded-2xl px-4 py-3">
+        <div className="glass-panel mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 rounded-2xl px-4 sm:h-[4.25rem]">
           <div className="flex min-w-0 items-center gap-4">
             <Link
               to="/"
-              className="shrink-0 bg-[linear-gradient(120deg,var(--brand-600),var(--accent-500))] bg-clip-text text-lg font-bold tracking-tight text-transparent transition-opacity hover:opacity-85"
+              className="flex h-full shrink-0 items-center transition-opacity hover:opacity-90"
             >
-              {env.VITE_APP_NAME}
+              <BrandMark variant="horizontal" className="hidden h-[3.35rem] w-[13.6rem] sm:block" />
+              <BrandMark variant="icon" className="size-9 sm:hidden" />
             </Link>
-            <div className="hidden sm:block">
+            <div className="hidden xl:block">
               <CompanySelector />
             </div>
           </div>
@@ -264,9 +265,9 @@ export function Layout() {
 
                 <button
                   onClick={handleLogout}
-                  className="menu-pill rounded-full border-[var(--border-strong)] bg-white text-sm font-semibold hover:bg-red-50 hover:text-red-700"
+                  className="inline-flex items-center rounded-full border border-red-200 bg-[linear-gradient(120deg,#fff5f5,#ffe9e9)] px-3 py-1.5 text-sm font-semibold text-red-700 transition-colors hover:bg-[linear-gradient(120deg,#ffe9e9,#ffdede)]"
                 >
-                  Cerrar sesion
+                  Salir
                 </button>
               </>
             ) : (
@@ -306,6 +307,14 @@ export function Layout() {
             </button>
           )}
         </div>
+
+        {accessToken && (
+          <div className="mx-auto mt-2 hidden max-w-6xl md:block xl:hidden">
+            <div className="glass-panel rounded-2xl px-3 py-2">
+              <CompanySelector />
+            </div>
+          </div>
+        )}
 
         {accessToken && mobileMenuOpen && (
           <div
@@ -369,19 +378,82 @@ export function Layout() {
               </NavLink>
               <button
                 onClick={handleLogout}
-                className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-subtle)] px-3 py-2 text-left text-sm font-semibold text-[var(--text-muted)] transition-colors hover:bg-red-50 hover:text-red-700"
+                className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-[linear-gradient(120deg,#fff5f5,#ffe9e9)] px-3 py-2 text-left text-sm font-semibold text-red-700 transition-colors hover:bg-[linear-gradient(120deg,#ffe9e9,#ffdede)]"
               >
-                Cerrar sesion
+                <svg className="size-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path
+                    fillRule="evenodd"
+                    d="M7.5 3.5a.75.75 0 0 1 1.5 0v5.75a.75.75 0 0 1-1.5 0V3.5Zm-2.8 1.17a.75.75 0 0 1 1.06 0l.92.92a.75.75 0 0 1-1.06 1.06l-.9-.9A5.25 5.25 0 1 0 14 5.7l-.9.9a.75.75 0 0 1-1.06-1.06l.9-.9a.75.75 0 0 1 1.06 0 6.75 6.75 0 1 1-9.3.03Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Salir
               </button>
             </div>
           </div>
         )}
       </nav>
 
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
         {showBreadcrumbs && <AppBreadcrumbs />}
         <Outlet />
       </main>
+
+      <footer className="mt-4 border-t border-[var(--border-soft)]/80 bg-white/45 px-4 py-4 backdrop-blur-[1px]">
+        <div className="mx-auto flex w-full max-w-6xl justify-end">
+          <div className="space-y-1 text-left text-xs text-[var(--text-muted)]">
+            <p className="inline-flex items-center gap-1.5 text-xs text-[var(--text-muted)]/75">
+              <svg className="size-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path
+                  fillRule="evenodd"
+                  d="M18 10A8 8 0 1 1 2 10a8 8 0 0 1 16 0Zm-8-4a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm1 4a1 1 0 1 0-2 0v4a1 1 0 1 0 2 0v-4Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span>Simulador con fines educativos</span>
+            </p>
+            <div className="space-y-0 text-left">
+              <p className="text-[0.78rem]">
+                Inspired by{' '}
+                <span className="font-semibold text-[var(--text-strong)]">
+                  SIC - Sistemas de Informacion Contable
+                </span>
+              </p>
+              <p className="text-[0.72rem] text-[var(--text-muted)]/95 italic">
+                Angrisani Editores - Ed. 2019
+              </p>
+            </div>
+            <p className="text-[0.8rem]">
+              Developed by{' '}
+              <a
+                href="https://github.com/gastong256/mono256_sic_web"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 font-semibold text-[var(--text-strong)] hover:text-[var(--brand-700)]"
+              >
+                <svg
+                  className="size-3.5"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d="M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.2c-3.35.73-4.06-1.61-4.06-1.61-.55-1.39-1.33-1.76-1.33-1.76-1.09-.74.08-.73.08-.73 1.2.08 1.84 1.23 1.84 1.23 1.08 1.84 2.82 1.31 3.5 1 .1-.78.42-1.31.76-1.62-2.67-.31-5.47-1.34-5.47-5.94 0-1.31.47-2.39 1.23-3.23-.12-.3-.53-1.52.12-3.17 0 0 1-.32 3.28 1.23a11.37 11.37 0 0 1 5.97 0c2.27-1.55 3.27-1.23 3.27-1.23.66 1.65.25 2.87.13 3.17.77.84 1.23 1.92 1.23 3.23 0 4.61-2.8 5.63-5.48 5.93.43.38.82 1.11.82 2.24v3.32c0 .32.22.7.83.58A12 12 0 0 0 12 .5Z" />
+                </svg>
+                <span>gastong256</span>
+              </a>{' '}
+              at{' '}
+              <a
+                href="https://www.linkedin.com/in/gastongonzalez256/"
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-[var(--brand-600)] hover:text-[var(--brand-700)]"
+              >
+                LinkedIn
+              </a>
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

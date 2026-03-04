@@ -69,6 +69,7 @@ export function LedgerReportPage() {
           <Button
             type="button"
             variant="secondary"
+            className="border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
             disabled={activeCompanyId === null || hasInvalidRange}
             isLoading={downloadMutation.isPending}
             onClick={() => {

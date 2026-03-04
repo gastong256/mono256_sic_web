@@ -10,6 +10,7 @@ import { useRegister } from '@/features/auth/hooks/useRegister'
 import type { RegisterPayload } from '@/features/auth/api/auth.api'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { Alert } from '@/shared/ui/Alert'
+import { BrandMark } from '@/shared/ui/BrandMark'
 
 const registerSchema = z
   .object({
@@ -125,9 +126,15 @@ export function RegisterPage() {
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-md">
         <div className="surface-card p-8">
-          <div className="mb-6 text-center">
+          <div className="mb-6 flex flex-col items-center text-center">
+            <div className="mb-3">
+              <BrandMark
+                variant="horizontal"
+                className="mx-auto block h-16 w-[18.5rem] max-w-full"
+              />
+            </div>
             <h1 className="text-2xl font-bold tracking-tight text-[var(--text-strong)]">
               Crear cuenta
             </h1>
