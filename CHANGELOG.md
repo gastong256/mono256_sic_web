@@ -1,3 +1,7 @@
+## 1.4.0 (2026-03-04)
+
+* feat: introduce asienta branding, improve nav/forms layout, and fix breadcrumb routing ([81aef86](https://github.com/gastong256/mono256_sic_web/commit/81aef86))
+
 ## 1.3.0 (2026-03-04)
 
 * feat: add contextual icon system and refine report/dashboard visuals to modern saas style ([6149f1e](https://github.com/gastong256/mono256_sic_web/commit/6149f1e))
