@@ -1,3 +1,7 @@
+## <small>1.6.2 (2026-03-12)</small>
+
+* fix: normalize account trees from backend levels for supervision and companies ([cd29945](https://github.com/gastong256/mono256_sic_web/commit/cd29945))
+
 ## <small>1.6.1 (2026-03-12)</small>
 
 * fix: sync fe/msw to backend contracts; fix admin visibility scope; tests/lint/typecheck pass ([04ba633](https://github.com/gastong256/mono256_sic_web/commit/04ba633))
