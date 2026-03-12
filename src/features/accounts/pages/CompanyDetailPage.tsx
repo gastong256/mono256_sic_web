@@ -10,14 +10,20 @@ import { Spinner } from '@/shared/ui/Spinner'
 import type { Account } from '@/features/accounts/types/account.types'
 import { Alert } from '@/shared/ui/Alert'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 
 export function CompanyDetailPage() {
   const { companyId } = useParams<{ companyId: string }>()
   const navigate = useNavigate()
   const id = Number(companyId)
 
+  const userRole = useAuthStore((state) => state.user?.role)
+  const shouldLoadVisibilityConfig = userRole !== undefined && userRole !== 'admin'
+
   const { data: accounts = [], isLoading, error } = useCompanyAccounts(id)
-  const { data: chartConfig = [] } = useAccountChartConfig()
+  const { data: chartConfig = [] } = useAccountChartConfig({
+    enabled: shouldLoadVisibilityConfig,
+  })
   const visibleAccounts = applyChartVisibility(accounts, chartConfig)
   const loadErrorMessage = useMemo(
     () =>

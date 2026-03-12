@@ -7,10 +7,17 @@ import {
   getJournalEntry,
   getRequestUser,
   listJournalEntriesByCompany,
+  reverseJournalEntry,
 } from '@/mocks/data/mockDb'
 import type { CreateJournalEntryPayload } from '@/features/journal/types/journal.types'
+import type { ReverseJournalEntryPayload } from '@/features/journal/types/journal.types'
 
 const BASE = env.VITE_API_BASE_URL
+const PAGE_SIZE = 25
+
+function buildPageLink(path: string, page: number): string {
+  return `${path}?page=${page}`
+}
 
 export const journalHandlers = [
   http.get(`${BASE}/companies/:companyId/journal/`, async ({ request, params }) => {
@@ -25,7 +32,23 @@ export const journalHandlers = [
     if (!canAccessCompany(user, company))
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
 
-    return HttpResponse.json(listJournalEntriesByCompany(companyId))
+    const url = new URL(request.url)
+    const pageRaw = Number(url.searchParams.get('page') ?? '1')
+    const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1
+
+    const allEntries = listJournalEntriesByCompany(companyId)
+    const count = allEntries.length
+    const start = (page - 1) * PAGE_SIZE
+    const end = start + PAGE_SIZE
+    const results = allEntries.slice(start, end)
+
+    return HttpResponse.json({
+      count,
+      next: end < count ? buildPageLink(`${BASE}/companies/${companyId}/journal/`, page + 1) : null,
+      previous:
+        page > 1 ? buildPageLink(`${BASE}/companies/${companyId}/journal/`, page - 1) : null,
+      results,
+    })
   }),
 
   http.get(`${BASE}/companies/:companyId/journal/:entryId/`, async ({ request, params }) => {
@@ -72,4 +95,28 @@ export const journalHandlers = [
 
     return HttpResponse.json(created, { status: 201 })
   }),
+
+  http.post(
+    `${BASE}/companies/:companyId/journal/:entryId/reverse/`,
+    async ({ request, params }) => {
+      await delay(180)
+
+      const user = getRequestUser(request)
+      if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+
+      const companyId = Number(params.companyId)
+      const company = getCompanyById(companyId)
+      if (!company) return HttpResponse.json({ detail: 'Company not found' }, { status: 404 })
+      if (!canAccessCompany(user, company))
+        return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+
+      const body = (await request.json()) as ReverseJournalEntryPayload
+      const reversed = reverseJournalEntry(companyId, Number(params.entryId), body, user.username)
+      if ('error' in reversed) {
+        return HttpResponse.json({ detail: reversed.error }, { status: reversed.status })
+      }
+
+      return HttpResponse.json(reversed, { status: 201 })
+    }
+  ),
 ]

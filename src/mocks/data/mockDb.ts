@@ -5,6 +5,7 @@ import type {
   JournalEntryDetail,
   JournalLine,
   JournalLineType,
+  ReverseJournalEntryPayload,
 } from '@/features/journal/types/journal.types'
 import type { AccountLevelConfig, Role, TeacherDashboardResponse, User } from '@/shared/types'
 
@@ -325,6 +326,23 @@ function toPublicUser(user: MockUserRecord): User {
 export function getUserByUsername(username: string): User | null {
   const user = users.find((candidate) => candidate.username === username)
   return user ? toPublicUser(user) : null
+}
+
+export function updateUserProfile(
+  username: string,
+  payload: { email?: string; first_name?: string; last_name?: string }
+): User | null {
+  const idx = users.findIndex((candidate) => candidate.username === username)
+  if (idx === -1) return null
+
+  users[idx] = {
+    ...users[idx],
+    ...(payload.email !== undefined ? { email: payload.email } : null),
+    ...(payload.first_name !== undefined ? { first_name: payload.first_name } : null),
+    ...(payload.last_name !== undefined ? { last_name: payload.last_name } : null),
+  }
+
+  return toPublicUser(users[idx])
 }
 
 export function listUsers(): User[] {
@@ -731,6 +749,55 @@ export function createJournalEntry(
   return entry
 }
 
+export function reverseJournalEntry(
+  companyId: number,
+  entryId: number,
+  payload: ReverseJournalEntryPayload,
+  createdBy: string
+): JournalEntryDetail | { error: string; status: number } {
+  const original = getJournalEntry(companyId, entryId)
+  if (!original) return { error: 'Not found.', status: 404 }
+  if (original.reversed_by_id) {
+    return { error: 'El asiento ya fue reversado.', status: 409 }
+  }
+
+  const maxEntryNumber = Math.max(
+    0,
+    ...journalEntries
+      .filter((entry) => journalCompanyMap[entry.id] === companyId)
+      .map((entry) => entry.entry_number)
+  )
+
+  const reversedLines: JournalLine[] = original.lines.map((line) => ({
+    ...line,
+    type: line.type === 'DEBIT' ? 'CREDIT' : 'DEBIT',
+  }))
+
+  const reversed: JournalEntryDetail = {
+    id: nextJournalId++,
+    entry_number: maxEntryNumber + 1,
+    date: payload.date ?? new Date().toISOString().slice(0, 10),
+    description: payload.description ?? `Reversa: ${original.description}`,
+    source_type: 'REVERSAL',
+    source_ref: String(original.id),
+    created_by: createdBy,
+    reversal_of_id: original.id,
+    reversed_by_id: null,
+    total_debit: original.total_credit,
+    total_credit: original.total_debit,
+    lines: reversedLines.map((line) => ({
+      ...line,
+      amount: line.amount,
+    })),
+  }
+
+  original.reversed_by_id = reversed.id
+  journalEntries.push(reversed)
+  journalCompanyMap[reversed.id] = companyId
+
+  return reversed
+}
+
 function canAccessCourse(user: User, course: Course): boolean {
   if (user.role === 'admin') return true
   if (user.role === 'teacher') return course.teacher_username === user.username
@@ -744,6 +811,28 @@ function findAccessibleCourse(user: User, courseId: number): Course | null {
   return course
 }
 
+function toCourseResponse(course: Course): {
+  id: number
+  name: string
+  code: string | null
+  teacher_id: number
+  teacher_username: string
+  student_count: number
+  created_at: string
+  updated_at: string
+} {
+  return {
+    id: course.id,
+    name: course.name,
+    code: course.code,
+    teacher_id: course.teacher_id,
+    teacher_username: course.teacher_username,
+    student_count: course.student_usernames.length,
+    created_at: course.created_at,
+    updated_at: course.updated_at,
+  }
+}
+
 export function listCoursesForUser(user: User): Array<{
   id: number
   name: string
@@ -755,17 +844,7 @@ export function listCoursesForUser(user: User): Array<{
   updated_at: string
 }> {
   const visibleCourses = courses.filter((course) => canAccessCourse(user, course))
-
-  return visibleCourses.map((course) => ({
-    id: course.id,
-    name: course.name,
-    code: course.code,
-    teacher_id: course.teacher_id,
-    teacher_username: course.teacher_username,
-    student_count: course.student_usernames.length,
-    created_at: course.created_at,
-    updated_at: course.updated_at,
-  }))
+  return visibleCourses.map(toCourseResponse)
 }
 
 export function createCourseForUser(
@@ -815,17 +894,103 @@ export function createCourseForUser(
     updated_at: now,
   }
   courses.push(created)
+  return toCourseResponse(created)
+}
 
-  return {
-    id: created.id,
-    name: created.name,
-    code: created.code,
-    teacher_id: created.teacher_id,
-    teacher_username: created.teacher_username,
-    student_count: 0,
-    created_at: created.created_at,
-    updated_at: created.updated_at,
+export function getCourseForUser(
+  user: User,
+  courseId: number
+): {
+  id: number
+  name: string
+  code: string | null
+  teacher_id: number
+  teacher_username: string
+  student_count: number
+  created_at: string
+  updated_at: string
+} | null {
+  const course = findAccessibleCourse(user, courseId)
+  if (!course) return null
+  return toCourseResponse(course)
+}
+
+export function updateCourseForUser(
+  user: User,
+  courseId: number,
+  payload: { name?: string; code?: string; teacher_id?: number }
+):
+  | {
+      ok: true
+      course: {
+        id: number
+        name: string
+        code: string | null
+        teacher_id: number
+        teacher_username: string
+        student_count: number
+        created_at: string
+        updated_at: string
+      }
+    }
+  | { ok: false; status: number; detail: string } {
+  const course = findAccessibleCourse(user, courseId)
+  if (!course) return { ok: false, status: 403, detail: 'Forbidden' }
+
+  if (payload.name !== undefined && payload.name.trim().length === 0) {
+    return { ok: false, status: 400, detail: 'Validation error' }
   }
+
+  course.name = payload.name?.trim() || course.name
+  if (payload.code !== undefined) {
+    course.code = payload.code.trim().length > 0 ? payload.code.trim() : null
+  }
+  // Backend contract note: teacher_id in PATCH currently does not change owner.
+  course.updated_at = new Date().toISOString()
+
+  return { ok: true, course: toCourseResponse(course) }
+}
+
+export function deleteCourseForUser(
+  user: User,
+  courseId: number
+): { ok: true } | { ok: false; status: number; detail: string } {
+  const idx = courses.findIndex((candidate) => candidate.id === courseId)
+  if (idx === -1) return { ok: false, status: 404, detail: 'Course not found' }
+
+  if (!canAccessCourse(user, courses[idx])) {
+    return { ok: false, status: 403, detail: 'Forbidden' }
+  }
+
+  const removed = courses[idx]
+  removed.student_usernames.forEach((username) => {
+    const student = users.find((candidate) => candidate.username === username)
+    if (student && student.course_id === removed.id) student.course_id = null
+  })
+
+  courses.splice(idx, 1)
+  return { ok: true }
+}
+
+export function listCourseEnrollmentsForUser(
+  user: User,
+  courseId: number
+): Array<{
+  student_id: number
+  student_username: string
+  student_full_name: string
+}> | null {
+  const course = findAccessibleCourse(user, courseId)
+  if (!course) return null
+
+  return course.student_usernames
+    .map((username) => users.find((candidate) => candidate.username === username))
+    .filter((student): student is MockUserRecord => student !== undefined)
+    .map((student) => ({
+      student_id: student.id,
+      student_username: student.username,
+      student_full_name: `${student.first_name} ${student.last_name}`.trim(),
+    }))
 }
 
 export function listTeacherCourseCompanies(
@@ -1152,10 +1317,9 @@ export function patchSingleAccountVisibility(
   return { ...accountChartConfig[idx] }
 }
 
-export function updateUserRole(userId: number, role: Exclude<Role, 'admin'>): User | null {
+export function updateUserRole(userId: number, role: Role): User | null {
   const idx = users.findIndex((user) => user.id === userId)
   if (idx === -1) return null
-  if (users[idx].role === 'admin') return null
 
   users[idx] = {
     ...users[idx],

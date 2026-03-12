@@ -10,6 +10,7 @@ import {
 import type { Role } from '@/shared/types'
 
 const BASE = env.VITE_API_BASE_URL
+const PAGE_SIZE = 20
 
 export const adminHandlers = [
   http.get(`${BASE}/admin/registration-code/`, async ({ request }) => {
@@ -55,10 +56,19 @@ export const adminHandlers = [
       users = users.filter((candidate) => candidate.username.toLowerCase().includes(search))
     }
 
-    // Keep response shape as array (per OpenAPI), with lightweight page slicing for mocks.
-    const PAGE_SIZE = 20
     const start = Math.max(0, (Number.isFinite(page) ? page : 1) - 1) * PAGE_SIZE
-    return HttpResponse.json(users.slice(start, start + PAGE_SIZE))
+    const normalizedPage = Math.max(1, Number.isFinite(page) ? page : 1)
+    const end = start + PAGE_SIZE
+
+    const next = end < users.length ? `${BASE}/admin/users/?page=${normalizedPage + 1}` : null
+    const previous = normalizedPage > 1 ? `${BASE}/admin/users/?page=${normalizedPage - 1}` : null
+
+    return HttpResponse.json({
+      count: users.length,
+      next,
+      previous,
+      results: users.slice(start, end),
+    })
   }),
 
   http.patch(`${BASE}/admin/users/:userId/role/`, async ({ request, params }) => {
@@ -69,7 +79,10 @@ export const adminHandlers = [
     if (user.role !== 'admin') return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
 
     const body = (await request.json()) as { role?: Role }
-    if (!body.role || (body.role !== 'teacher' && body.role !== 'student')) {
+    if (
+      !body.role ||
+      (body.role !== 'teacher' && body.role !== 'student' && body.role !== 'admin')
+    ) {
       return HttpResponse.json({ role: ['Role inválido.'] }, { status: 400 })
     }
 

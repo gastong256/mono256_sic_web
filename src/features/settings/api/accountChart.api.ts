@@ -37,16 +37,22 @@ function flattenVisibilityTree(nodes: VisibilityNode[], acc: AccountLevelConfig[
 }
 
 export const accountChartApi = {
-  getConfig: (): Promise<AccountLevelConfig[]> =>
+  getConfig: (params?: { teacherId?: number }): Promise<AccountLevelConfig[]> =>
     httpClient
-      .get<VisibilityNode[] | { results: VisibilityNode[] }>('/accounts/visibility/')
+      .get<VisibilityNode[] | { results: VisibilityNode[] }>('/accounts/visibility/', {
+        params:
+          params?.teacherId && params.teacherId > 0 ? { teacher_id: params.teacherId } : undefined,
+      })
       .then((r) => {
         const payload = r.data
         const nodes = Array.isArray(payload) ? payload : payload.results
         return flattenVisibilityTree(nodes ?? [])
       }),
 
-  updateConfig: (payload: AccountLevelConfig[]): Promise<AccountLevelConfig[]> =>
+  updateConfig: (
+    payload: AccountLevelConfig[],
+    params?: { teacherId?: number }
+  ): Promise<AccountLevelConfig[]> =>
     (() => {
       const uniqueUpdates = Array.from(
         payload.reduce((acc, item) => {
@@ -60,6 +66,7 @@ export const accountChartApi = {
 
       return httpClient
         .patch<unknown>('/accounts/visibility/batch/', {
+          ...(params?.teacherId && params.teacherId > 0 ? { teacher_id: params.teacherId } : null),
           updates: uniqueUpdates,
         })
         .then((r) => r.data)

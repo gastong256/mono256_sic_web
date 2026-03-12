@@ -5,6 +5,7 @@ import {
   getRequestUser,
   refreshAccessToken,
   registerStudent,
+  updateUserProfile,
 } from '@/mocks/data/mockDb'
 
 const BASE = env.VITE_API_BASE_URL
@@ -90,5 +91,32 @@ export const authHandlers = [
     }
 
     return HttpResponse.json(user)
+  }),
+
+  http.patch(`${BASE}/auth/me/`, async ({ request }) => {
+    await delay(100)
+
+    const user = getRequestUser(request)
+    if (!user) {
+      return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = (await request.json()) as {
+      email?: string
+      first_name?: string
+      last_name?: string
+    }
+
+    const updated = updateUserProfile(user.username, {
+      ...(body.email !== undefined ? { email: body.email } : null),
+      ...(body.first_name !== undefined ? { first_name: body.first_name } : null),
+      ...(body.last_name !== undefined ? { last_name: body.last_name } : null),
+    })
+
+    if (!updated) {
+      return HttpResponse.json({ detail: 'User not found' }, { status: 404 })
+    }
+
+    return HttpResponse.json(updated)
   }),
 ]

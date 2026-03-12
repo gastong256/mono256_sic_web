@@ -4,6 +4,7 @@ import type { AdminRoleUpdatePayload } from '@/shared/types'
 import type { AdminListUsersParams, AdminUsersPage } from '@/features/admin/api/admin.api'
 
 export const ADMIN_USERS_QUERY_KEY = ['admin', 'users'] as const
+export const ADMIN_TEACHERS_QUERY_KEY = ['admin', 'teachers'] as const
 
 export function useAdminUsers(params?: AdminListUsersParams) {
   return useQuery<AdminUsersPage>({
@@ -22,5 +23,14 @@ export function useUpdateUserRole() {
       await queryClient.invalidateQueries({ queryKey: ADMIN_USERS_QUERY_KEY })
       await queryClient.invalidateQueries({ queryKey: ['me'] })
     },
+  })
+}
+
+export function useAdminTeachers(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ADMIN_TEACHERS_QUERY_KEY,
+    queryFn: adminApi.listTeachers,
+    enabled: options?.enabled ?? true,
+    staleTime: 60_000,
   })
 }

@@ -3,6 +3,8 @@ import {
   useAccountChartConfig,
   useUpdateAccountChartConfig,
 } from '@/features/settings/hooks/useAccountChartConfig'
+import { useAdminTeachers } from '@/features/admin/hooks/useAdminUsers'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import type { AccountLevelConfig } from '@/shared/types'
 import { Spinner } from '@/shared/ui/Spinner'
 import { PageHeader } from '@/shared/ui/PageHeader'
@@ -25,8 +27,40 @@ function buildTree(items: AccountLevelConfig[]): ChartTreeNode[] {
 
 export function AccountChartVisibilityPage() {
   const { pushToast } = useToast()
-  const { data = [], isLoading, error } = useAccountChartConfig()
-  const { mutate: saveConfig, isPending: saving } = useUpdateAccountChartConfig()
+  const role = useAuthStore((state) => state.user?.role)
+  const isRoleResolved = role === 'admin' || role === 'teacher'
+  const isAdmin = role === 'admin'
+  const [selectedTeacherId, setSelectedTeacherId] = useState<number | null>(null)
+
+  const {
+    data: teachers = [],
+    isLoading: teachersLoading,
+    error: teachersError,
+  } = useAdminTeachers({ enabled: isAdmin })
+
+  useEffect(() => {
+    if (!isAdmin || teachers.length === 0) return
+    const selectedStillExists = teachers.some((teacher) => teacher.id === selectedTeacherId)
+    if (!selectedStillExists) {
+      setSelectedTeacherId(teachers[0].id)
+    }
+  }, [isAdmin, teachers, selectedTeacherId])
+
+  const teacherId = isAdmin ? (selectedTeacherId ?? undefined) : undefined
+  const canLoadConfig =
+    isRoleResolved && (!isAdmin || (typeof teacherId === 'number' && teacherId > 0))
+
+  const {
+    data = [],
+    isLoading,
+    error,
+  } = useAccountChartConfig({
+    teacherId,
+    enabled: canLoadConfig,
+  })
+  const { mutate: saveConfig, isPending: saving } = useUpdateAccountChartConfig({
+    teacherId,
+  })
 
   const [draft, setDraft] = useState<AccountLevelConfig[]>([])
   const loadErrorMessage = useMemo(
@@ -37,6 +71,15 @@ export function AccountChartVisibilityPage() {
         forbiddenMessage: 'No tenés permisos para configurar visibilidad del plan de cuentas.',
       }),
     [error]
+  )
+  const teachersErrorMessage = useMemo(
+    () =>
+      getHttpErrorMessage(teachersError, {
+        defaultMessage: 'No se pudieron cargar los docentes disponibles.',
+        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
+        forbiddenMessage: 'No tenés permisos para consultar docentes.',
+      }),
+    [teachersError]
   )
 
   useEffect(() => {
@@ -56,18 +99,65 @@ export function AccountChartVisibilityPage() {
       <PageHeader
         icon="settings"
         title="Visibilidad del plan de cuentas"
-        subtitle="Mostra u oculta niveles 1 y 2 globalmente."
+        subtitle={
+          isAdmin
+            ? 'Seleccioná un docente y configurá su visibilidad de niveles 1 y 2.'
+            : 'Mostra u oculta niveles 1 y 2 globalmente.'
+        }
       />
 
-      {isLoading && (
+      {isAdmin && (
+        <section className="surface-card p-4">
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+            <label className="text-sm font-semibold text-[var(--text-strong)]">
+              Docente
+              <select
+                value={selectedTeacherId ?? ''}
+                disabled={teachersLoading || teachers.length === 0}
+                onChange={(event) => {
+                  const nextId = Number(event.target.value)
+                  setSelectedTeacherId(Number.isFinite(nextId) && nextId > 0 ? nextId : null)
+                }}
+                className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-white px-3 py-2 text-sm text-[var(--text-strong)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
+              >
+                <option value="" disabled>
+                  Seleccioná un docente...
+                </option>
+                {teachers.map((teacher) => (
+                  <option key={teacher.id} value={teacher.id}>
+                    @{teacher.username} · {`${teacher.first_name} ${teacher.last_name}`.trim()}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {teachersLoading && (
+              <div className="pb-1">
+                <Spinner className="size-5 text-[var(--brand-500)]" label="Cargando docentes..." />
+              </div>
+            )}
+          </div>
+
+          {teachersError && !teachersLoading && <Alert tone="error">{teachersErrorMessage}</Alert>}
+
+          {!teachersLoading && !teachersError && teachers.length === 0 && (
+            <Alert tone="warning">No hay docentes disponibles para configurar.</Alert>
+          )}
+
+          {!teachersLoading && !teachersError && teachers.length > 0 && !canLoadConfig && (
+            <Alert tone="warning">Seleccioná un docente para cargar la configuración.</Alert>
+          )}
+        </section>
+      )}
+
+      {canLoadConfig && isLoading && (
         <div className="flex justify-center py-16">
           <Spinner className="size-8 text-[var(--brand-500)]" label="Cargando configuracion..." />
         </div>
       )}
 
-      {error && !isLoading && <Alert tone="error">{loadErrorMessage}</Alert>}
+      {canLoadConfig && error && !isLoading && <Alert tone="error">{loadErrorMessage}</Alert>}
 
-      {!isLoading && !error && (
+      {canLoadConfig && !isLoading && !error && (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="divide-y divide-gray-100">
             {buildTree(draft).map((parent) => (
@@ -134,7 +224,7 @@ export function AccountChartVisibilityPage() {
                     ),
                 })
               }
-              disabled={saving}
+              disabled={saving || !canLoadConfig}
             >
               {saving ? 'Guardando...' : 'Guardar cambios'}
             </Button>

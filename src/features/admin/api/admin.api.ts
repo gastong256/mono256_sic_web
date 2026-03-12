@@ -1,6 +1,7 @@
 import { httpClient } from '@/shared/lib/http'
 import type { AdminRoleUpdatePayload, User } from '@/shared/types'
 import { extractListPayload, extractPaginationMeta } from '@/shared/lib/apiPagination'
+import { fetchAllPages } from '@/shared/lib/fetchAllPages'
 
 export type AdminListUsersParams = {
   page?: number
@@ -32,4 +33,13 @@ export const adminApi = {
 
   updateUserRole: (userId: number, payload: AdminRoleUpdatePayload): Promise<User> =>
     httpClient.patch<User>(`/admin/users/${userId}/role/`, payload).then((r) => r.data),
+
+  listTeachers: (): Promise<User[]> =>
+    fetchAllPages<User>((page) =>
+      httpClient
+        .get<unknown>('/admin/users/', {
+          params: { role: 'teacher', page },
+        })
+        .then((r) => r.data)
+    ),
 }
