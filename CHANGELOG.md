@@ -1,3 +1,7 @@
+## <small>1.6.1 (2026-03-12)</small>
+
+* fix: sync fe/msw to backend contracts; fix admin visibility scope; tests/lint/typecheck pass ([04ba633](https://github.com/gastong256/mono256_sic_web/commit/04ba633))
+
 ## 1.6.0 (2026-03-12)
 
 * feat: sync backend contracts (teacher all, decimals, retry_after, tenant, me, reverse) ([f099308](https://github.com/gastong256/mono256_sic_web/commit/f099308))
