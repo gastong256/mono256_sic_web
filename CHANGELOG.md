@@ -1,3 +1,8 @@
+## 1.5.0 (2026-03-12)
+
+* feat: sync api contracts with backend (auth, pagination, errors, adapters, reports) ([3d1196f](https://github.com/gastong256/mono256_sic_web/commit/3d1196f))
+* test: fix strict selectors for register and company creation smoke scenarios ([61c2d25](https://github.com/gastong256/mono256_sic_web/commit/61c2d25))
+
 ## <small>1.4.1 (2026-03-04)</small>
 
 * fix: add stable smoke coverage for register, companies and reports navigation ([7df7c7f](https://github.com/gastong256/mono256_sic_web/commit/7df7c7f))
