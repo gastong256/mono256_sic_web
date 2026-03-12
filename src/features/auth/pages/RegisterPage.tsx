@@ -11,6 +11,11 @@ import type { RegisterPayload } from '@/features/auth/api/auth.api'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { Alert } from '@/shared/ui/Alert'
 import { BrandMark } from '@/shared/ui/BrandMark'
+import {
+  extractApiMessage,
+  extractFieldValidationErrors,
+  getRetryAfterSeconds,
+} from '@/shared/lib/httpErrors'
 
 const registerSchema = z
   .object({
@@ -86,33 +91,33 @@ export function RegisterPage() {
       }
 
       if (error.response?.status === 429) {
-        const data = error.response.data as { retry_after?: number; detail?: string } | undefined
-        const retryAfter = Number(data?.retry_after)
-        setRetryAfterSec(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 10)
-        setGenericError('Demasiados intentos. Esperá antes de volver a intentar.')
+        const retryAfter = getRetryAfterSeconds(error)
+        const retryAfterValue = retryAfter ?? Number.NaN
+        setRetryAfterSec(
+          Number.isFinite(retryAfterValue) && retryAfterValue > 0 ? retryAfterValue : 10
+        )
+        setGenericError(
+          extractApiMessage(error) ?? 'Demasiados intentos. Esperá antes de volver a intentar.'
+        )
         return
       }
 
       if (error.response?.status === 400) {
-        const data = error.response.data as Record<string, string[] | string> | undefined
-        if (data) {
-          const nextFieldErrors: ServerErrors = {}
-          ;(['username', 'password', 'password_confirm', 'registration_code'] as const).forEach(
-            (field) => {
-              const value = data[field]
-              if (Array.isArray(value) && value.length > 0) nextFieldErrors[field] = value[0]
-              if (typeof value === 'string') nextFieldErrors[field] = value
-            }
-          )
-          setServerErrors(nextFieldErrors)
-          if (!Object.keys(nextFieldErrors).length) {
-            setGenericError('No se pudo completar el registro.')
+        const rawFieldErrors = extractFieldValidationErrors(error)
+        const nextFieldErrors: ServerErrors = {}
+        ;(['username', 'password', 'password_confirm', 'registration_code'] as const).forEach(
+          (field) => {
+            if (rawFieldErrors[field]) nextFieldErrors[field] = rawFieldErrors[field]
           }
-          return
+        )
+        setServerErrors(nextFieldErrors)
+        if (!Object.keys(nextFieldErrors).length) {
+          setGenericError(extractApiMessage(error) ?? 'No se pudo completar el registro.')
         }
+        return
       }
 
-      setGenericError('No se pudo completar el registro.')
+      setGenericError(extractApiMessage(error) ?? 'No se pudo completar el registro.')
     }
   }
 

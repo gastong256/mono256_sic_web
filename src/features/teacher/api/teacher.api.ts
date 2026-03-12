@@ -1,14 +1,20 @@
 import { httpClient } from '@/shared/lib/http'
 import type { TeacherDashboardResponse } from '@/shared/types'
+import { fetchAllPages } from '@/shared/lib/fetchAllPages'
+import { extractListPayload, extractPaginationMeta } from '@/shared/lib/apiPagination'
+import {
+  normalizeTeacherAvailableStudentsPayload,
+  normalizeTeacherCourseCompaniesPayload,
+  normalizeTeacherCourseJournalEntriesPayload,
+} from '@/features/teacher/adapters/teacher.adapters'
 import type {
   CourseCreatePayload,
-  TeacherAvailableStudent,
   TeacherAvailableStudentsResponse,
   TeacherCompanyItem,
-  TeacherCourseCompaniesResponse,
-  TeacherCourseJournalEntriesResponse,
   TeacherCourseJournalEntry,
 } from '@/features/teacher/types/teacher.types'
+
+type UnknownRecord = Record<string, unknown>
 
 type Course = {
   id: number
@@ -16,63 +22,90 @@ type Course = {
   teacher_username?: string
 }
 
-type AvailableStudentsPayload = TeacherAvailableStudentsResponse | TeacherAvailableStudent[]
-
-function normalizeAvailableStudents(
-  payload: AvailableStudentsPayload
-): TeacherAvailableStudentsResponse {
-  if (Array.isArray(payload)) {
-    return {
-      count: payload.length,
-      next: null,
-      previous: null,
-      results: payload,
-    }
-  }
-  return {
-    count: payload.count ?? payload.results.length,
-    next: payload.next ?? null,
-    previous: payload.previous ?? null,
-    results: payload.results ?? [],
-  }
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === 'object' && value !== null
 }
 
-function extractCount(payload: TeacherCourseJournalEntriesResponse): number {
-  return typeof payload.count === 'number' ? payload.count : payload.results.length
+function normalizeCourses(payload: unknown): Course[] {
+  return extractListPayload<unknown>(payload)
+    .map((course) => {
+      if (!isRecord(course) || typeof course.id !== 'number') return null
+      const normalized: Course = {
+        id: course.id,
+        name: typeof course.name === 'string' ? course.name : '',
+        ...(typeof course.teacher_username === 'string'
+          ? { teacher_username: course.teacher_username }
+          : {}),
+      }
+      return normalized
+    })
+    .filter((course): course is Course => Boolean(course))
+}
+
+function buildStudentJournalCountMap(entries: TeacherCourseJournalEntry[]): Map<number, number> {
+  const map = new Map<number, number>()
+  entries.forEach((entry) => {
+    map.set(entry.student_id, (map.get(entry.student_id) ?? 0) + 1)
+  })
+  return map
+}
+
+async function fetchTeacherCourseCompaniesPayload(courseId: number): Promise<unknown> {
+  const firstPagePayload = await httpClient
+    .get<unknown>(`/teacher/courses/${courseId}/companies/`, { params: { page: 1 } })
+    .then((r) => r.data)
+
+  if (isRecord(firstPagePayload) && Array.isArray(firstPagePayload.students)) {
+    return firstPagePayload
+  }
+
+  const firstPageItems = extractListPayload<unknown>(firstPagePayload)
+  const firstMeta = extractPaginationMeta(firstPagePayload, firstPageItems.length)
+  if (!firstMeta.next) return firstPagePayload
+
+  const remainingItems = await fetchAllPages<unknown>(
+    (page) =>
+      httpClient
+        .get<unknown>(`/teacher/courses/${courseId}/companies/`, { params: { page } })
+        .then((r) => r.data),
+    { startPage: 2 }
+  )
+
+  return [...firstPageItems, ...remainingItems]
 }
 
 export const teacherApi = {
   dashboard: async (): Promise<TeacherDashboardResponse> => {
-    const courses = await httpClient.get<Course[]>('/courses/').then((r) => r.data)
+    const courses = await fetchAllPages<unknown>((page) =>
+      httpClient.get<unknown>('/courses/', { params: { page } }).then((r) => r.data)
+    ).then((items) => normalizeCourses(items))
 
     const dashboardCourses = await Promise.all(
       courses.map(async (course) => {
-        const courseCompanies = await httpClient
-          .get<TeacherCourseCompaniesResponse>(`/teacher/courses/${course.id}/companies/`)
-          .then((r) => r.data)
-
-        const students = await Promise.all(
-          courseCompanies.students.map(async (student) => {
-            const journalPayload = await httpClient
-              .get<TeacherCourseJournalEntriesResponse>(
-                `/teacher/courses/${course.id}/journal-entries/`,
-                {
-                  params: { student_id: student.student_id },
-                }
-              )
+        const [allCompaniesPayload, allCourseJournalEntries] = await Promise.all([
+          fetchTeacherCourseCompaniesPayload(course.id),
+          fetchAllPages<unknown>((page) =>
+            httpClient
+              .get<unknown>(`/teacher/courses/${course.id}/journal-entries/`, { params: { page } })
               .then((r) => r.data)
+          ).then((items) => normalizeTeacherCourseJournalEntriesPayload(items).results),
+        ])
 
-            return {
-              id: student.student_id,
-              username: student.student_username,
-              full_name: student.student_full_name,
-              course_id: course.id,
-              course_name: course.name,
-              company_count: student.companies.length,
-              journal_entry_count: extractCount(journalPayload),
-            }
-          })
+        const courseCompanies = normalizeTeacherCourseCompaniesPayload(
+          allCompaniesPayload,
+          course.id
         )
+        const countMap = buildStudentJournalCountMap(allCourseJournalEntries)
+
+        const students = courseCompanies.students.map((student) => ({
+          id: student.student_id,
+          username: student.student_username,
+          full_name: student.student_full_name,
+          course_id: course.id,
+          course_name: course.name,
+          company_count: student.companies.length,
+          journal_entry_count: countMap.get(student.student_id) ?? 0,
+        }))
 
         return {
           id: course.id,
@@ -88,9 +121,8 @@ export const teacherApi = {
   },
 
   studentCompanies: async (courseId: number, studentId: number): Promise<TeacherCompanyItem[]> => {
-    const grouped = await httpClient
-      .get<TeacherCourseCompaniesResponse>(`/teacher/courses/${courseId}/companies/`)
-      .then((r) => r.data)
+    const payload = await fetchTeacherCourseCompaniesPayload(courseId)
+    const grouped = normalizeTeacherCourseCompaniesPayload(payload, courseId)
     const student = grouped.students.find((candidate) => candidate.student_id === studentId)
     return student?.companies ?? []
   },
@@ -98,27 +130,36 @@ export const teacherApi = {
   companyJournal: (
     courseId: number,
     studentId: number,
-    companyId: number
+    companyId: number,
+    params?: { dateFrom?: string; dateTo?: string }
   ): Promise<TeacherCourseJournalEntry[]> =>
-    httpClient
-      .get<TeacherCourseJournalEntriesResponse>(`/teacher/courses/${courseId}/journal-entries/`, {
-        params: { student_id: studentId, company_id: companyId },
-      })
-      .then((r) => r.data.results.map((entry) => ({ ...entry, lines: entry.lines ?? [] }))),
+    fetchAllPages<unknown>((page) =>
+      httpClient
+        .get<unknown>(`/teacher/courses/${courseId}/journal-entries/`, {
+          params: {
+            student_id: studentId,
+            company_id: companyId,
+            ...(params?.dateFrom ? { date_from: params.dateFrom } : null),
+            ...(params?.dateTo ? { date_to: params.dateTo } : null),
+            page,
+          },
+        })
+        .then((r) => r.data)
+    ).then((entries) => normalizeTeacherCourseJournalEntriesPayload(entries).results),
 
   availableStudents: (
     courseId: number,
     params?: { search?: string; page?: number }
   ): Promise<TeacherAvailableStudentsResponse> =>
     httpClient
-      .get<AvailableStudentsPayload>('/teacher/students/available/', {
+      .get<unknown>('/teacher/students/available/', {
         params: {
           course_id: courseId,
           ...(params?.search ? { search: params.search } : null),
           ...(params?.page ? { page: params.page } : null),
         },
       })
-      .then((r) => normalizeAvailableStudents(r.data)),
+      .then((r) => normalizeTeacherAvailableStudentsPayload(r.data)),
 
   enrollStudent: (courseId: number, studentId: number): Promise<void> =>
     httpClient.post(`/courses/${courseId}/enrollments/`, { student_id: studentId }).then(() => {}),

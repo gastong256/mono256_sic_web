@@ -11,6 +11,7 @@ import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.
 import { env } from '@/shared/config/env'
 import { logger } from '@/shared/lib/logger'
 import { ToastProvider } from '@/shared/ui/ToastProvider'
+import { getRequestId } from '@/shared/lib/tracing'
 
 function setUserFromToken(accessToken: string): void {
   const payload = decodeJwtPayload(accessToken)
@@ -60,12 +61,18 @@ export function App() {
     let cancelled = false
 
     void axios
-      .post<{ access: string; refresh: string }>(`${env.VITE_API_BASE_URL}/auth/token/refresh/`, {
-        refresh: refreshToken,
-      })
+      .post<{ access: string; refresh?: string }>(
+        `${env.VITE_API_BASE_URL}/auth/token/refresh/`,
+        { refresh: refreshToken },
+        {
+          headers: {
+            'X-Request-ID': getRequestId(),
+          },
+        }
+      )
       .then(({ data }) => {
         if (cancelled) return
-        setTokens(data.access, data.refresh)
+        setTokens(data.access, data.refresh ?? refreshToken)
         setUserFromToken(data.access)
       })
       .catch((error: unknown) => {

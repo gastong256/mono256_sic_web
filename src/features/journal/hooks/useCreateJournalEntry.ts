@@ -9,8 +9,11 @@ export function useCreateJournalEntry(companyId: number) {
 
   return useMutation({
     mutationFn: (payload: CreateJournalEntryPayload) => journalApi.create(companyId, payload),
-    onSuccess: (entry) => {
-      void queryClient.invalidateQueries({ queryKey: journalEntriesQueryKey(companyId) })
+    onSuccess: async (entry) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: journalEntriesQueryKey(companyId) }),
+        queryClient.invalidateQueries({ queryKey: ['reports'] }),
+      ])
       logger.info({ message: 'Journal entry created', entryId: entry.id })
     },
     onError: (err: unknown) => {

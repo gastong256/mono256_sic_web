@@ -11,6 +11,7 @@ export function useDeleteAccount(companyId: number) {
     onSuccess: async (_, accountId) => {
       logger.info({ message: 'Cuenta eliminada', accountId, companyId })
       await queryClient.invalidateQueries({ queryKey: companyAccountsQueryKey(companyId) })
+      await queryClient.invalidateQueries({ queryKey: ['accounts'] })
     },
     onError: (error) => {
       logger.error({ message: 'Error al eliminar cuenta', error: String(error) })

@@ -11,6 +11,7 @@ export function useDeleteCompany() {
     onSuccess: async (_, id) => {
       logger.info({ message: 'Empresa eliminada', companyId: id })
       await queryClient.invalidateQueries({ queryKey: COMPANIES_QUERY_KEY })
+      await queryClient.invalidateQueries({ queryKey: ['companies', 'detail'] })
     },
     onError: (error) => {
       logger.error({ message: 'Error al eliminar empresa', error: String(error) })

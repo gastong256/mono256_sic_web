@@ -8,6 +8,7 @@ import type { TeacherCourseJournalEntry } from '@/features/teacher/types/teacher
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
+import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
   style: 'currency',
@@ -109,6 +110,25 @@ export function TeacherStudentDetailPage() {
       byAccount: summarizeByAccount(journalEntries),
     }
   }, [journalEntries])
+  const companiesErrorMessage = useMemo(
+    () =>
+      getHttpErrorMessage(error, {
+        defaultMessage: 'No se pudieron cargar las empresas del alumno.',
+        forbiddenMessage: 'No tenés permisos para ver empresas de este alumno.',
+        notFoundMessage: 'El alumno o el curso ya no existe.',
+      }),
+    [error]
+  )
+  const journalErrorMessage = useMemo(
+    () =>
+      getHttpErrorMessage(journalError, {
+        defaultMessage: 'No se pudieron cargar los asientos del alumno.',
+        badRequestMessage: 'Parámetros inválidos para consultar los asientos.',
+        forbiddenMessage: 'No tenés permisos para ver estos asientos.',
+        notFoundMessage: 'La empresa seleccionada no existe o ya no está disponible.',
+      }),
+    [journalError]
+  )
 
   return (
     <div className="space-y-6">
@@ -129,9 +149,7 @@ export function TeacherStudentDetailPage() {
 
         {isLoading && <Spinner className="size-6 text-blue-600" label="Cargando empresas…" />}
 
-        {error && !isLoading && (
-          <Alert tone="error">Error al cargar las empresas del alumno.</Alert>
-        )}
+        {error && !isLoading && <Alert tone="error">{companiesErrorMessage}</Alert>}
 
         {!isLoading && !error && companies.length === 0 && (
           <EmptyState
@@ -181,7 +199,9 @@ export function TeacherStudentDetailPage() {
         )}
 
         {selectedCompany && journalError && !journalLoading && (
-          <Alert tone="error">Error al cargar asientos para {selectedCompany.name}.</Alert>
+          <Alert tone="error">
+            {journalErrorMessage} ({selectedCompany.name}).
+          </Alert>
         )}
 
         {selectedCompany && !journalLoading && !journalError && journalEntries.length === 0 && (

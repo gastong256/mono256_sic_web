@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   useAccountChartConfig,
   useUpdateAccountChartConfig,
@@ -9,6 +9,7 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 import { Button } from '@/shared/ui/Button'
 import { Alert } from '@/shared/ui/Alert'
 import { useToast } from '@/shared/ui/ToastProvider'
+import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 type ChartTreeNode = AccountLevelConfig & { children: AccountLevelConfig[] }
 
@@ -28,6 +29,15 @@ export function AccountChartVisibilityPage() {
   const { mutate: saveConfig, isPending: saving } = useUpdateAccountChartConfig()
 
   const [draft, setDraft] = useState<AccountLevelConfig[]>([])
+  const loadErrorMessage = useMemo(
+    () =>
+      getHttpErrorMessage(error, {
+        defaultMessage: 'No se pudo cargar la configuración de visibilidad.',
+        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
+        forbiddenMessage: 'No tenés permisos para configurar visibilidad del plan de cuentas.',
+      }),
+    [error]
+  )
 
   useEffect(() => {
     setDraft(data)
@@ -55,9 +65,7 @@ export function AccountChartVisibilityPage() {
         </div>
       )}
 
-      {error && !isLoading && (
-        <Alert tone="error">Error al cargar configuracion de visibilidad.</Alert>
-      )}
+      {error && !isLoading && <Alert tone="error">{loadErrorMessage}</Alert>}
 
       {!isLoading && !error && (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -113,7 +121,17 @@ export function AccountChartVisibilityPage() {
               onClick={() =>
                 saveConfig(draft, {
                   onSuccess: () => pushToast('Visibilidad actualizada.', 'success'),
-                  onError: () => pushToast('No se pudo guardar la configuracion.', 'error'),
+                  onError: (mutationError) =>
+                    pushToast(
+                      getHttpErrorMessage(mutationError, {
+                        defaultMessage: 'No se pudo guardar la configuración.',
+                        badRequestMessage:
+                          'Hay valores inválidos en la configuración que intentaste guardar.',
+                        forbiddenMessage:
+                          'No tenés permisos para modificar visibilidad del plan de cuentas.',
+                      }),
+                      'error'
+                    ),
                 })
               }
               disabled={saving}

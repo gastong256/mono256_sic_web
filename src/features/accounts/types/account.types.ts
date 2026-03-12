@@ -10,7 +10,7 @@ export interface Account {
 export interface CreateAccountPayload {
   name: string
   code: string
-  parent_id?: number
+  parent_id: number
 }
 
 export interface UpdateAccountPayload {

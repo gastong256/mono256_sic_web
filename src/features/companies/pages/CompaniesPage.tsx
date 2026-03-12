@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useCompanies } from '@/features/companies/hooks/useCompanies'
 import { CompanyTable } from '@/features/companies/components/CompanyTable'
@@ -10,10 +10,21 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { Skeleton } from '@/shared/ui/Skeleton'
+import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 export function CompaniesPage() {
   const navigate = useNavigate()
   const { data: companies = [], isLoading, error } = useCompanies()
+  const loadErrorMessage = useMemo(
+    () =>
+      getHttpErrorMessage(error, {
+        defaultMessage: 'No se pudieron cargar las empresas.',
+        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente para ver tus empresas.',
+        forbiddenMessage: 'No tenés permisos para consultar empresas.',
+        serverErrorMessage: 'El servidor no respondió al cargar empresas. Intentá nuevamente.',
+      }),
+    [error]
+  )
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingCompany, setEditingCompany] = useState<Company | null>(null)
@@ -68,9 +79,7 @@ export function CompaniesPage() {
       )}
 
       {/* Error */}
-      {error && !isLoading && (
-        <Alert tone="error">Error al cargar las empresas. Intente nuevamente.</Alert>
-      )}
+      {error && !isLoading && <Alert tone="error">{loadErrorMessage}</Alert>}
 
       {/* Empty */}
       {!isLoading && !error && companies.length === 0 && (

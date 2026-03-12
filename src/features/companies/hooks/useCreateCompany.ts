@@ -11,6 +11,7 @@ export function useCreateCompany() {
     onSuccess: async (company) => {
       logger.info({ message: 'Empresa creada', companyId: company.id, name: company.name })
       await queryClient.invalidateQueries({ queryKey: COMPANIES_QUERY_KEY })
+      await queryClient.invalidateQueries({ queryKey: ['companies', 'detail'] })
     },
     onError: (error) => {
       logger.error({ message: 'Error al crear empresa', error: String(error) })

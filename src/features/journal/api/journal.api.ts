@@ -4,18 +4,27 @@ import type {
   JournalEntryDetail,
   CreateJournalEntryPayload,
 } from '@/features/journal/types/journal.types'
+import { fetchAllPages } from '@/shared/lib/fetchAllPages'
+import {
+  normalizeJournalEntryDetailPayload,
+  normalizeJournalEntryListPayload,
+} from '@/features/journal/adapters/journal.adapters'
 
 export const journalApi = {
   list: (companyId: number): Promise<JournalEntry[]> =>
-    httpClient.get<JournalEntry[]>(`/companies/${companyId}/journal/`).then((r) => r.data),
+    fetchAllPages<unknown>((page) =>
+      httpClient
+        .get<unknown>(`/companies/${companyId}/journal/`, { params: { page } })
+        .then((r) => r.data)
+    ).then((entries) => normalizeJournalEntryListPayload(entries)),
 
   get: (companyId: number, entryId: number): Promise<JournalEntryDetail> =>
     httpClient
-      .get<JournalEntryDetail>(`/companies/${companyId}/journal/${entryId}/`)
-      .then((r) => r.data),
+      .get<unknown>(`/companies/${companyId}/journal/${entryId}/`)
+      .then((r) => normalizeJournalEntryDetailPayload(r.data)),
 
   create: (companyId: number, payload: CreateJournalEntryPayload): Promise<JournalEntryDetail> =>
     httpClient
-      .post<JournalEntryDetail>(`/companies/${companyId}/journal/`, payload)
-      .then((r) => r.data),
+      .post<unknown>(`/companies/${companyId}/journal/`, payload)
+      .then((r) => normalizeJournalEntryDetailPayload(r.data)),
 }

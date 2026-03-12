@@ -17,6 +17,7 @@ import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { env } from '@/shared/config/env'
 import { getRequestId } from '@/shared/lib/tracing'
 import { logger } from '@/shared/lib/logger'
+import { isSlowRequest, recordHttpMetric } from '@/shared/lib/httpMetrics'
 
 // ── Token provider interface ──────────────────────────────────────────────────
 
@@ -51,7 +52,26 @@ export const httpClient = axios.create({
 
 // ── Request interceptor — attach auth + tracing headers ───────────────────────
 
+interface TimedRequestConfig extends InternalAxiosRequestConfig {
+  _requestStartedAtMs?: number
+}
+
+function nowMs(): number {
+  if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+    return performance.now()
+  }
+  return Date.now()
+}
+
+function getRequestDurationMs(config: TimedRequestConfig | undefined): number | null {
+  if (!config || typeof config._requestStartedAtMs !== 'number') return null
+  return Math.max(0, nowMs() - config._requestStartedAtMs)
+}
+
 httpClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const timedConfig = config as TimedRequestConfig
+  timedConfig._requestStartedAtMs = nowMs()
+
   const token = _tokenProvider?.getAccessToken()
 
   if (token) {
@@ -101,14 +121,73 @@ function processQueue(error: unknown, token: string | null = null): void {
 
 interface RetryConfig extends InternalAxiosRequestConfig {
   _retry?: boolean
+  _requestStartedAtMs?: number
 }
 
 httpClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const config = response.config as RetryConfig
+    const method = (config.method ?? 'GET').toUpperCase()
+    const url = config.url ?? ''
+    const durationMs = getRequestDurationMs(config)
+
+    if (durationMs !== null) {
+      const metric = recordHttpMetric({
+        method,
+        url,
+        status: response.status,
+        durationMs,
+      })
+
+      logger.debug({
+        message: 'HTTP response',
+        method,
+        url,
+        status: response.status,
+        duration_ms: Math.round(durationMs),
+        endpoint: metric.endpoint,
+        endpoint_avg_duration_ms: metric.avgDurationMs,
+      })
+
+      if (isSlowRequest(durationMs)) {
+        logger.warn({
+          message: 'Slow HTTP request detected',
+          method,
+          url,
+          status: response.status,
+          duration_ms: Math.round(durationMs),
+          endpoint: metric.endpoint,
+        })
+      }
+    }
+
+    return response
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryConfig | undefined
 
     if (!originalRequest) return Promise.reject(error)
+
+    const method = (originalRequest.method ?? 'GET').toUpperCase()
+    const url = originalRequest.url ?? ''
+    const durationMs = getRequestDurationMs(originalRequest)
+    if (durationMs !== null) {
+      const metric = recordHttpMetric({
+        method,
+        url,
+        status: error.response?.status,
+        durationMs,
+      })
+      logger.warn({
+        message: 'HTTP response error',
+        method,
+        url,
+        status: error.response?.status,
+        duration_ms: Math.round(durationMs),
+        endpoint: metric.endpoint,
+        endpoint_error_count: metric.errorCount,
+      })
+    }
 
     // Auth endpoints return 401 for "wrong credentials" or "expired refresh token" —
     // not for "access token expired". Skip the refresh flow and let the error
@@ -118,11 +197,13 @@ httpClient.interceptors.response.use(
 
     // Only handle 401 Unauthorized — not already-retried requests
     if (error.response?.status !== 401 || originalRequest._retry === true) {
-      logger.warn({
-        message: 'HTTP error',
-        status: error.response?.status,
-        url: originalRequest.url,
-      })
+      if (durationMs === null) {
+        logger.warn({
+          message: 'HTTP error',
+          status: error.response?.status,
+          url: originalRequest.url,
+        })
+      }
       return Promise.reject(error)
     }
 
@@ -157,12 +238,21 @@ httpClient.interceptors.response.use(
       // and avoid an infinite retry loop.
       const { data } = await axios.post<{
         access: string
-        refresh: string
-      }>(`${env.VITE_API_BASE_URL}/auth/token/refresh/`, {
-        refresh: refreshToken,
-      })
+        refresh?: string
+      }>(
+        `${env.VITE_API_BASE_URL}/auth/token/refresh/`,
+        {
+          refresh: refreshToken,
+        },
+        {
+          headers: {
+            'X-Request-ID': getRequestId(),
+          },
+        }
+      )
 
-      _tokenProvider?.setTokens(data.access, data.refresh)
+      const nextRefreshToken = data.refresh ?? refreshToken
+      _tokenProvider?.setTokens(data.access, nextRefreshToken)
       logger.info({ message: 'Token refresh successful' })
       _tokenProvider?.onTokensRefreshed?.(data.access)
 

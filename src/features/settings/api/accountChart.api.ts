@@ -13,6 +13,10 @@ type VisibilityNode = {
   children?: VisibilityNode[]
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
 function flattenVisibilityTree(nodes: VisibilityNode[], acc: AccountLevelConfig[] = []) {
   nodes.forEach((node) => {
     const level = node.level ?? node.depth
@@ -45,9 +49,20 @@ export const accountChartApi = {
   updateConfig: (payload: AccountLevelConfig[]): Promise<AccountLevelConfig[]> =>
     Promise.all(
       payload.map((item) =>
-        httpClient.patch(`/accounts/visibility/${item.account_id}/`, {
-          is_visible: item.visible,
-        })
+        httpClient
+          .patch<unknown>(`/accounts/visibility/${item.account_id}/`, {
+            is_visible: item.visible,
+          })
+          .then((r) => r.data)
       )
-    ).then(() => accountChartApi.getConfig()),
+    ).then((responses) => {
+      const latest = responses[responses.length - 1]
+      if (Array.isArray(latest)) {
+        return flattenVisibilityTree(latest as VisibilityNode[])
+      }
+      if (isRecord(latest) && Array.isArray(latest.results)) {
+        return flattenVisibilityTree(latest.results as VisibilityNode[])
+      }
+      return accountChartApi.getConfig()
+    }),
 }

@@ -11,6 +11,7 @@ import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { buildDefaultXlsxFilename, saveBlobAsFile } from '@/shared/lib/fileDownload'
 import { useToast } from '@/shared/ui/ToastProvider'
+import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
   style: 'currency',
@@ -41,6 +42,17 @@ export function LedgerReportPage() {
   const { data: accounts = [] } = useJournalAccounts(activeCompanyId ?? 0)
   const { data, isLoading, isError, error } = useLedgerReport(activeCompanyId, filters)
   const downloadMutation = useDownloadLedgerReport()
+  const reportErrorMessage = useMemo(
+    () =>
+      getHttpErrorMessage(error, {
+        defaultMessage: 'No se pudo cargar el Libro Mayor.',
+        badRequestMessage: 'Revisá los filtros aplicados e intentá nuevamente.',
+        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
+        forbiddenMessage: 'No tenés permisos para consultar este reporte.',
+        notFoundMessage: 'La empresa no existe o ya no está disponible.',
+      }),
+    [error]
+  )
 
   const canSearch = !hasInvalidRange && activeCompanyId !== null
 
@@ -160,9 +172,7 @@ export function LedgerReportPage() {
       )}
 
       {activeCompanyId !== null && isError && !isLoading && (
-        <Alert tone="error">
-          {error instanceof Error ? error.message : 'No se pudo cargar el Libro Mayor.'}
-        </Alert>
+        <Alert tone="error">{reportErrorMessage}</Alert>
       )}
 
       {activeCompanyId !== null && !isLoading && !isError && data && (

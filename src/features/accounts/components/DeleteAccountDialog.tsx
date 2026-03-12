@@ -5,6 +5,7 @@ import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { Button } from '@/shared/ui/Button'
 import { useDeleteAccount } from '@/features/accounts/hooks/useDeleteAccount'
 import type { Account } from '@/features/accounts/types/account.types'
+import { extractApiMessage } from '@/shared/lib/httpErrors'
 
 interface DeleteAccountDialogProps {
   account: Account | null
@@ -29,7 +30,7 @@ export function DeleteAccountDialog({ account, companyId, onClose }: DeleteAccou
         const axiosErr = error as AxiosError<{ detail?: string }>
         if (axiosErr.response?.status === 409) {
           setConflictMessage(
-            axiosErr.response.data?.detail ??
+            extractApiMessage(error) ??
               'Esta cuenta tiene movimientos registrados y no puede eliminarse.'
           )
         }

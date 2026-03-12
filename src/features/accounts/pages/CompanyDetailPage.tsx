@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useCompanyAccounts } from '@/features/accounts/hooks/useCompanyAccounts'
 import { AccountTree } from '@/features/accounts/components/AccountTree'
@@ -8,6 +8,8 @@ import { useAccountChartConfig } from '@/features/settings/hooks/useAccountChart
 import { applyChartVisibility } from '@/shared/lib/accountTreeVisibility'
 import { Spinner } from '@/shared/ui/Spinner'
 import type { Account } from '@/features/accounts/types/account.types'
+import { Alert } from '@/shared/ui/Alert'
+import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 export function CompanyDetailPage() {
   const { companyId } = useParams<{ companyId: string }>()
@@ -17,6 +19,16 @@ export function CompanyDetailPage() {
   const { data: accounts = [], isLoading, error } = useCompanyAccounts(id)
   const { data: chartConfig = [] } = useAccountChartConfig()
   const visibleAccounts = applyChartVisibility(accounts, chartConfig)
+  const loadErrorMessage = useMemo(
+    () =>
+      getHttpErrorMessage(error, {
+        defaultMessage: 'No se pudo cargar el plan de cuentas de la empresa.',
+        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
+        forbiddenMessage: 'No tenés permisos para ver el plan de cuentas de esta empresa.',
+        notFoundMessage: 'La empresa no existe o ya no está disponible.',
+      }),
+    [error]
+  )
 
   const [accountFormOpen, setAccountFormOpen] = useState(false)
   const [selectedParent, setSelectedParent] = useState<Account | null>(null)
@@ -65,14 +77,7 @@ export function CompanyDetailPage() {
       )}
 
       {/* Error */}
-      {error && !isLoading && (
-        <div
-          role="alert"
-          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-        >
-          Error al cargar el plan de cuentas. Intente nuevamente.
-        </div>
-      )}
+      {error && !isLoading && <Alert tone="error">{loadErrorMessage}</Alert>}
 
       {/* Empty */}
       {!isLoading && !error && visibleAccounts.length === 0 && (

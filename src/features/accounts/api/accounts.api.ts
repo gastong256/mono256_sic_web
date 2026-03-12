@@ -12,8 +12,12 @@ export const accountsApi = {
   getCompanyAccounts: (companyId: number): Promise<Account[]> =>
     httpClient.get<Account[]>(`/accounts/company/${companyId}/`).then((r) => r.data),
 
-  createAccount: (companyId: number, payload: CreateAccountPayload): Promise<Account> =>
-    httpClient.post<Account>(`/accounts/company/${companyId}/`, payload).then((r) => r.data),
+  createAccount: (companyId: number, payload: CreateAccountPayload): Promise<Account> => {
+    if (!payload.parent_id || payload.parent_id <= 0) {
+      return Promise.reject(new Error('Debe seleccionar una cuenta padre válida.'))
+    }
+    return httpClient.post<Account>(`/accounts/company/${companyId}/`, payload).then((r) => r.data)
+  },
 
   updateAccount: (
     companyId: number,

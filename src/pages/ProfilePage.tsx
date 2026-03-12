@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useMe } from '@/features/auth/hooks/useMe'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { Spinner } from '@/shared/ui/Spinner'
@@ -5,10 +6,19 @@ import { getRequestId } from '@/shared/lib/tracing'
 import { RegistrationCodeCard } from '@/features/auth/components/RegistrationCodeCard'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Alert } from '@/shared/ui/Alert'
+import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 export function ProfilePage() {
   const { user } = useAuthStore()
-  const { isLoading, isError } = useMe()
+  const { isLoading, isError, error } = useMe()
+  const loadErrorMessage = useMemo(
+    () =>
+      getHttpErrorMessage(error, {
+        defaultMessage: 'No se pudo cargar tu perfil.',
+        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
+      }),
+    [error]
+  )
 
   if (isLoading) {
     return (
@@ -19,7 +29,7 @@ export function ProfilePage() {
   }
 
   if (isError || !user) {
-    return <Alert tone="error">Failed to load profile. Please try refreshing the page.</Alert>
+    return <Alert tone="error">{loadErrorMessage}</Alert>
   }
 
   const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username

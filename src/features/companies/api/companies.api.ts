@@ -4,12 +4,13 @@ import type {
   CreateCompanyPayload,
   UpdateCompanyPayload,
 } from '@/features/companies/types/company.types'
+import { fetchAllPages } from '@/shared/lib/fetchAllPages'
 
 export const companiesApi = {
   list: (): Promise<Company[]> =>
-    httpClient
-      .get<{ count: number; results: Company[] }>('/companies/')
-      .then((r) => r.data.results),
+    fetchAllPages<Company>((page) =>
+      httpClient.get<unknown>('/companies/', { params: { page } }).then((r) => r.data)
+    ),
 
   get: (id: number): Promise<Company> =>
     httpClient.get<Company>(`/companies/${id}/`).then((r) => r.data),

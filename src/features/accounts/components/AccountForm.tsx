@@ -2,13 +2,13 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import type { AxiosError } from 'axios'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
 import { useCreateAccount } from '@/features/accounts/hooks/useCreateAccount'
 import { useUpdateAccount } from '@/features/accounts/hooks/useUpdateAccount'
 import type { Account } from '@/features/accounts/types/account.types'
+import { extractApiMessage, extractFieldValidationErrors } from '@/shared/lib/httpErrors'
 
 // ── Validation schema ─────────────────────────────────────────────────────────
 
@@ -68,15 +68,13 @@ export function AccountForm({
   function extractApiError(
     error: unknown
   ): { field: keyof AccountFormValues; message: string } | string | null {
-    const axiosErr = error as AxiosError<Record<string, string | string[]>>
-    const data = axiosErr.response?.data
-    if (!data) return null
-    if (typeof data.detail === 'string') return data.detail
-    if (typeof data.name === 'string') return { field: 'name', message: data.name }
-    if (Array.isArray(data.name)) return { field: 'name', message: data.name[0] }
-    if (typeof data.code === 'string') return { field: 'code', message: data.code }
-    if (Array.isArray(data.code)) return { field: 'code', message: data.code[0] }
-    return 'Error inesperado. Intente nuevamente.'
+    const fieldErrors = extractFieldValidationErrors(error)
+    if (fieldErrors.name) return { field: 'name', message: fieldErrors.name }
+    if (fieldErrors.code) return { field: 'code', message: fieldErrors.code }
+
+    const message = extractApiMessage(error)
+    if (message) return message
+    return 'No se pudo guardar la subcuenta. Intente nuevamente.'
   }
 
   function onSubmit(values: AccountFormValues) {
@@ -96,8 +94,12 @@ export function AccountForm({
         { onSuccess: handleClose, onError: handleError }
       )
     } else {
+      if (!parentAccount?.id) {
+        setError('root', { message: 'Debe seleccionar una cuenta padre válida.' })
+        return
+      }
       createAccount(
-        { name: values.name, code: values.code, parent_id: parentAccount?.id },
+        { name: values.name, code: values.code, parent_id: parentAccount.id },
         { onSuccess: handleClose, onError: handleError }
       )
     }

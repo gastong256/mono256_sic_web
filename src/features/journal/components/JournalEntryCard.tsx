@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { JournalEntry } from '@/features/journal/types/journal.types'
 import { useJournalEntry } from '@/features/journal/hooks/useJournalEntry'
 import { Spinner } from '@/shared/ui/Spinner'
 import { Alert } from '@/shared/ui/Alert'
+import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 const arsFormat = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' })
 
@@ -22,7 +23,18 @@ export function JournalEntryCard({ entry, companyId }: JournalEntryCardProps) {
     data: detail,
     isLoading: detailLoading,
     isError: detailError,
+    error: detailErrorObj,
   } = useJournalEntry(companyId, entry.id, expanded)
+  const detailLoadErrorMessage = useMemo(
+    () =>
+      getHttpErrorMessage(detailErrorObj, {
+        defaultMessage: 'No se pudo cargar el detalle del asiento.',
+        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
+        forbiddenMessage: 'No tenés permisos para ver el detalle de este asiento.',
+        notFoundMessage: 'El asiento ya no existe.',
+      }),
+    [detailErrorObj]
+  )
 
   const totalDebe = entry.total_debit
   const totalHaber = entry.total_credit
@@ -84,7 +96,7 @@ export function JournalEntryCard({ entry, companyId }: JournalEntryCardProps) {
             </div>
           )}
 
-          {detailError && <Alert tone="error">Error al cargar el detalle del asiento.</Alert>}
+          {detailError && <Alert tone="error">{detailLoadErrorMessage}</Alert>}
 
           {!detailLoading && !detailError && detail && (
             <div className="accounting-table-shell">

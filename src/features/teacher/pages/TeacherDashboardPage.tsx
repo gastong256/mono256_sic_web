@@ -16,6 +16,7 @@ import { Modal } from '@/shared/ui/Modal'
 import { Input } from '@/shared/ui/Input'
 import { Button } from '@/shared/ui/Button'
 import { useToast } from '@/shared/ui/ToastProvider'
+import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 function fullName(student: { first_name?: string; last_name?: string; username: string }): string {
   const formatted = `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim()
@@ -55,14 +56,40 @@ export function TeacherDashboardPage() {
     const pageSize = availableStudents.results.length || 1
     return Math.max(1, Math.ceil(availableStudents.count / pageSize))
   }, [availableStudents])
+  const dashboardErrorMessage = useMemo(
+    () =>
+      getHttpErrorMessage(error, {
+        defaultMessage: 'No se pudo cargar el panel docente.',
+        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
+        forbiddenMessage: 'No tenés permisos para acceder al panel docente.',
+      }),
+    [error]
+  )
+  const availableStudentsErrorMessage = useMemo(
+    () =>
+      getHttpErrorMessage(availableError, {
+        defaultMessage: 'No se pudo cargar la lista de alumnos disponibles.',
+        badRequestMessage: 'Parámetros inválidos para buscar alumnos disponibles.',
+        forbiddenMessage: 'No tenés permisos para gestionar inscripciones de este curso.',
+      }),
+    [availableError]
+  )
 
   async function handleEnroll(studentId: number) {
     if (!courseForEnroll) return
     try {
       await enrollMutation.mutateAsync({ courseId: courseForEnroll.id, studentId })
       pushToast('Alumno enrolado correctamente.', 'success')
-    } catch {
-      pushToast('No se pudo enrolar al alumno.', 'error')
+    } catch (mutationError) {
+      pushToast(
+        getHttpErrorMessage(mutationError, {
+          defaultMessage: 'No se pudo enrolar al alumno.',
+          badRequestMessage: 'El alumno no puede inscribirse en este curso.',
+          forbiddenMessage: 'No tenés permisos para enrolar alumnos en este curso.',
+          notFoundMessage: 'El curso o alumno ya no está disponible.',
+        }),
+        'error'
+      )
     }
   }
 
@@ -70,8 +97,15 @@ export function TeacherDashboardPage() {
     try {
       await unenrollMutation.mutateAsync({ courseId, studentId })
       pushToast('Alumno desenrolado correctamente.', 'success')
-    } catch {
-      pushToast('No se pudo desenrolar al alumno.', 'error')
+    } catch (mutationError) {
+      pushToast(
+        getHttpErrorMessage(mutationError, {
+          defaultMessage: 'No se pudo desenrolar al alumno.',
+          forbiddenMessage: 'No tenés permisos para desenrolar alumnos en este curso.',
+          notFoundMessage: 'La inscripción no existe o ya fue eliminada.',
+        }),
+        'error'
+      )
     }
   }
 
@@ -106,9 +140,14 @@ export function TeacherDashboardPage() {
       setIsCreateCourseOpen(false)
       setNewCourseName('')
       setNewCourseCode('')
-    } catch {
-      setCreateCourseError('No se pudo crear el curso.')
-      pushToast('No se pudo crear el curso.', 'error')
+    } catch (mutationError) {
+      const message = getHttpErrorMessage(mutationError, {
+        defaultMessage: 'No se pudo crear el curso.',
+        badRequestMessage: 'Revisá el nombre/código del curso e intentá nuevamente.',
+        forbiddenMessage: 'No tenés permisos para crear cursos.',
+      })
+      setCreateCourseError(message)
+      pushToast(message, 'error')
     }
   }
 
@@ -151,7 +190,7 @@ export function TeacherDashboardPage() {
         </div>
       )}
 
-      {error && !isLoading && <Alert tone="error">Error al cargar el panel docente.</Alert>}
+      {error && !isLoading && <Alert tone="error">{dashboardErrorMessage}</Alert>}
 
       {!isLoading && !error && data && data.courses.length === 0 && (
         <EmptyState icon="teacher" title="No hay cursos asignados" />
@@ -295,7 +334,7 @@ export function TeacherDashboardPage() {
           )}
 
           {availableError && !availableLoading && (
-            <Alert tone="error">No se pudo cargar la lista de alumnos disponibles.</Alert>
+            <Alert tone="error">{availableStudentsErrorMessage}</Alert>
           )}
 
           {!availableLoading &&

@@ -12,6 +12,7 @@ export function useCreateAccount(companyId: number) {
     onSuccess: async (account) => {
       logger.info({ message: 'Cuenta creada', accountId: account.id, companyId })
       await queryClient.invalidateQueries({ queryKey: companyAccountsQueryKey(companyId) })
+      await queryClient.invalidateQueries({ queryKey: ['accounts'] })
     },
     onError: (error) => {
       logger.error({ message: 'Error al crear cuenta', error: String(error) })

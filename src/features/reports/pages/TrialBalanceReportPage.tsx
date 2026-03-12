@@ -10,6 +10,7 @@ import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { buildDefaultXlsxFilename, saveBlobAsFile } from '@/shared/lib/fileDownload'
 import { useToast } from '@/shared/ui/ToastProvider'
+import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
   style: 'currency',
@@ -35,6 +36,17 @@ export function TrialBalanceReportPage() {
   const { data, isLoading, isError, error } = useTrialBalanceReport(activeCompanyId, filters)
   const downloadMutation = useDownloadTrialBalanceReport()
   const canSearch = !hasInvalidRange && activeCompanyId !== null
+  const reportErrorMessage = useMemo(
+    () =>
+      getHttpErrorMessage(error, {
+        defaultMessage: 'No se pudo cargar el Balance de Comprobación.',
+        badRequestMessage: 'Revisá los filtros de fecha e intentá nuevamente.',
+        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
+        forbiddenMessage: 'No tenés permisos para consultar este reporte.',
+        notFoundMessage: 'La empresa no existe o ya no está disponible.',
+      }),
+    [error]
+  )
 
   async function handleDownload() {
     if (activeCompanyId === null) return
@@ -138,9 +150,7 @@ export function TrialBalanceReportPage() {
       )}
 
       {activeCompanyId !== null && isError && !isLoading && (
-        <Alert tone="error">
-          {error instanceof Error ? error.message : 'No se pudo cargar el balance de comprobación.'}
-        </Alert>
+        <Alert tone="error">{reportErrorMessage}</Alert>
       )}
 
       {activeCompanyId !== null && !isLoading && !isError && data && (

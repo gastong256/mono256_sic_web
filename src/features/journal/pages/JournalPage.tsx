@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Navigate } from 'react-router'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
@@ -10,14 +10,25 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { Alert } from '@/shared/ui/Alert'
 import { Skeleton } from '@/shared/ui/Skeleton'
+import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 export function JournalPage() {
   const { accessToken, refreshToken } = useAuthStore()
   const { activeCompanyId } = useActiveCompanyStore()
   const [isFormOpen, setIsFormOpen] = useState(false)
 
-  const { data: entries, isLoading, isError } = useJournalEntries()
+  const { data: entries, isLoading, isError, error } = useJournalEntries()
   const isAuthenticated = Boolean(accessToken ?? refreshToken)
+  const loadErrorMessage = useMemo(
+    () =>
+      getHttpErrorMessage(error, {
+        defaultMessage: 'No se pudieron cargar los asientos de la empresa activa.',
+        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
+        forbiddenMessage: 'No tenés permisos para ver estos asientos.',
+        notFoundMessage: 'La empresa activa no existe o ya no está disponible.',
+      }),
+    [error]
+  )
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
@@ -62,7 +73,7 @@ export function JournalPage() {
         </div>
       )}
 
-      {isError && <Alert tone="error">Error al cargar los asientos. Intentá de nuevo.</Alert>}
+      {isError && <Alert tone="error">{loadErrorMessage}</Alert>}
 
       {!isLoading && !isError && entries && entries.length === 0 && (
         <EmptyState

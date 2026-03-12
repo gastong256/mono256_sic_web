@@ -1,6 +1,7 @@
 import { httpClient } from '@/shared/lib/http'
 import type { User } from '@/shared/types'
 import { isAxiosError } from 'axios'
+import { getRetryAfterSeconds } from '@/shared/lib/httpErrors'
 
 // ── Request / Response types ──────────────────────────────────────────────────
 
@@ -11,10 +12,13 @@ export interface LoginCredentials {
 
 export interface AuthTokens {
   access: string
-  refresh: string
+  refresh?: string
 }
 
-export type LoginResponse = AuthTokens
+export interface LoginResponse {
+  access: string
+  refresh: string
+}
 
 export interface RegisterPayload {
   username: string
@@ -84,10 +88,10 @@ export const authApi = {
           throw error
         }
 
-        const responseData = error.response?.data as { retry_after?: number } | undefined
-        const retryAfterSec = Number(responseData?.retry_after)
+        const retryAfterSec = getRetryAfterSeconds(error)
+        const retryAfterValue = retryAfterSec ?? Number.NaN
         const baseMs =
-          Number.isFinite(retryAfterSec) && retryAfterSec > 0 ? retryAfterSec * 1000 : 600
+          Number.isFinite(retryAfterValue) && retryAfterValue > 0 ? retryAfterValue * 1000 : 600
         const backoffMs = Math.max(baseMs, 2 ** attempt * 300)
         await sleep(backoffMs)
       }

@@ -13,6 +13,7 @@ export function useUpdateAccount(companyId: number) {
     onSuccess: async (account) => {
       logger.info({ message: 'Cuenta actualizada', accountId: account.id, companyId })
       await queryClient.invalidateQueries({ queryKey: companyAccountsQueryKey(companyId) })
+      await queryClient.invalidateQueries({ queryKey: ['accounts'] })
     },
     onError: (error) => {
       logger.error({ message: 'Error al actualizar cuenta', error: String(error) })

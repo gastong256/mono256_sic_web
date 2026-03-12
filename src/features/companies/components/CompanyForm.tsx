@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import type { AxiosError } from 'axios'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
@@ -11,6 +10,7 @@ import { useUpdateCompany } from '@/features/companies/hooks/useUpdateCompany'
 import type { Company } from '@/features/companies/types/company.types'
 import { Alert } from '@/shared/ui/Alert'
 import { useToast } from '@/shared/ui/ToastProvider'
+import { extractApiMessage, extractFieldValidationErrors } from '@/shared/lib/httpErrors'
 
 // ── Validation schema ─────────────────────────────────────────────────────────
 
@@ -63,15 +63,14 @@ export function CompanyForm({ isOpen, onClose, company }: CompanyFormProps) {
   function extractApiError(
     error: unknown
   ): { field: keyof CompanyFormValues; message: string } | string | null {
-    const axiosErr = error as AxiosError<Record<string, string | string[]>>
-    const data = axiosErr.response?.data
-    if (!data) return null
-    if (typeof data.detail === 'string') return data.detail
-    if (typeof data.name === 'string') return { field: 'name', message: data.name }
-    if (Array.isArray(data.name)) return { field: 'name', message: data.name[0] }
-    if (typeof data.tax_id === 'string') return { field: 'tax_id', message: data.tax_id }
-    if (Array.isArray(data.tax_id)) return { field: 'tax_id', message: data.tax_id[0] }
-    return 'Error inesperado. Intente nuevamente.'
+    const fieldErrors = extractFieldValidationErrors(error)
+    if (fieldErrors.name) return { field: 'name', message: fieldErrors.name }
+    if (fieldErrors.tax_id) return { field: 'tax_id', message: fieldErrors.tax_id }
+
+    const message = extractApiMessage(error)
+    if (message) return message
+
+    return 'No se pudo guardar la empresa. Intente nuevamente.'
   }
 
   function onSubmit(values: CompanyFormValues) {
