@@ -1,3 +1,7 @@
+## 1.6.0 (2026-03-12)
+
+* feat: sync backend contracts (teacher all, decimals, retry_after, tenant, me, reverse) ([f099308](https://github.com/gastong256/mono256_sic_web/commit/f099308))
+
 ## 1.5.0 (2026-03-12)
 
 * feat: sync api contracts with backend (auth, pagination, errors, adapters, reports) ([3d1196f](https://github.com/gastong256/mono256_sic_web/commit/3d1196f))
