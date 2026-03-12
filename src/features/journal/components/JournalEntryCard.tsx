@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react'
 import type { JournalEntry } from '@/features/journal/types/journal.types'
 import { useJournalEntry } from '@/features/journal/hooks/useJournalEntry'
+import { useReverseJournalEntry } from '@/features/journal/hooks/useReverseJournalEntry'
 import { Spinner } from '@/shared/ui/Spinner'
 import { Alert } from '@/shared/ui/Alert'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
+import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
+import { useToast } from '@/shared/ui/ToastProvider'
 
 const arsFormat = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' })
 
@@ -18,7 +21,9 @@ interface JournalEntryCardProps {
 }
 
 export function JournalEntryCard({ entry, companyId }: JournalEntryCardProps) {
+  const { pushToast } = useToast()
   const [expanded, setExpanded] = useState(false)
+  const [confirmReverseOpen, setConfirmReverseOpen] = useState(false)
   const {
     data: detail,
     isLoading: detailLoading,
@@ -38,6 +43,28 @@ export function JournalEntryCard({ entry, companyId }: JournalEntryCardProps) {
 
   const totalDebe = entry.total_debit
   const totalHaber = entry.total_credit
+  const reverseMutation = useReverseJournalEntry(companyId)
+  const canReverse = !entry.reversal_of_id && !entry.reversed_by_id
+
+  async function handleReverseEntry() {
+    try {
+      await reverseMutation.mutateAsync({ entryId: entry.id })
+      pushToast('Asiento reversado correctamente.', 'success')
+      setConfirmReverseOpen(false)
+      setExpanded(false)
+    } catch (reverseError) {
+      pushToast(
+        getHttpErrorMessage(reverseError, {
+          defaultMessage: 'No se pudo reversar el asiento.',
+          badRequestMessage: 'No se puede reversar este asiento en el estado actual.',
+          forbiddenMessage: 'No tenés permisos para reversar este asiento.',
+          notFoundMessage: 'El asiento ya no existe.',
+          conflictMessage: 'El asiento ya fue reversado previamente.',
+        }),
+        'error'
+      )
+    }
+  }
 
   return (
     <div className="surface-card ui-fade-in ui-lift overflow-hidden">
@@ -90,6 +117,17 @@ export function JournalEntryCard({ entry, companyId }: JournalEntryCardProps) {
       {/* Expanded lines */}
       {expanded && (
         <div className="border-t border-[var(--border-soft)] px-5 pt-3 pb-4">
+          <div className="mb-3 flex justify-end">
+            <button
+              type="button"
+              disabled={!canReverse || reverseMutation.isPending}
+              onClick={() => setConfirmReverseOpen(true)}
+              className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Reversar asiento
+            </button>
+          </div>
+
           {detailLoading && (
             <div className="flex justify-center py-6">
               <Spinner className="size-5 text-[var(--brand-500)]" label="Cargando lineas..." />
@@ -153,6 +191,24 @@ export function JournalEntryCard({ entry, companyId }: JournalEntryCardProps) {
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmReverseOpen}
+        onClose={() => setConfirmReverseOpen(false)}
+        onConfirm={() => {
+          void handleReverseEntry()
+        }}
+        title="Reversar asiento"
+        message={
+          <>
+            ¿Desea reversar el asiento <strong>#{entry.entry_number}</strong> del día{' '}
+            <strong>{entry.date}</strong>? Se generará un asiento inverso automáticamente.
+          </>
+        }
+        confirmLabel="Reversar"
+        isLoading={reverseMutation.isPending}
+        variant="danger"
+      />
     </div>
   )
 }

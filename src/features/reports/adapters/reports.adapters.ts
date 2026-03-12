@@ -22,7 +22,12 @@ function toStringValue(value: unknown, fallback = ''): string {
 }
 
 function toNumberValue(value: unknown, fallback = 0): number {
-  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return fallback
 }
 
 function normalizeJournalEntries(payload: unknown): JournalEntryDetail[] {

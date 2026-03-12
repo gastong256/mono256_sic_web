@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMe } from '@/features/auth/hooks/useMe'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { Spinner } from '@/shared/ui/Spinner'
@@ -6,11 +6,32 @@ import { getRequestId } from '@/shared/lib/tracing'
 import { RegistrationCodeCard } from '@/features/auth/components/RegistrationCodeCard'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Alert } from '@/shared/ui/Alert'
-import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
+import {
+  extractApiMessage,
+  extractFieldValidationErrors,
+  getHttpErrorMessage,
+} from '@/shared/lib/httpErrors'
+import { Input } from '@/shared/ui/Input'
+import { Button } from '@/shared/ui/Button'
+import { useUpdateMe } from '@/features/auth/hooks/useUpdateMe'
+import { useToast } from '@/shared/ui/ToastProvider'
 
 export function ProfilePage() {
+  const { pushToast } = useToast()
   const { user } = useAuthStore()
   const { isLoading, isError, error } = useMe()
+  const updateMeMutation = useUpdateMe()
+  const [isEditing, setIsEditing] = useState(false)
+  const [formValues, setFormValues] = useState({
+    email: '',
+    first_name: '',
+    last_name: '',
+  })
+  const [formErrors, setFormErrors] = useState<
+    Partial<Record<'email' | 'first_name' | 'last_name', string>>
+  >({})
+  const [formGenericError, setFormGenericError] = useState<string | null>(null)
+
   const loadErrorMessage = useMemo(
     () =>
       getHttpErrorMessage(error, {
@@ -19,6 +40,15 @@ export function ProfilePage() {
       }),
     [error]
   )
+
+  useEffect(() => {
+    if (!user) return
+    setFormValues({
+      email: user.email ?? '',
+      first_name: user.first_name ?? '',
+      last_name: user.last_name ?? '',
+    })
+  }, [user])
 
   if (isLoading) {
     return (
@@ -34,9 +64,45 @@ export function ProfilePage() {
 
   const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username
 
+  async function handleProfileSave() {
+    setFormErrors({})
+    setFormGenericError(null)
+
+    try {
+      await updateMeMutation.mutateAsync({
+        email: formValues.email || undefined,
+        first_name: formValues.first_name || undefined,
+        last_name: formValues.last_name || undefined,
+      })
+      pushToast('Perfil actualizado correctamente.', 'success')
+      setIsEditing(false)
+    } catch (updateError) {
+      const fieldErrors = extractFieldValidationErrors(updateError)
+      setFormErrors({
+        ...(fieldErrors.email ? { email: fieldErrors.email } : null),
+        ...(fieldErrors.first_name ? { first_name: fieldErrors.first_name } : null),
+        ...(fieldErrors.last_name ? { last_name: fieldErrors.last_name } : null),
+      })
+      if (!Object.keys(fieldErrors).length) {
+        setFormGenericError(extractApiMessage(updateError) ?? 'No se pudo actualizar el perfil.')
+      }
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <PageHeader icon="profile" title="Perfil" subtitle="Tu informacion de cuenta." />
+      <PageHeader
+        icon="profile"
+        title="Perfil"
+        subtitle="Tu informacion de cuenta."
+        actions={
+          !isEditing ? (
+            <Button type="button" variant="secondary" onClick={() => setIsEditing(true)}>
+              Editar perfil
+            </Button>
+          ) : undefined
+        }
+      />
 
       {/* Profile card */}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -52,6 +118,62 @@ export function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {isEditing && (
+          <div className="space-y-4 border-b border-gray-100 px-6 py-4">
+            {formGenericError && <Alert tone="error">{formGenericError}</Alert>}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input
+                label="Nombre"
+                value={formValues.first_name}
+                error={formErrors.first_name}
+                onChange={(event) =>
+                  setFormValues((current) => ({ ...current, first_name: event.target.value }))
+                }
+              />
+              <Input
+                label="Apellido"
+                value={formValues.last_name}
+                error={formErrors.last_name}
+                onChange={(event) =>
+                  setFormValues((current) => ({ ...current, last_name: event.target.value }))
+                }
+              />
+            </div>
+            <Input
+              label="Email"
+              type="email"
+              value={formValues.email}
+              error={formErrors.email}
+              onChange={(event) =>
+                setFormValues((current) => ({ ...current, email: event.target.value }))
+              }
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={updateMeMutation.isPending}
+                onClick={() => {
+                  setIsEditing(false)
+                  setFormErrors({})
+                  setFormGenericError(null)
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                isLoading={updateMeMutation.isPending}
+                onClick={() => {
+                  void handleProfileSave()
+                }}
+              >
+                Guardar cambios
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Details */}
         <div className="divide-y divide-gray-100">

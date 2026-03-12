@@ -2,13 +2,18 @@ import { httpClient } from '@/shared/lib/http'
 import type { TeacherDashboardResponse } from '@/shared/types'
 import { fetchAllPages } from '@/shared/lib/fetchAllPages'
 import { extractListPayload, extractPaginationMeta } from '@/shared/lib/apiPagination'
+import { isAxiosError } from 'axios'
 import {
   normalizeTeacherAvailableStudentsPayload,
   normalizeTeacherCourseCompaniesPayload,
   normalizeTeacherCourseJournalEntriesPayload,
 } from '@/features/teacher/adapters/teacher.adapters'
 import type {
+  CourseEnrollmentItem,
+  CourseEnrollmentsResponse,
+  CourseItem,
   CourseCreatePayload,
+  CourseUpdatePayload,
   TeacherAvailableStudentsResponse,
   TeacherCompanyItem,
   TeacherCourseJournalEntry,
@@ -16,30 +21,57 @@ import type {
 
 type UnknownRecord = Record<string, unknown>
 
-type Course = {
-  id: number
-  name: string
-  teacher_username?: string
-}
-
 function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === 'object' && value !== null
 }
 
-function normalizeCourses(payload: unknown): Course[] {
+function toNumberValue(value: unknown, fallback = 0): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return fallback
+}
+
+function normalizeCourse(value: unknown): CourseItem | null {
+  if (!isRecord(value)) return null
+  const id = toNumberValue(value.id)
+  if (id <= 0) return null
+
+  return {
+    id,
+    name: typeof value.name === 'string' ? value.name : '',
+    ...(typeof value.code === 'string' ? { code: value.code } : {}),
+    ...(value.teacher_id === null || typeof value.teacher_id === 'number'
+      ? { teacher_id: value.teacher_id }
+      : {}),
+    ...(typeof value.teacher_username === 'string'
+      ? { teacher_username: value.teacher_username }
+      : {}),
+  }
+}
+
+function normalizeCourses(payload: unknown): CourseItem[] {
   return extractListPayload<unknown>(payload)
-    .map((course) => {
-      if (!isRecord(course) || typeof course.id !== 'number') return null
-      const normalized: Course = {
-        id: course.id,
-        name: typeof course.name === 'string' ? course.name : '',
-        ...(typeof course.teacher_username === 'string'
-          ? { teacher_username: course.teacher_username }
-          : {}),
-      }
-      return normalized
-    })
-    .filter((course): course is Course => Boolean(course))
+    .map(normalizeCourse)
+    .filter((course): course is CourseItem => Boolean(course))
+}
+
+function normalizeCourseEnrollment(value: unknown): CourseEnrollmentItem | null {
+  if (!isRecord(value)) return null
+  const studentId = toNumberValue(value.student_id ?? value.id)
+  if (studentId <= 0) return null
+  return {
+    student_id: studentId,
+    student_username:
+      typeof value.student_username === 'string'
+        ? value.student_username
+        : typeof value.username === 'string'
+          ? value.username
+          : '',
+    student_full_name: typeof value.student_full_name === 'string' ? value.student_full_name : '',
+  }
 }
 
 function buildStudentJournalCountMap(entries: TeacherCourseJournalEntry[]): Map<number, number> {
@@ -52,12 +84,8 @@ function buildStudentJournalCountMap(entries: TeacherCourseJournalEntry[]): Map<
 
 async function fetchTeacherCourseCompaniesPayload(courseId: number): Promise<unknown> {
   const firstPagePayload = await httpClient
-    .get<unknown>(`/teacher/courses/${courseId}/companies/`, { params: { page: 1 } })
+    .get<unknown>(`/teacher/courses/${courseId}/companies/`, { params: { all: 'true' } })
     .then((r) => r.data)
-
-  if (isRecord(firstPagePayload) && Array.isArray(firstPagePayload.students)) {
-    return firstPagePayload
-  }
 
   const firstPageItems = extractListPayload<unknown>(firstPagePayload)
   const firstMeta = extractPaginationMeta(firstPagePayload, firstPageItems.length)
@@ -74,6 +102,50 @@ async function fetchTeacherCourseCompaniesPayload(courseId: number): Promise<unk
   return [...firstPageItems, ...remainingItems]
 }
 
+type TeacherJournalFilters = {
+  dateFrom?: string
+  dateTo?: string
+  studentId?: number
+  companyId?: number
+}
+
+function buildTeacherJournalQueryParams(
+  filters: TeacherJournalFilters & { page?: number }
+): Record<string, string | number> {
+  return {
+    ...(filters.studentId ? { student_id: filters.studentId } : null),
+    ...(filters.companyId ? { company_id: filters.companyId } : null),
+    ...(filters.dateFrom ? { date_from: filters.dateFrom } : null),
+    ...(filters.dateTo ? { date_to: filters.dateTo } : null),
+    ...(filters.page ? { page: filters.page } : null),
+  }
+}
+
+async function fetchTeacherCourseJournalEntriesPayload(
+  courseId: number,
+  filters: TeacherJournalFilters = {}
+): Promise<unknown> {
+  try {
+    return await httpClient
+      .get<unknown>(`/teacher/courses/${courseId}/journal-entries/all/`, {
+        params: buildTeacherJournalQueryParams(filters),
+      })
+      .then((r) => r.data)
+  } catch (error) {
+    if (!isAxiosError(error) || error.response?.status !== 404) {
+      throw error
+    }
+
+    return fetchAllPages<unknown>((page) =>
+      httpClient
+        .get<unknown>(`/teacher/courses/${courseId}/journal-entries/`, {
+          params: buildTeacherJournalQueryParams({ ...filters, page }),
+        })
+        .then((r) => r.data)
+    )
+  }
+}
+
 export const teacherApi = {
   dashboard: async (): Promise<TeacherDashboardResponse> => {
     const courses = await fetchAllPages<unknown>((page) =>
@@ -84,11 +156,9 @@ export const teacherApi = {
       courses.map(async (course) => {
         const [allCompaniesPayload, allCourseJournalEntries] = await Promise.all([
           fetchTeacherCourseCompaniesPayload(course.id),
-          fetchAllPages<unknown>((page) =>
-            httpClient
-              .get<unknown>(`/teacher/courses/${course.id}/journal-entries/`, { params: { page } })
-              .then((r) => r.data)
-          ).then((items) => normalizeTeacherCourseJournalEntriesPayload(items).results),
+          fetchTeacherCourseJournalEntriesPayload(course.id).then(
+            (items) => normalizeTeacherCourseJournalEntriesPayload(items).results
+          ),
         ])
 
         const courseCompanies = normalizeTeacherCourseCompaniesPayload(
@@ -133,19 +203,12 @@ export const teacherApi = {
     companyId: number,
     params?: { dateFrom?: string; dateTo?: string }
   ): Promise<TeacherCourseJournalEntry[]> =>
-    fetchAllPages<unknown>((page) =>
-      httpClient
-        .get<unknown>(`/teacher/courses/${courseId}/journal-entries/`, {
-          params: {
-            student_id: studentId,
-            company_id: companyId,
-            ...(params?.dateFrom ? { date_from: params.dateFrom } : null),
-            ...(params?.dateTo ? { date_to: params.dateTo } : null),
-            page,
-          },
-        })
-        .then((r) => r.data)
-    ).then((entries) => normalizeTeacherCourseJournalEntriesPayload(entries).results),
+    fetchTeacherCourseJournalEntriesPayload(courseId, {
+      studentId,
+      companyId,
+      dateFrom: params?.dateFrom,
+      dateTo: params?.dateTo,
+    }).then((entries) => normalizeTeacherCourseJournalEntriesPayload(entries).results),
 
   availableStudents: (
     courseId: number,
@@ -175,4 +238,40 @@ export const teacherApi = {
         ...(payload.teacher_id ? { teacher_id: payload.teacher_id } : null),
       })
       .then(() => {}),
+
+  getCourse: (courseId: number): Promise<CourseItem> =>
+    httpClient.get<unknown>(`/courses/${courseId}/`).then((r) => {
+      const normalized = normalizeCourse(r.data)
+      if (!normalized) throw new Error('No se pudo normalizar el curso solicitado.')
+      return normalized
+    }),
+
+  updateCourse: (courseId: number, payload: CourseUpdatePayload): Promise<CourseItem> =>
+    httpClient.patch<unknown>(`/courses/${courseId}/`, payload).then((r) => {
+      const normalized = normalizeCourse(r.data)
+      if (!normalized) throw new Error('No se pudo normalizar el curso actualizado.')
+      return normalized
+    }),
+
+  deleteCourse: (courseId: number): Promise<void> =>
+    httpClient.delete(`/courses/${courseId}/`).then(() => undefined),
+
+  listCourseEnrollments: (
+    courseId: number,
+    params?: { page?: number }
+  ): Promise<CourseEnrollmentsResponse> =>
+    httpClient.get<unknown>(`/courses/${courseId}/enrollments/`, { params }).then((r) => {
+      const payload = r.data
+      const results = extractListPayload<unknown>(payload)
+        .map(normalizeCourseEnrollment)
+        .filter((entry): entry is CourseEnrollmentItem => entry !== null)
+      const meta = extractPaginationMeta(payload, results.length)
+
+      return {
+        count: meta.count ?? results.length,
+        next: meta.next,
+        previous: meta.previous,
+        results,
+      }
+    }),
 }

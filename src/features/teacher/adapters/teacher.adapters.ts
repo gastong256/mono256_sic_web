@@ -20,7 +20,18 @@ function toStringValue(value: unknown, fallback = ''): string {
 }
 
 function toNumberValue(value: unknown, fallback = 0): number {
-  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return fallback
+}
+
+function toDecimalString(value: unknown, fallback = '0'): string {
+  if (typeof value === 'string' && value.trim().length > 0) return value
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  return fallback
 }
 
 function normalizeCompany(raw: unknown): TeacherCompanyItem | null {
@@ -146,7 +157,7 @@ function normalizeTeacherJournalEntry(raw: unknown): TeacherCourseJournalEntry |
         account_code: toStringValue(entry.account_code),
         account_name: toStringValue(entry.account_name),
         type: entry.type === 'CREDIT' ? 'CREDIT' : 'DEBIT',
-        amount: toStringValue(entry.amount, '0'),
+        amount: toDecimalString(entry.amount, '0'),
       }
     }),
   }

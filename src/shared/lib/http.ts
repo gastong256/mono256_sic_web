@@ -18,6 +18,7 @@ import { env } from '@/shared/config/env'
 import { getRequestId } from '@/shared/lib/tracing'
 import { logger } from '@/shared/lib/logger'
 import { isSlowRequest, recordHttpMetric } from '@/shared/lib/httpMetrics'
+import { getTenantId } from '@/shared/lib/tenant'
 
 // ── Token provider interface ──────────────────────────────────────────────────
 
@@ -79,6 +80,10 @@ httpClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   }
 
   config.headers['X-Request-ID'] = getRequestId()
+  const tenantId = getTenantId()
+  if (tenantId) {
+    config.headers['X-Tenant-ID'] = tenantId
+  }
 
   logger.debug({
     message: 'HTTP request',
@@ -233,6 +238,7 @@ httpClient.interceptors.response.use(
 
     try {
       logger.info({ message: 'Attempting token refresh' })
+      const tenantId = getTenantId()
 
       // Use bare axios (NOT httpClient) to bypass our own interceptors
       // and avoid an infinite retry loop.
@@ -247,6 +253,7 @@ httpClient.interceptors.response.use(
         {
           headers: {
             'X-Request-ID': getRequestId(),
+            ...(tenantId ? { 'X-Tenant-ID': tenantId } : null),
           },
         }
       )

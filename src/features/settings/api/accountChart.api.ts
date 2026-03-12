@@ -47,22 +47,30 @@ export const accountChartApi = {
       }),
 
   updateConfig: (payload: AccountLevelConfig[]): Promise<AccountLevelConfig[]> =>
-    Promise.all(
-      payload.map((item) =>
-        httpClient
-          .patch<unknown>(`/accounts/visibility/${item.account_id}/`, {
+    (() => {
+      const uniqueUpdates = Array.from(
+        payload.reduce((acc, item) => {
+          acc.set(item.account_id, {
+            account_id: item.account_id,
             is_visible: item.visible,
           })
-          .then((r) => r.data)
-      )
-    ).then((responses) => {
-      const latest = responses[responses.length - 1]
-      if (Array.isArray(latest)) {
-        return flattenVisibilityTree(latest as VisibilityNode[])
-      }
-      if (isRecord(latest) && Array.isArray(latest.results)) {
-        return flattenVisibilityTree(latest.results as VisibilityNode[])
-      }
-      return accountChartApi.getConfig()
-    }),
+          return acc
+        }, new Map<number, { account_id: number; is_visible: boolean }>())
+      ).map(([, value]) => value)
+
+      return httpClient
+        .patch<unknown>('/accounts/visibility/batch/', {
+          updates: uniqueUpdates,
+        })
+        .then((r) => r.data)
+        .then((latest) => {
+          if (Array.isArray(latest)) {
+            return flattenVisibilityTree(latest as VisibilityNode[])
+          }
+          if (isRecord(latest) && Array.isArray(latest.results)) {
+            return flattenVisibilityTree(latest.results as VisibilityNode[])
+          }
+          return accountChartApi.getConfig()
+        })
+    })(),
 }

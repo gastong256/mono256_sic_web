@@ -49,6 +49,15 @@ function getRetryAfterHeader(error: AxiosError<unknown>): string | number | null
   return null
 }
 
+function toPositiveNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    if (Number.isFinite(parsed) && parsed > 0) return parsed
+  }
+  return null
+}
+
 export function extractApiMessage(error: unknown): string | null {
   if (!isAxiosError<unknown>(error)) return null
   const payload = getAxiosPayload(error)
@@ -101,19 +110,31 @@ export function getRetryAfterSeconds(error: unknown): number | null {
   if (!isAxiosError<unknown>(error)) return null
 
   const headerRaw = getRetryAfterHeader(error)
-  const parsedHeader = Number(headerRaw)
-  if (Number.isFinite(parsedHeader) && parsedHeader > 0) return parsedHeader
+  const parsedHeader = toPositiveNumber(headerRaw)
+  if (parsedHeader !== null) return parsedHeader
 
   const payload = getAxiosPayload(error)
+  const payloadRecord = isRecord(payload) ? payload : null
+  const topLevelRetryAfter = toPositiveNumber(payloadRecord?.retry_after)
+  if (topLevelRetryAfter !== null) return topLevelRetryAfter
+
   const envelope = readErrorEnvelope(payload)
   const detail = envelope?.detail
 
-  if (typeof detail === 'number' && Number.isFinite(detail) && detail > 0) return detail
+  const detailRetryAfter = isRecord(detail)
+    ? toPositiveNumber(detail.retry_after)
+    : toPositiveNumber(detail)
+  if (detailRetryAfter !== null) return detailRetryAfter
+
+  if (payloadRecord && isRecord(payloadRecord.detail)) {
+    const payloadDetailRetryAfter = toPositiveNumber(payloadRecord.detail.retry_after)
+    if (payloadDetailRetryAfter !== null) return payloadDetailRetryAfter
+  }
 
   const asString = firstString(detail)
   if (asString) {
-    const parsedFromText = Number(asString)
-    if (Number.isFinite(parsedFromText) && parsedFromText > 0) return parsedFromText
+    const parsedFromText = toPositiveNumber(asString)
+    if (parsedFromText !== null) return parsedFromText
   }
 
   return null

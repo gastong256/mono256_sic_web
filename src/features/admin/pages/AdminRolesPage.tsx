@@ -195,12 +195,12 @@ export function AdminRolesPage() {
                     <td className="muted-text px-4 py-3">{user.role}</td>
                     <td className="px-4 py-3 text-right">
                       <select
-                        value={user.role === 'admin' ? 'teacher' : user.role}
+                        value={user.role}
                         onChange={(e) =>
                           updateRole(
                             {
                               userId: user.id,
-                              payload: { role: e.target.value as Exclude<Role, 'admin'> },
+                              payload: { role: e.target.value as Role },
                             },
                             {
                               onSuccess: () => pushToast('Rol actualizado.', 'success'),
@@ -208,9 +208,10 @@ export function AdminRolesPage() {
                             }
                           )
                         }
-                        disabled={isPending || user.role === 'admin'}
+                        disabled={isPending}
                         className="rounded-md border border-[var(--border-strong)] px-2 py-1 text-sm text-[var(--text-strong)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
                       >
+                        <option value="admin">admin</option>
                         <option value="student">student</option>
                         <option value="teacher">teacher</option>
                       </select>

@@ -37,3 +37,8 @@ export interface CreateJournalEntryPayload {
   description: string
   lines: CreateJournalLinePayload[]
 }
+
+export interface ReverseJournalEntryPayload {
+  date?: string
+  description?: string
+}

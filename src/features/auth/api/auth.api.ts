@@ -38,6 +38,12 @@ export interface RegistrationCodeResponse {
   valid_until: string
 }
 
+export interface UpdateMePayload {
+  email?: string
+  first_name?: string
+  last_name?: string
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms)
@@ -73,6 +79,13 @@ export const authApi = {
    * Returns the current authenticated user. Requires Authorization header.
    */
   me: (): Promise<User> => httpClient.get<User>('/auth/me/').then((r) => r.data),
+
+  /**
+   * PATCH /auth/me/
+   * Partial profile update for the authenticated user.
+   */
+  updateMe: (payload: UpdateMePayload): Promise<User> =>
+    httpClient.patch<User>('/auth/me/', payload).then((r) => r.data),
 
   register: async (payload: RegisterPayload): Promise<User> => {
     const maxAttempts = 3

@@ -64,3 +64,30 @@ export interface CourseCreatePayload {
   code?: string
   teacher_id?: number
 }
+
+export interface CourseUpdatePayload {
+  name?: string
+  code?: string
+  teacher_id?: number
+}
+
+export interface CourseItem {
+  id: number
+  name: string
+  code?: string
+  teacher_id?: number | null
+  teacher_username?: string
+}
+
+export interface CourseEnrollmentItem {
+  student_id: number
+  student_username: string
+  student_full_name: string
+}
+
+export interface CourseEnrollmentsResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: CourseEnrollmentItem[]
+}

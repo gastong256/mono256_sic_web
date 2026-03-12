@@ -6,7 +6,7 @@ const envSchema = z.object({
   VITE_MOCK_SCENARIO: z.enum(['default', 'demo']).default('default'),
   VITE_USE_MOCK_API: z
     .string()
-    .default('true')
+    .default('false')
     .transform((v) => v === 'true'),
   VITE_SENTRY_ENABLED: z
     .string()

@@ -3,6 +3,7 @@ import type {
   JournalEntry,
   JournalEntryDetail,
   CreateJournalEntryPayload,
+  ReverseJournalEntryPayload,
 } from '@/features/journal/types/journal.types'
 import { fetchAllPages } from '@/shared/lib/fetchAllPages'
 import {
@@ -26,5 +27,14 @@ export const journalApi = {
   create: (companyId: number, payload: CreateJournalEntryPayload): Promise<JournalEntryDetail> =>
     httpClient
       .post<unknown>(`/companies/${companyId}/journal/`, payload)
+      .then((r) => normalizeJournalEntryDetailPayload(r.data)),
+
+  reverse: (
+    companyId: number,
+    entryId: number,
+    payload: ReverseJournalEntryPayload = {}
+  ): Promise<JournalEntryDetail> =>
+    httpClient
+      .post<unknown>(`/companies/${companyId}/journal/${entryId}/reverse/`, payload)
       .then((r) => normalizeJournalEntryDetailPayload(r.data)),
 }

@@ -46,7 +46,7 @@ export interface AccountLevelConfig {
 }
 
 export interface AdminRoleUpdatePayload {
-  role: Exclude<Role, 'admin'>
+  role: Role
 }
 
 export interface ApiError {

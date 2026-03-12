@@ -12,6 +12,7 @@ import { env } from '@/shared/config/env'
 import { logger } from '@/shared/lib/logger'
 import { ToastProvider } from '@/shared/ui/ToastProvider'
 import { getRequestId } from '@/shared/lib/tracing'
+import { getTenantId } from '@/shared/lib/tenant'
 
 function setUserFromToken(accessToken: string): void {
   const payload = decodeJwtPayload(accessToken)
@@ -59,6 +60,7 @@ export function App() {
     if (accessToken || !refreshToken) return
 
     let cancelled = false
+    const tenantId = getTenantId()
 
     void axios
       .post<{ access: string; refresh?: string }>(
@@ -67,6 +69,7 @@ export function App() {
         {
           headers: {
             'X-Request-ID': getRequestId(),
+            ...(tenantId ? { 'X-Tenant-ID': tenantId } : null),
           },
         }
       )
