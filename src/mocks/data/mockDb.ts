@@ -7,7 +7,7 @@ import type {
   JournalLineType,
   ReverseJournalEntryPayload,
 } from '@/features/journal/types/journal.types'
-import type { AccountLevelConfig, Role, TeacherDashboardResponse, User } from '@/shared/types'
+import type { AccountLevelConfig, Role, User } from '@/shared/types'
 
 type MockUserRecord = User & { password: string }
 
@@ -545,7 +545,10 @@ function isStudentAssignedToTeacher(studentUsername: string, teacherUsername: st
 }
 
 export function canAccessCompany(user: User, company: Company): boolean {
+  if (user.role === 'admin') return true
   return company.owner_username === user.username
+    ? true
+    : user.role === 'teacher' && isStudentAssignedToTeacher(company.owner_username, user.username)
 }
 
 export function listCompaniesForUser(user: User): Company[] {
@@ -1255,47 +1258,6 @@ export function unenrollStudentFromCourse(
   course.updated_at = new Date().toISOString()
 
   return { ok: true }
-}
-
-export function buildTeacherDashboard(user: User): TeacherDashboardResponse | null {
-  if (user.role !== 'teacher' && user.role !== 'admin') return null
-
-  const teacherCourses =
-    user.role === 'admin'
-      ? courses
-      : courses.filter((course) => course.teacher_username === user.username)
-
-  return {
-    courses: teacherCourses.map((course) => ({
-      id: course.id,
-      name: course.name,
-      teacher_username: course.teacher_username,
-      students_count: course.student_usernames.length,
-      students: course.student_usernames
-        .map((username) => users.find((candidate) => candidate.username === username))
-        .filter((candidate): candidate is MockUserRecord => candidate !== undefined)
-        .map((student) => {
-          const studentCompanies = companies.filter(
-            (company) => company.owner_username === student.username
-          )
-          const journalCount = journalEntries.filter((entry) => {
-            const companyId = journalCompanyMap[entry.id]
-            const company = getCompanyById(companyId)
-            return company?.owner_username === student.username
-          }).length
-
-          return {
-            id: student.id,
-            username: student.username,
-            full_name: `${student.first_name} ${student.last_name}`.trim(),
-            course_id: course.id,
-            course_name: course.name,
-            company_count: studentCompanies.length,
-            journal_entry_count: journalCount,
-          }
-        }),
-    })),
-  }
 }
 
 export function getAccountChartConfig(): AccountLevelConfig[] {

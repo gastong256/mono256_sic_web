@@ -10,8 +10,8 @@ type AccountNodePayload = {
   code?: string
   name?: string
   type?: string
-  depth?: number
   level?: number
+  is_leaf?: boolean
   children?: AccountNodePayload[]
 }
 
@@ -19,20 +19,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
-function normalizeAccountNode(node: AccountNodePayload, treeDepth: number): Account | null {
+function normalizeAccountNode(node: AccountNodePayload, treeLevel: number): Account | null {
   const id = Number(node.id)
   if (!Number.isFinite(id) || id <= 0 || !node.code || !node.name || !node.type) return null
 
-  const explicitDepth = Number(node.depth)
   const explicitLevel = Number(node.level)
-  const depth = Number.isFinite(explicitDepth)
-    ? explicitDepth
-    : Number.isFinite(explicitLevel)
-      ? explicitLevel + 1
-      : treeDepth
+  const level = Number.isFinite(explicitLevel) ? explicitLevel : treeLevel
 
   const children = (node.children ?? [])
-    .map((child) => normalizeAccountNode(child, treeDepth + 1))
+    .map((child) => normalizeAccountNode(child, treeLevel + 1))
     .filter((child): child is Account => child !== null)
 
   return {
@@ -40,7 +35,8 @@ function normalizeAccountNode(node: AccountNodePayload, treeDepth: number): Acco
     code: node.code,
     name: node.name,
     type: node.type,
-    depth,
+    level,
+    is_leaf: typeof node.is_leaf === 'boolean' ? node.is_leaf : children.length === 0,
     children,
   }
 }
@@ -58,7 +54,7 @@ function extractAccountNodes(payload: unknown): AccountNodePayload[] {
 
 function normalizeAccountTree(payload: unknown): Account[] {
   return extractAccountNodes(payload)
-    .map((node) => normalizeAccountNode(node, 1))
+    .map((node) => normalizeAccountNode(node, 0))
     .filter((node): node is Account => node !== null)
 }
 
@@ -76,8 +72,8 @@ export const accountsApi = {
       return Promise.reject(new Error('Debe seleccionar una cuenta padre válida.'))
     }
     return httpClient.post<unknown>(`/accounts/company/${companyId}/`, payload).then((r) => {
-      const normalized = normalizeAccountNode(r.data as AccountNodePayload, 3)
-      if (!normalized) throw new Error('Respuesta inválida al crear subcuenta.')
+      const normalized = normalizeAccountNode(r.data as AccountNodePayload, 2)
+      if (!normalized) throw new Error('Respuesta inválida al crear la cuenta.')
       return normalized
     })
   },
@@ -88,8 +84,8 @@ export const accountsApi = {
     payload: UpdateAccountPayload
   ): Promise<Account> =>
     httpClient.patch<unknown>(`/accounts/company/${companyId}/${accountId}/`, payload).then((r) => {
-      const normalized = normalizeAccountNode(r.data as AccountNodePayload, 3)
-      if (!normalized) throw new Error('Respuesta inválida al actualizar subcuenta.')
+      const normalized = normalizeAccountNode(r.data as AccountNodePayload, 2)
+      if (!normalized) throw new Error('Respuesta inválida al actualizar la cuenta.')
       return normalized
     }),
 

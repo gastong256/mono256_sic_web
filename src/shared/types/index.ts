@@ -12,31 +12,6 @@ export interface User {
   date_joined?: string
 }
 
-export interface CourseSummary {
-  id: number
-  name: string
-  teacher_username: string
-  students_count: number
-}
-
-export interface StudentSummary {
-  id: number
-  username: string
-  full_name: string
-  course_id: number
-  course_name: string
-  company_count: number
-  journal_entry_count: number
-}
-
-export interface TeacherDashboardResponse {
-  courses: Array<
-    CourseSummary & {
-      students: StudentSummary[]
-    }
-  >
-}
-
 export interface AccountLevelConfig {
   account_id: number
   level: 0 | 1

@@ -1,12 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { teacherApi } from '@/features/teacher/api/teacher.api'
-import { TEACHER_DASHBOARD_QUERY_KEY } from '@/features/teacher/hooks/useTeacherDashboard'
+import { teacherQueryKeys } from '@/features/teacher/hooks/teacherQueryKeys'
 
 export const teacherAvailableStudentsQueryKey = (
   courseId: number,
   params?: { search?: string; page?: number }
-) =>
-  ['teacher', 'students', 'available', courseId, params?.search ?? '', params?.page ?? 1] as const
+) => teacherQueryKeys.availableStudents(courseId, params)
 
 export function useTeacherAvailableStudents(
   courseId: number,
@@ -27,11 +26,11 @@ export function useEnrollStudent() {
     mutationFn: ({ courseId, studentId }: { courseId: number; studentId: number }) =>
       teacherApi.enrollStudent(courseId, studentId),
     onSuccess: async (_data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: TEACHER_DASHBOARD_QUERY_KEY })
+      await queryClient.invalidateQueries({ queryKey: teacherQueryKeys.courses })
       await queryClient.invalidateQueries({
-        queryKey: ['teacher', 'students', 'available', variables.courseId],
+        queryKey: teacherQueryKeys.availableStudents(variables.courseId),
       })
-      await queryClient.invalidateQueries({ queryKey: ['teacher', 'courses', variables.courseId] })
+      await queryClient.invalidateQueries({ queryKey: teacherQueryKeys.course(variables.courseId) })
     },
   })
 }
@@ -43,11 +42,11 @@ export function useUnenrollStudent() {
     mutationFn: ({ courseId, studentId }: { courseId: number; studentId: number }) =>
       teacherApi.unenrollStudent(courseId, studentId),
     onSuccess: async (_data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: TEACHER_DASHBOARD_QUERY_KEY })
+      await queryClient.invalidateQueries({ queryKey: teacherQueryKeys.courses })
       await queryClient.invalidateQueries({
-        queryKey: ['teacher', 'students', 'available', variables.courseId],
+        queryKey: teacherQueryKeys.availableStudents(variables.courseId),
       })
-      await queryClient.invalidateQueries({ queryKey: ['teacher', 'courses', variables.courseId] })
+      await queryClient.invalidateQueries({ queryKey: teacherQueryKeys.course(variables.courseId) })
     },
   })
 }

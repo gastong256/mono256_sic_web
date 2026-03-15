@@ -3,7 +3,8 @@ export interface Account {
   code: string
   name: string
   type: string
-  depth: number
+  level: number
+  is_leaf: boolean
   children?: Account[]
 }
 

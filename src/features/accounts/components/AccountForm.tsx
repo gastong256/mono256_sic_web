@@ -147,7 +147,7 @@ export function AccountForm({
             Cancelar
           </Button>
           <Button type="submit" isLoading={isPending}>
-            {isEditMode ? 'Guardar cambios' : 'Crear subcuenta'}
+            {isEditMode ? 'Guardar cambios' : 'Crear cuenta'}
           </Button>
         </div>
       </form>

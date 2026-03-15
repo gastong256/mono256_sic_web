@@ -10,121 +10,63 @@ const HAS_TRANSACTIONS_ID = 301
 
 let nextAccountId = 400
 
-// Global chart (depth 1 and 2) — shared across companies
+function makeAccount(
+  id: number,
+  code: string,
+  name: string,
+  type: string,
+  level: number,
+  children: Account[] = []
+): Account {
+  return {
+    id,
+    code,
+    name,
+    type,
+    level,
+    is_leaf: children.length === 0,
+    children,
+  }
+}
+
+// Global chart (level 0 and 1) — shared across companies
 const globalChart: Account[] = [
-  {
-    id: 1,
-    code: '1',
-    name: 'Activo',
-    type: 'asset',
-    depth: 1,
-    children: [
-      { id: 11, code: '1.01', name: 'Caja y Bancos', type: 'asset', depth: 2, children: [] },
-      { id: 12, code: '1.02', name: 'Créditos', type: 'asset', depth: 2, children: [] },
-      { id: 13, code: '1.03', name: 'Bienes de Cambio', type: 'asset', depth: 2, children: [] },
-      { id: 14, code: '1.04', name: 'Bienes de Uso', type: 'asset', depth: 2, children: [] },
-    ],
-  },
-  {
-    id: 2,
-    code: '2',
-    name: 'Pasivo',
-    type: 'liability',
-    depth: 1,
-    children: [
-      {
-        id: 21,
-        code: '2.01',
-        name: 'Deudas Comerciales',
-        type: 'liability',
-        depth: 2,
-        children: [],
-      },
-      { id: 22, code: '2.02', name: 'Deudas Bancarias', type: 'liability', depth: 2, children: [] },
-      { id: 23, code: '2.03', name: 'Deudas Fiscales', type: 'liability', depth: 2, children: [] },
-    ],
-  },
-  {
-    id: 3,
-    code: '3',
-    name: 'Patrimonio Neto',
-    type: 'equity',
-    depth: 1,
-    children: [
-      { id: 31, code: '3.01', name: 'Capital', type: 'equity', depth: 2, children: [] },
-      { id: 32, code: '3.02', name: 'Resultados', type: 'equity', depth: 2, children: [] },
-    ],
-  },
-  {
-    id: 4,
-    code: '4',
-    name: 'Ingresos',
-    type: 'revenue',
-    depth: 1,
-    children: [
-      { id: 41, code: '4.01', name: 'Ventas', type: 'revenue', depth: 2, children: [] },
-      { id: 42, code: '4.02', name: 'Otros Ingresos', type: 'revenue', depth: 2, children: [] },
-    ],
-  },
-  {
-    id: 5,
-    code: '5',
-    name: 'Egresos',
-    type: 'expense',
-    depth: 1,
-    children: [
-      { id: 51, code: '5.01', name: 'Costo de Ventas', type: 'expense', depth: 2, children: [] },
-      { id: 52, code: '5.02', name: 'Gastos Operativos', type: 'expense', depth: 2, children: [] },
-      { id: 53, code: '5.03', name: 'Gastos Financieros', type: 'expense', depth: 2, children: [] },
-    ],
-  },
+  makeAccount(1, '1', 'Activo', 'AS', 0, [
+    makeAccount(11, '1.01', 'Caja y Bancos', 'AS', 1),
+    makeAccount(12, '1.02', 'Créditos', 'AS', 1),
+    makeAccount(13, '1.03', 'Bienes de Cambio', 'AS', 1),
+    makeAccount(14, '1.04', 'Bienes de Uso', 'AS', 1),
+  ]),
+  makeAccount(2, '2', 'Pasivo', 'LI', 0, [
+    makeAccount(21, '2.01', 'Deudas Comerciales', 'LI', 1),
+    makeAccount(22, '2.02', 'Deudas Bancarias', 'LI', 1),
+    makeAccount(23, '2.03', 'Deudas Fiscales', 'LI', 1),
+  ]),
+  makeAccount(3, '3', 'Patrimonio Neto', 'EQ', 0, [
+    makeAccount(31, '3.01', 'Capital', 'EQ', 1),
+    makeAccount(32, '3.02', 'Resultados', 'EQ', 1),
+  ]),
+  makeAccount(4, '4', 'Ingresos', 'IN', 0, [
+    makeAccount(41, '4.01', 'Ventas', 'IN', 1),
+    makeAccount(42, '4.02', 'Otros Ingresos', 'IN', 1),
+  ]),
+  makeAccount(5, '5', 'Egresos', 'EX', 0, [
+    makeAccount(51, '5.01', 'Costo de Ventas', 'EX', 1),
+    makeAccount(52, '5.02', 'Gastos Operativos', 'EX', 1),
+    makeAccount(53, '5.03', 'Gastos Financieros', 'EX', 1),
+  ]),
 ]
 
-// Per-company level-3 accounts — keyed by companyId
+// Per-company movement accounts (level 2) — keyed by companyId
 const companyLevel3Accounts: Record<number, Account[]> = {
   1: [
-    {
-      id: 301,
-      code: '1.01.01',
-      name: 'Caja en Pesos',
-      type: 'asset',
-      depth: 3,
-      children: [],
-    },
-    {
-      id: 302,
-      code: '1.01.02',
-      name: 'Banco Nación Cta. Cte.',
-      type: 'asset',
-      depth: 3,
-      children: [],
-    },
-    {
-      id: 303,
-      code: '5.02.01',
-      name: 'Sueldos y Jornales',
-      type: 'expense',
-      depth: 3,
-      children: [],
-    },
+    makeAccount(301, '1.01.01', 'Caja en Pesos', 'AS', 2),
+    makeAccount(302, '1.01.02', 'Banco Nación Cta. Cte.', 'AS', 2),
+    makeAccount(303, '5.02.01', 'Sueldos y Jornales', 'EX', 2),
   ],
   2: [
-    {
-      id: 310,
-      code: '1.01.01',
-      name: 'Caja en Pesos',
-      type: 'asset',
-      depth: 3,
-      children: [],
-    },
-    {
-      id: 311,
-      code: '4.01.01',
-      name: 'Ventas al Contado',
-      type: 'revenue',
-      depth: 3,
-      children: [],
-    },
+    makeAccount(310, '1.01.01', 'Caja en Pesos', 'AS', 2),
+    makeAccount(311, '4.01.01', 'Ventas al Contado', 'IN', 2),
   ],
   3: [],
 }
@@ -145,46 +87,34 @@ export function listCompanyMovementAccounts(companyId: number): Account[] {
 function buildCompanyTree(companyId: number): Account[] {
   const level3 = listCompanyMovementAccounts(companyId)
 
-  return globalChart.map((level1) => ({
-    ...level1,
-    children: level1.children?.map((level2) => ({
-      ...level2,
-      children: level3.filter((acc) => accountParents[acc.id] === level2.id),
-    })),
-  }))
+  return globalChart.map((level0) => {
+    const children = (level0.children ?? []).map((level1) => {
+      const movementChildren = level3.filter((acc) => accountParents[acc.id] === level1.id)
+      return {
+        ...level1,
+        is_leaf: movementChildren.length === 0,
+        children: movementChildren,
+      }
+    })
+
+    return {
+      ...level0,
+      is_leaf: children.length === 0,
+      children,
+    }
+  })
 }
 
 export function resetAccountsMock() {
   nextAccountId = 400
   companyLevel3Accounts[1] = [
-    { id: 301, code: '1.01.01', name: 'Caja en Pesos', type: 'asset', depth: 3, children: [] },
-    {
-      id: 302,
-      code: '1.01.02',
-      name: 'Banco Nación Cta. Cte.',
-      type: 'asset',
-      depth: 3,
-      children: [],
-    },
-    {
-      id: 303,
-      code: '5.02.01',
-      name: 'Sueldos y Jornales',
-      type: 'expense',
-      depth: 3,
-      children: [],
-    },
+    makeAccount(301, '1.01.01', 'Caja en Pesos', 'AS', 2),
+    makeAccount(302, '1.01.02', 'Banco Nación Cta. Cte.', 'AS', 2),
+    makeAccount(303, '5.02.01', 'Sueldos y Jornales', 'EX', 2),
   ]
   companyLevel3Accounts[2] = [
-    { id: 310, code: '1.01.01', name: 'Caja en Pesos', type: 'asset', depth: 3, children: [] },
-    {
-      id: 311,
-      code: '4.01.01',
-      name: 'Ventas al Contado',
-      type: 'revenue',
-      depth: 3,
-      children: [],
-    },
+    makeAccount(310, '1.01.01', 'Caja en Pesos', 'AS', 2),
+    makeAccount(311, '4.01.01', 'Ventas al Contado', 'IN', 2),
   ]
   companyLevel3Accounts[3] = []
 }
@@ -255,8 +185,9 @@ export const accountsHandlers = [
       id: nextAccountId++,
       code: body.code,
       name: body.name,
-      type: 'asset',
-      depth: 3,
+      type: 'AS',
+      level: 2,
+      is_leaf: true,
       children: [],
     }
 

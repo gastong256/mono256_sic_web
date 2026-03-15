@@ -60,24 +60,11 @@ function formatMoney(value: number): string {
 }
 
 function getLedgerAccountType(account: Account): string {
-  switch (account.type) {
-    case 'asset':
-      return 'AS'
-    case 'liability':
-      return 'LI'
-    case 'equity':
-      return 'EQ'
-    case 'revenue':
-      return 'IN'
-    case 'expense':
-      return 'EX'
-    default:
-      return account.type.toUpperCase().slice(0, 2)
-  }
+  return account.type.toUpperCase().slice(0, 2)
 }
 
 function getNormalBalance(account: Account): 'DEBIT' | 'CREDIT' {
-  return account.type === 'asset' || account.type === 'expense' ? 'DEBIT' : 'CREDIT'
+  return account.type === 'AS' || account.type === 'EX' ? 'DEBIT' : 'CREDIT'
 }
 
 type ReportValidationError = {

@@ -1,5 +1,4 @@
 import { httpClient } from '@/shared/lib/http'
-import type { TeacherDashboardResponse } from '@/shared/types'
 import { fetchAllPages } from '@/shared/lib/fetchAllPages'
 import { extractListPayload, extractPaginationMeta } from '@/shared/lib/apiPagination'
 import { isAxiosError } from 'axios'
@@ -78,14 +77,6 @@ function normalizeCourseEnrollment(value: unknown): CourseEnrollmentItem | null 
   }
 }
 
-function buildStudentJournalCountMap(entries: TeacherCourseJournalEntry[]): Map<number, number> {
-  const map = new Map<number, number>()
-  entries.forEach((entry) => {
-    map.set(entry.student_id, (map.get(entry.student_id) ?? 0) + 1)
-  })
-  return map
-}
-
 async function fetchTeacherCourseCompaniesPayload(courseId: number): Promise<unknown> {
   const firstPagePayload = await httpClient
     .get<unknown>(`/teacher/courses/${courseId}/companies/`, { params: { all: 'true' } })
@@ -104,6 +95,12 @@ async function fetchTeacherCourseCompaniesPayload(courseId: number): Promise<unk
   )
 
   return [...firstPageItems, ...remainingItems]
+}
+
+async function fetchTeacherCourseCompaniesSummaryPayload(courseId: number): Promise<unknown> {
+  return httpClient
+    .get<unknown>(`/teacher/courses/${courseId}/companies/summary/`)
+    .then((r) => r.data)
 }
 
 type TeacherJournalFilters = {
@@ -151,48 +148,23 @@ async function fetchTeacherCourseJournalEntriesPayload(
 }
 
 export const teacherApi = {
-  dashboard: async (): Promise<TeacherDashboardResponse> => {
-    const courses = await fetchAllPages<unknown>((page) =>
+  listCourses: async (): Promise<CourseItem[]> =>
+    fetchAllPages<unknown>((page) =>
       httpClient.get<unknown>('/courses/', { params: { page } }).then((r) => r.data)
-    ).then((items) => normalizeCourses(items))
+    ).then((items) => normalizeCourses(items)),
 
-    const dashboardCourses = await Promise.all(
-      courses.map(async (course) => {
-        const [allCompaniesPayload, allCourseJournalEntries] = await Promise.all([
-          fetchTeacherCourseCompaniesPayload(course.id),
-          fetchTeacherCourseJournalEntriesPayload(course.id).then(
-            (items) => normalizeTeacherCourseJournalEntriesPayload(items).results
-          ),
-        ])
+  courseCompaniesSummary: async (courseId: number) =>
+    fetchTeacherCourseCompaniesSummaryPayload(courseId).then((payload) =>
+      normalizeTeacherCourseCompaniesPayload(payload, courseId)
+    ),
 
-        const courseCompanies = normalizeTeacherCourseCompaniesPayload(
-          allCompaniesPayload,
-          course.id
-        )
-        const countMap = buildStudentJournalCountMap(allCourseJournalEntries)
-
-        const students = courseCompanies.students.map((student) => ({
-          id: student.student_id,
-          username: student.student_username,
-          full_name: student.student_full_name,
-          course_id: course.id,
-          course_name: course.name,
-          company_count: student.companies.length,
-          journal_entry_count: countMap.get(student.student_id) ?? 0,
-        }))
-
-        return {
-          id: course.id,
-          name: course.name,
-          teacher_username: course.teacher_username ?? '',
-          students_count: students.length,
-          students,
-        }
-      })
-    )
-
-    return { courses: dashboardCourses }
-  },
+  courseJournalEntries: (
+    courseId: number,
+    filters?: TeacherJournalFilters
+  ): Promise<TeacherCourseJournalEntry[]> =>
+    fetchTeacherCourseJournalEntriesPayload(courseId, filters).then(
+      (entries) => normalizeTeacherCourseJournalEntriesPayload(entries).results
+    ),
 
   studentCompanies: async (courseId: number, studentId: number): Promise<TeacherCompanyItem[]> => {
     const payload = await fetchTeacherCourseCompaniesPayload(courseId)
@@ -207,12 +179,12 @@ export const teacherApi = {
     companyId: number,
     params?: { dateFrom?: string; dateTo?: string }
   ): Promise<TeacherCourseJournalEntry[]> =>
-    fetchTeacherCourseJournalEntriesPayload(courseId, {
+    teacherApi.courseJournalEntries(courseId, {
       studentId,
       companyId,
       dateFrom: params?.dateFrom,
       dateTo: params?.dateTo,
-    }).then((entries) => normalizeTeacherCourseJournalEntriesPayload(entries).results),
+    }),
 
   availableStudents: (
     courseId: number,

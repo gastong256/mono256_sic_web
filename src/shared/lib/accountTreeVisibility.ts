@@ -9,7 +9,7 @@ export function applyChartVisibility(tree: Account[], config: AccountLevelConfig
   )
 
   function filterNode(node: Account): Account | null {
-    if (node.depth <= 2) {
+    if (node.level <= 1) {
       const visible = visibilityById.get(node.id)
       if (visible === false) return null
     }

@@ -1,14 +1,15 @@
+import { getAccountVisualDepth } from '@/features/accounts/lib/accountTree'
 import type { Account } from '@/features/accounts/types/account.types'
 
 interface AccountRowProps {
   account: Account
-  depth: 1 | 2 | 3
   onAddChild?: (parent: Account) => void
   onEdit?: (account: Account) => void
   onDelete?: (account: Account) => void
 }
 
-export function AccountRow({ account, depth, onAddChild, onEdit, onDelete }: AccountRowProps) {
+export function AccountRow({ account, onAddChild, onEdit, onDelete }: AccountRowProps) {
+  const depth = getAccountVisualDepth(account)
   const containerStyles: Record<1 | 2 | 3, string> = {
     1: 'bg-gray-100',
     2: 'bg-white',
@@ -39,7 +40,7 @@ export function AccountRow({ account, depth, onAddChild, onEdit, onDelete }: Acc
       </div>
 
       <div className="flex items-center gap-1">
-        {depth === 2 && onAddChild && (
+        {account.level === 1 && onAddChild && (
           <button
             onClick={() => onAddChild(account)}
             className="rounded px-2 py-1 text-xs text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
@@ -48,7 +49,7 @@ export function AccountRow({ account, depth, onAddChild, onEdit, onDelete }: Acc
           </button>
         )}
 
-        {depth === 3 && onEdit && (
+        {account.level === 2 && onEdit && (
           <button
             onClick={() => onEdit(account)}
             className="rounded p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-blue-600"
@@ -60,7 +61,7 @@ export function AccountRow({ account, depth, onAddChild, onEdit, onDelete }: Acc
           </button>
         )}
 
-        {depth === 3 && onDelete && (
+        {account.level === 2 && onDelete && (
           <button
             onClick={() => onDelete(account)}
             className="rounded p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-red-600"
