@@ -1,3 +1,7 @@
+## <small>1.6.5 (2026-03-15)</small>
+
+* fix: align implemented flows with backend api contract ([71f973b](https://github.com/gastong256/mono256_sic_web/commit/71f973b))
+
 ## <small>1.6.4 (2026-03-15)</small>
 
 * fix: ci run semantic-release after successful ci and deploy vercel only on releases ([c943549](https://github.com/gastong256/mono256_sic_web/commit/c943549))
