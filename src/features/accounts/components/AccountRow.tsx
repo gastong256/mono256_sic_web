@@ -44,7 +44,7 @@ export function AccountRow({ account, depth, onAddChild, onEdit, onDelete }: Acc
             onClick={() => onAddChild(account)}
             className="rounded px-2 py-1 text-xs text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
           >
-            + Agregar subcuenta
+            + Agregar cuenta
           </button>
         )}
 

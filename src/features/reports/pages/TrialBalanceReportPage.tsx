@@ -10,15 +10,16 @@ import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { buildDefaultXlsxFilename, saveBlobAsFile } from '@/shared/lib/fileDownload'
 import { useToast } from '@/shared/ui/ToastProvider'
-import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
+import { extractFieldValidationErrors, getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
   style: 'currency',
   currency: 'ARS',
 })
 
-function formatAmount(value: number) {
-  return arsFormatter.format(value)
+function formatAmount(value: string | number | null) {
+  const amount = typeof value === 'number' ? value : Number(value)
+  return arsFormatter.format(Number.isFinite(amount) ? amount : 0)
 }
 
 export function TrialBalanceReportPage() {
@@ -36,17 +37,19 @@ export function TrialBalanceReportPage() {
   const { data, isLoading, isError, error } = useTrialBalanceReport(activeCompanyId, filters)
   const downloadMutation = useDownloadTrialBalanceReport()
   const canSearch = !hasInvalidRange && activeCompanyId !== null
-  const reportErrorMessage = useMemo(
-    () =>
-      getHttpErrorMessage(error, {
-        defaultMessage: 'No se pudo cargar el Balance de Comprobación.',
-        badRequestMessage: 'Revisá los filtros de fecha e intentá nuevamente.',
-        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
-        forbiddenMessage: 'No tenés permisos para consultar este reporte.',
-        notFoundMessage: 'La empresa no existe o ya no está disponible.',
-      }),
-    [error]
-  )
+  const fieldErrors = useMemo(() => extractFieldValidationErrors(error), [error])
+  const reportErrorMessage = useMemo(() => {
+    if (fieldErrors.date_from) return fieldErrors.date_from
+    if (fieldErrors.date_to) return fieldErrors.date_to
+
+    return getHttpErrorMessage(error, {
+      defaultMessage: 'No se pudo cargar el Balance de Comprobación.',
+      badRequestMessage: 'Revisá los filtros de fecha e intentá nuevamente.',
+      unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
+      forbiddenMessage: 'No tenés permisos para consultar este reporte.',
+      notFoundMessage: 'La empresa no existe o ya no está disponible.',
+    })
+  }, [error, fieldErrors.date_from, fieldErrors.date_to])
 
   async function handleDownload() {
     if (activeCompanyId === null) return
@@ -156,12 +159,19 @@ export function TrialBalanceReportPage() {
       {activeCompanyId !== null && !isLoading && !isError && data && (
         <section className="space-y-4">
           <div className="glass-panel rounded-xl p-3 text-sm">
-            <p className="font-semibold text-[var(--text-strong)]">Totales generales</p>
+            <p className="font-semibold text-[var(--text-strong)]">
+              {data.company || 'Totales generales'}
+            </p>
             <div className="mt-2 flex flex-wrap gap-2">
+              <span className="metric-chip">Desde: {data.date_from ?? '—'}</span>
+              <span className="metric-chip">Hasta: {data.date_to ?? '—'}</span>
               <span className="metric-chip">Debe: {formatAmount(data.grand_total_debit)}</span>
               <span className="metric-chip">Haber: {formatAmount(data.grand_total_credit)}</span>
               <span className="metric-chip">
-                Diferencia: {formatAmount(data.grand_total_debit - data.grand_total_credit)}
+                Saldo deudor: {formatAmount(data.totals.total_debit_balance)}
+              </span>
+              <span className="metric-chip">
+                Saldo acreedor: {formatAmount(data.totals.total_credit_balance)}
               </span>
             </div>
           </div>
@@ -180,6 +190,7 @@ export function TrialBalanceReportPage() {
                   <thead>
                     <tr>
                       <th scope="col">Cuenta</th>
+                      <th scope="col">Tipo</th>
                       <th scope="col" className="amount-col">
                         Debe
                       </th>
@@ -187,37 +198,62 @@ export function TrialBalanceReportPage() {
                         Haber
                       </th>
                       <th scope="col" className="amount-col">
-                        Saldo
+                        Saldo deudor
+                      </th>
+                      <th scope="col" className="amount-col">
+                        Saldo acreedor
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.rows.map((row) => (
-                      <Fragment key={`g-${row.level2_id}`}>
+                      <Fragment key={`g-${row.account_code}`}>
                         <tr className="data-table-head">
                           <td className="font-semibold text-[var(--text-strong)]">
-                            {row.code} · {row.name}
+                            {row.account_code} · {row.account_name}
+                          </td>
+                          <td className="font-semibold text-[var(--text-muted)]">
+                            {row.account_type || '—'}
                           </td>
                           <td className="amount-cell font-semibold">
-                            {formatAmount(row.total_debit)}
+                            {formatAmount(row.subtotal_debit)}
                           </td>
                           <td className="amount-cell font-semibold">
-                            {formatAmount(row.total_credit)}
+                            {formatAmount(row.subtotal_credit)}
                           </td>
-                          <td className="amount-cell font-semibold">{formatAmount(row.balance)}</td>
+                          <td className="amount-cell font-semibold">
+                            {row.subtotal_debit_balance !== null
+                              ? formatAmount(row.subtotal_debit_balance)
+                              : '—'}
+                          </td>
+                          <td className="amount-cell font-semibold">
+                            {row.subtotal_credit_balance !== null
+                              ? formatAmount(row.subtotal_credit_balance)
+                              : '—'}
+                          </td>
                         </tr>
                         {row.accounts.map((account) => (
-                          <tr key={`a-${account.account_id}`}>
+                          <tr key={`a-${account.account_code}`}>
                             <td className="pl-8">
-                              {account.code} · {account.name}
+                              {account.account_code} · {account.account_name}
                             </td>
+                            <td>{account.account_type || '—'}</td>
                             <td className="amount-cell amount-cell-debit">
                               {formatAmount(account.total_debit)}
                             </td>
                             <td className="amount-cell amount-cell-credit">
                               {formatAmount(account.total_credit)}
                             </td>
-                            <td className="amount-cell">{formatAmount(account.balance)}</td>
+                            <td className="amount-cell">
+                              {account.debit_balance !== null
+                                ? formatAmount(account.debit_balance)
+                                : '—'}
+                            </td>
+                            <td className="amount-cell">
+                              {account.credit_balance !== null
+                                ? formatAmount(account.credit_balance)
+                                : '—'}
+                            </td>
                           </tr>
                         ))}
                       </Fragment>

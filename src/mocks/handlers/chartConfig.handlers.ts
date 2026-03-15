@@ -9,7 +9,7 @@ type VisibilityNode = {
   account_id: number
   code: string
   name: string
-  level: 1 | 2
+  level: 0 | 1
   is_visible: boolean
   children: VisibilityNode[]
 }
@@ -92,22 +92,22 @@ function resolveScope(
 }
 
 function buildVisibilityTree(items: AccountLevelConfig[]): VisibilityNode[] {
+  const level0 = items.filter((item) => item.level === 0)
   const level1 = items.filter((item) => item.level === 1)
-  const level2 = items.filter((item) => item.level === 2)
 
-  return level1.map((parent) => ({
+  return level0.map((parent) => ({
     account_id: parent.account_id,
     code: parent.code,
     name: parent.name,
-    level: 1,
+    level: 0,
     is_visible: parent.visible,
-    children: level2
+    children: level1
       .filter((child) => child.code.startsWith(`${parent.code}.`))
       .map((child) => ({
         account_id: child.account_id,
         code: child.code,
         name: child.name,
-        level: 2,
+        level: 1,
         is_visible: child.visible,
         children: [],
       })),

@@ -14,7 +14,11 @@ import { extractApiMessage, extractFieldValidationErrors } from '@/shared/lib/ht
 
 const accountSchema = z.object({
   name: z.string().min(1, 'El nombre es obligatorio').max(200),
-  code: z.string().min(1, 'El código es obligatorio').max(20),
+  code: z
+    .string()
+    .min(1, 'El código es obligatorio')
+    .max(20)
+    .regex(/^\d+\.\d{2}\.\d{2}$/, 'Usá el formato X.XX.XX'),
 })
 
 type AccountFormValues = z.infer<typeof accountSchema>
@@ -74,7 +78,7 @@ export function AccountForm({
 
     const message = extractApiMessage(error)
     if (message) return message
-    return 'No se pudo guardar la subcuenta. Intente nuevamente.'
+    return 'No se pudo guardar la cuenta de movimiento. Intente nuevamente.'
   }
 
   function onSubmit(values: AccountFormValues) {
@@ -105,7 +109,7 @@ export function AccountForm({
     }
   }
 
-  const modalTitle = isEditMode ? 'Editar subcuenta' : 'Nueva subcuenta'
+  const modalTitle = isEditMode ? 'Editar cuenta de movimiento' : 'Nueva cuenta de movimiento'
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title={modalTitle}>

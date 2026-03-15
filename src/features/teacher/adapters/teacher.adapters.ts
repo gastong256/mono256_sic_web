@@ -41,7 +41,7 @@ function normalizeCompany(raw: unknown): TeacherCompanyItem | null {
   return {
     id,
     name: toStringValue(raw.name),
-    tax_id: toStringValue(raw.tax_id),
+    tax_id: typeof raw.tax_id === 'string' ? raw.tax_id : null,
     created_at: toStringValue(raw.created_at),
   }
 }
@@ -145,7 +145,10 @@ function normalizeTeacherJournalEntry(raw: unknown): TeacherCourseJournalEntry |
     student_id: toNumberValue(raw.student_id),
     student_username: toStringValue(raw.student_username),
     created_by: toStringValue(raw.created_by),
-    reversal_of_id: toNumberValue(raw.reversal_of_id),
+    reversal_of_id:
+      typeof raw.reversal_of_id === 'number' && Number.isFinite(raw.reversal_of_id)
+        ? raw.reversal_of_id
+        : null,
     reversed_by_id:
       typeof raw.reversed_by_id === 'number' && Number.isFinite(raw.reversed_by_id)
         ? raw.reversed_by_id
@@ -183,12 +186,15 @@ function normalizeAvailableStudent(raw: unknown): TeacherAvailableStudent | null
   if (!isRecord(raw)) return null
   const id = toNumberValue(raw.id)
   if (id <= 0) return null
+  const firstName = toStringValue(raw.first_name)
+  const lastName = toStringValue(raw.last_name)
+  const fullNameFromParts = `${firstName} ${lastName}`.trim()
   return {
     id,
     username: toStringValue(raw.username),
-    first_name: toStringValue(raw.first_name),
-    last_name: toStringValue(raw.last_name),
-    email: toStringValue(raw.email),
+    first_name: firstName,
+    last_name: lastName,
+    full_name: toStringValue(raw.full_name) || fullNameFromParts || toStringValue(raw.username),
   }
 }
 

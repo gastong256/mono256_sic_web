@@ -16,12 +16,12 @@ import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 type ChartTreeNode = AccountLevelConfig & { children: AccountLevelConfig[] }
 
 function buildTree(items: AccountLevelConfig[]): ChartTreeNode[] {
+  const level0 = items.filter((item) => item.level === 0)
   const level1 = items.filter((item) => item.level === 1)
-  const level2 = items.filter((item) => item.level === 2)
 
-  return level1.map((parent) => ({
+  return level0.map((parent) => ({
     ...parent,
-    children: level2.filter((child) => child.code.startsWith(`${parent.code}.`)),
+    children: level1.filter((child) => child.code.startsWith(`${parent.code}.`)),
   }))
 }
 
@@ -101,8 +101,8 @@ export function AccountChartVisibilityPage() {
         title="Visibilidad del plan de cuentas"
         subtitle={
           isAdmin
-            ? 'Seleccioná un docente y configurá su visibilidad de niveles 1 y 2.'
-            : 'Mostra u oculta niveles 1 y 2 globalmente.'
+            ? 'Seleccioná un docente y configurá la visibilidad de cuentas globales nivel 0 y 1.'
+            : 'Mostrá u ocultá cuentas globales nivel 0 y 1.'
         }
       />
 

@@ -1,9 +1,11 @@
+import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useLogin } from '@/features/auth/hooks/useLogin'
 import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
+import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 // ── Validation schema ─────────────────────────────────────────────────────────
 
@@ -17,7 +19,16 @@ type LoginFormValues = z.infer<typeof loginSchema>
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function LoginForm() {
-  const { mutate: login, isPending, isError } = useLogin()
+  const { mutate: login, isPending, isError, error } = useLogin()
+  const loginErrorMessage = useMemo(
+    () =>
+      getHttpErrorMessage(error, {
+        defaultMessage: 'No se pudo iniciar sesión.',
+        unauthorizedMessage: 'Usuario o contraseña incorrectos.',
+        rateLimitMessage: 'Demasiados intentos. Esperá unos segundos e intentá de nuevo.',
+      }),
+    [error]
+  )
 
   const {
     register,
@@ -48,7 +59,7 @@ export function LoginForm() {
           role="alert"
           className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-[var(--danger-600)]"
         >
-          Usuario o contraseña incorrectos.
+          {loginErrorMessage}
         </div>
       )}
 

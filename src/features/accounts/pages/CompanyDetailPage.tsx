@@ -71,7 +71,7 @@ export function CompanyDetailPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Plan de cuentas</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Administrá las subcuentas (nivel 3) de esta empresa.
+          Administrá las cuentas de movimiento de esta empresa.
         </p>
       </div>
 

@@ -36,7 +36,7 @@ function flattenByTreeDepth(nodes: VisibilityNode[]): AccountLevelConfig[] {
       seen.add(accountId)
       acc.push({
         account_id: accountId,
-        level: depth,
+        level: depth === 1 ? 0 : 1,
         code: node.code,
         name: node.name,
         visible: node.is_visible ?? node.visible ?? true,
@@ -59,16 +59,14 @@ function flattenByDeclaredLevel(nodes: VisibilityNode[]): AccountLevelConfig[] {
 
   if (declaredLevels.length === 0) return []
 
-  const minLevel = Math.min(...declaredLevels)
-  const shift = 1 - minLevel
   const acc: AccountLevelConfig[] = []
   const seen = new Set<number>()
 
   nodes.forEach((node) => {
-    const normalizedLevel = Number(node.level ?? node.depth) + shift
+    const normalizedLevel = Number(node.level ?? node.depth)
     const accountId = Number(node.account_id ?? node.id)
     if (
-      (normalizedLevel === 1 || normalizedLevel === 2) &&
+      (normalizedLevel === 0 || normalizedLevel === 1) &&
       Number.isFinite(accountId) &&
       accountId > 0 &&
       node.code &&
@@ -93,7 +91,7 @@ function flattenVisibilityPayload(nodes: VisibilityNode[]): AccountLevelConfig[]
   const byDepth = flattenByTreeDepth(nodes)
 
   // If payload arrives flat (no nested children), use declared level/depth as fallback.
-  if (byDepth.length > 0 && byDepth.some((item) => item.level === 2)) {
+  if (byDepth.length > 0 && byDepth.some((item) => item.level === 1)) {
     return byDepth
   }
 

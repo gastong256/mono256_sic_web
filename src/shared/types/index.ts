@@ -39,7 +39,7 @@ export interface TeacherDashboardResponse {
 
 export interface AccountLevelConfig {
   account_id: number
-  level: 1 | 2
+  level: 0 | 1
   code: string
   name: string
   visible: boolean

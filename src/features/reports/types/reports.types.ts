@@ -1,10 +1,10 @@
-import type { JournalEntryDetail } from '@/features/journal/types/journal.types'
-
 export interface JournalBookReportResponse {
   company_id: number
+  company: string
   date_from: string | null
   date_to: string | null
-  entries: JournalEntryDetail[]
+  entries: JournalBookEntry[]
+  results: JournalBookEntry[]
   grand_total_debit: number
   grand_total_credit: number
 }
@@ -12,6 +12,24 @@ export interface JournalBookReportResponse {
 export interface JournalBookReportParams {
   dateFrom?: string
   dateTo?: string
+}
+
+export interface JournalBookLine {
+  account_code: string
+  account_name: string
+  debit: number | null
+  credit: number | null
+}
+
+export interface JournalBookEntry {
+  entry_number: number
+  date: string
+  description: string
+  source_type: string
+  source_ref: string
+  lines: JournalBookLine[]
+  total_debit: number
+  total_credit: number
 }
 
 export interface LedgerMovement {
@@ -55,31 +73,43 @@ export interface LedgerReportParams extends JournalBookReportParams {
 }
 
 export interface TrialBalanceAccountRow {
-  account_id: number
-  code: string
-  name: string
+  account_code: string
+  account_name: string
+  account_type: string
   total_debit: number
   total_credit: number
-  balance: number
+  debit_balance: number | null
+  credit_balance: number | null
 }
 
 export interface TrialBalanceGroupRow {
-  level2_id: number
-  code: string
-  name: string
+  account_code: string
+  account_name: string
+  account_type: string
+  subtotal_debit: number
+  subtotal_credit: number
+  subtotal_debit_balance: number | null
+  subtotal_credit_balance: number | null
+  accounts: TrialBalanceAccountRow[]
+}
+
+export interface TrialBalanceTotals {
   total_debit: number
   total_credit: number
-  balance: number
-  accounts: TrialBalanceAccountRow[]
+  total_debit_balance: number
+  total_credit_balance: number
 }
 
 export interface TrialBalanceReportResponse {
   company_id: number
+  company: string
   date_from: string | null
   date_to: string | null
   rows: TrialBalanceGroupRow[]
+  groups: TrialBalanceGroupRow[]
   grand_total_debit: number
   grand_total_credit: number
+  totals: TrialBalanceTotals
 }
 
 export type TrialBalanceReportParams = JournalBookReportParams

@@ -3,7 +3,7 @@ import type { JournalLine } from '@/features/journal/types/journal.types'
 export interface TeacherCompanyItem {
   id: number
   name: string
-  tax_id: string
+  tax_id: string | null
   created_at: string
 }
 
@@ -32,7 +32,7 @@ export interface TeacherCourseJournalEntry {
   student_id: number
   student_username: string
   created_by: string
-  reversal_of_id: number
+  reversal_of_id: number | null
   reversed_by_id: number | null
   lines: JournalLine[]
 }
@@ -49,7 +49,7 @@ export interface TeacherAvailableStudent {
   username: string
   first_name: string
   last_name: string
-  email: string
+  full_name: string
 }
 
 export interface TeacherAvailableStudentsResponse {
@@ -77,12 +77,16 @@ export interface CourseItem {
   code?: string
   teacher_id?: number | null
   teacher_username?: string
+  student_count?: number
+  created_at?: string
+  updated_at?: string
 }
 
 export interface CourseEnrollmentItem {
   student_id: number
   student_username: string
   student_full_name: string
+  created_at?: string
 }
 
 export interface CourseEnrollmentsResponse {

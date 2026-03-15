@@ -1,5 +1,61 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeLedgerReportPayload } from '@/features/reports/adapters/reports.adapters'
+import {
+  normalizeJournalBookReportPayload,
+  normalizeLedgerReportPayload,
+  normalizeTrialBalanceReportPayload,
+} from '@/features/reports/adapters/reports.adapters'
+
+describe('normalizeJournalBookReportPayload', () => {
+  it('normalizes the backend journal-book payload without requiring journal detail fields', () => {
+    const payload = {
+      company_id: 12,
+      company: 'Mi Empresa Demo',
+      date_from: '2026-03-01',
+      date_to: '2026-03-31',
+      entries: [
+        {
+          entry_number: 4,
+          date: '2026-03-10',
+          description: 'Venta contado',
+          source_type: 'MANUAL',
+          source_ref: '',
+          lines: [
+            {
+              account_code: '1.01.01',
+              account_name: 'Caja Principal',
+              debit: '2500.00',
+              credit: null,
+            },
+          ],
+          total_debit: '2500.00',
+          total_credit: '2500.00',
+        },
+      ],
+      totals: {
+        total_debit: '2500.00',
+        total_credit: '2500.00',
+      },
+    }
+
+    const result = normalizeJournalBookReportPayload(payload, 12, {})
+
+    expect(result.company).toBe('Mi Empresa Demo')
+    expect(result.entries).toHaveLength(1)
+    expect(result.results).toEqual(result.entries)
+    expect(result.entries[0]).toMatchObject({
+      entry_number: 4,
+      source_type: 'MANUAL',
+      total_debit: 2500,
+      total_credit: 2500,
+    })
+    expect(result.entries[0].lines[0]).toEqual({
+      account_code: '1.01.01',
+      account_name: 'Caja Principal',
+      debit: 2500,
+      credit: null,
+    })
+  })
+})
 
 describe('normalizeLedgerReportPayload', () => {
   it('normalizes the backend ledger payload without requiring account ids per card', () => {
@@ -123,6 +179,74 @@ describe('normalizeLedgerReportPayload', () => {
     expect(result.cards[0].period_totals).toEqual({
       total_debit: 0,
       total_credit: 0,
+    })
+  })
+})
+
+describe('normalizeTrialBalanceReportPayload', () => {
+  it('normalizes the backend trial-balance payload with duplicated rows/groups shapes', () => {
+    const payload = {
+      company_id: 12,
+      company: 'Mi Empresa Demo',
+      date_from: '2026-03-01',
+      date_to: '2026-03-31',
+      rows: [
+        {
+          account_code: '1.01',
+          account_name: 'Caja',
+          account_type: 'AS',
+          subtotal_debit: '2500.00',
+          subtotal_credit: '800.00',
+          subtotal_debit_balance: '1700.00',
+          subtotal_credit_balance: null,
+          accounts: [
+            {
+              account_code: '1.01.01',
+              account_name: 'Caja Principal',
+              account_type: 'AS',
+              total_debit: '2500.00',
+              total_credit: '800.00',
+              debit_balance: '1700.00',
+              credit_balance: null,
+            },
+          ],
+        },
+      ],
+      totals: {
+        total_debit: '2500.00',
+        total_credit: '800.00',
+        total_debit_balance: '1700.00',
+        total_credit_balance: '0.00',
+      },
+    }
+
+    const result = normalizeTrialBalanceReportPayload(payload, 12, {})
+
+    expect(result.company).toBe('Mi Empresa Demo')
+    expect(result.rows).toHaveLength(1)
+    expect(result.groups).toEqual(result.rows)
+    expect(result.rows[0]).toMatchObject({
+      account_code: '1.01',
+      account_name: 'Caja',
+      subtotal_debit: 2500,
+      subtotal_credit: 800,
+      subtotal_debit_balance: 1700,
+      subtotal_credit_balance: null,
+    })
+    expect(result.rows[0].accounts[0]).toEqual({
+      account_code: '1.01.01',
+      account_name: 'Caja Principal',
+      account_type: 'AS',
+      total_debit: 2500,
+      total_credit: 800,
+      debit_balance: 1700,
+      credit_balance: null,
+    })
+    expect(result.totals).toEqual({
+      total_debit: 2500,
+      total_credit: 800,
+      total_debit_balance: 1700,
+      total_credit_balance: 0,
     })
   })
 })

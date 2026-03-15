@@ -61,11 +61,12 @@ export function DeleteAccountDialog({ account, companyId, onClose }: DeleteAccou
       isOpen={account !== null}
       onClose={handleClose}
       onConfirm={handleConfirm}
-      title="Eliminar subcuenta"
+      title="Eliminar cuenta"
       message={
         <>
-          ¿Desea eliminar la subcuenta <strong className="font-semibold">{account?.name}</strong>?
-          Esta acción no se puede deshacer.
+          ¿Desea eliminar la cuenta de movimiento{' '}
+          <strong className="font-semibold">{account?.name}</strong>? Esta acción no se puede
+          deshacer.
         </>
       }
       confirmLabel="Eliminar"

@@ -49,6 +49,9 @@ function normalizeCourse(value: unknown): CourseItem | null {
     ...(typeof value.teacher_username === 'string'
       ? { teacher_username: value.teacher_username }
       : {}),
+    ...(typeof value.student_count === 'number' ? { student_count: value.student_count } : {}),
+    ...(typeof value.created_at === 'string' ? { created_at: value.created_at } : {}),
+    ...(typeof value.updated_at === 'string' ? { updated_at: value.updated_at } : {}),
   }
 }
 
@@ -71,6 +74,7 @@ function normalizeCourseEnrollment(value: unknown): CourseEnrollmentItem | null 
           ? value.username
           : '',
     student_full_name: typeof value.student_full_name === 'string' ? value.student_full_name : '',
+    ...(typeof value.created_at === 'string' ? { created_at: value.created_at } : {}),
   }
 }
 

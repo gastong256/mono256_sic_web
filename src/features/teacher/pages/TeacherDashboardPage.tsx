@@ -18,7 +18,18 @@ import { Button } from '@/shared/ui/Button'
 import { useToast } from '@/shared/ui/ToastProvider'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
-function fullName(student: { first_name?: string; last_name?: string; username: string }): string {
+const AVAILABLE_STUDENTS_PAGE_SIZE = 25
+
+function fullName(student: {
+  first_name?: string
+  last_name?: string
+  full_name?: string
+  username: string
+}): string {
+  const fullNameCandidate =
+    'full_name' in student && typeof student.full_name === 'string' ? student.full_name.trim() : ''
+  if (fullNameCandidate.length > 0) return fullNameCandidate
+
   const formatted = `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim()
   return formatted.length > 0 ? formatted : student.username
 }
@@ -53,8 +64,7 @@ export function TeacherDashboardPage() {
 
   const totalAvailablePages = useMemo(() => {
     if (!availableStudents) return 1
-    const pageSize = availableStudents.results.length || 1
-    return Math.max(1, Math.ceil(availableStudents.count / pageSize))
+    return Math.max(1, Math.ceil(availableStudents.count / AVAILABLE_STUDENTS_PAGE_SIZE))
   }, [availableStudents])
   const dashboardErrorMessage = useMemo(
     () =>

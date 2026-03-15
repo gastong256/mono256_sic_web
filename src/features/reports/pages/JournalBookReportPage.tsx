@@ -10,7 +10,7 @@ import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { buildDefaultXlsxFilename, saveBlobAsFile } from '@/shared/lib/fileDownload'
 import { useToast } from '@/shared/ui/ToastProvider'
-import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
+import { extractFieldValidationErrors, getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
   style: 'currency',
@@ -36,17 +36,19 @@ export function JournalBookReportPage() {
 
   const { data, isLoading, isError, error } = useJournalBookReport(activeCompanyId, filters)
   const downloadMutation = useDownloadJournalBookReport()
-  const reportErrorMessage = useMemo(
-    () =>
-      getHttpErrorMessage(error, {
-        defaultMessage: 'No se pudo cargar el Libro Diario.',
-        badRequestMessage: 'Revisá los filtros de fecha e intentá nuevamente.',
-        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
-        forbiddenMessage: 'No tenés permisos para consultar este reporte.',
-        notFoundMessage: 'La empresa no existe o ya no está disponible.',
-      }),
-    [error]
-  )
+  const fieldErrors = useMemo(() => extractFieldValidationErrors(error), [error])
+  const reportErrorMessage = useMemo(() => {
+    if (fieldErrors.date_from) return fieldErrors.date_from
+    if (fieldErrors.date_to) return fieldErrors.date_to
+
+    return getHttpErrorMessage(error, {
+      defaultMessage: 'No se pudo cargar el Libro Diario.',
+      badRequestMessage: 'Revisá los filtros de fecha e intentá nuevamente.',
+      unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
+      forbiddenMessage: 'No tenés permisos para consultar este reporte.',
+      notFoundMessage: 'La empresa no existe o ya no está disponible.',
+    })
+  }, [error, fieldErrors.date_from, fieldErrors.date_to])
 
   const canSearch = !hasInvalidRange && activeCompanyId !== null
 
@@ -155,8 +157,12 @@ export function JournalBookReportPage() {
       {activeCompanyId !== null && !isLoading && !isError && data && (
         <section className="space-y-4">
           <div className="glass-panel rounded-xl p-3 text-sm">
-            <p className="font-semibold text-[var(--text-strong)]">Resumen del periodo</p>
+            <p className="font-semibold text-[var(--text-strong)]">
+              {data.company || 'Resumen del periodo'}
+            </p>
             <div className="mt-2 flex flex-wrap gap-2">
+              <span className="metric-chip">Desde: {data.date_from ?? '—'}</span>
+              <span className="metric-chip">Hasta: {data.date_to ?? '—'}</span>
               <span className="metric-chip">Asientos: {data.entries.length}</span>
               <span className="metric-chip">Debe: {formatAmount(data.grand_total_debit)}</span>
               <span className="metric-chip">Haber: {formatAmount(data.grand_total_credit)}</span>
@@ -172,12 +178,20 @@ export function JournalBookReportPage() {
             />
           ) : (
             <ul className="space-y-3">
-              {data.entries.map((entry) => (
-                <li key={entry.id} className="ui-fade-in ui-lift data-table-shell">
+              {data.entries.map((entry, index) => (
+                <li
+                  key={`${entry.entry_number}-${entry.date}-${index}`}
+                  className="ui-fade-in ui-lift data-table-shell"
+                >
                   <div className="data-table-head flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-soft)] px-3 py-2 text-sm">
-                    <span className="font-semibold text-[var(--text-strong)]">
-                      Asiento #{entry.entry_number} · {entry.date} · {entry.description}
-                    </span>
+                    <div>
+                      <span className="font-semibold text-[var(--text-strong)]">
+                        Asiento #{entry.entry_number} · {entry.date} · {entry.description}
+                      </span>
+                      <p className="muted-text mt-1 text-xs">
+                        Origen {entry.source_type || '—'} · Ref. {entry.source_ref || '—'}
+                      </p>
+                    </div>
                     <span className="font-medium text-[var(--text-muted)]">
                       Debe {formatAmount(entry.total_debit)} | Haber{' '}
                       {formatAmount(entry.total_credit)}
@@ -198,27 +212,27 @@ export function JournalBookReportPage() {
                       </thead>
                       <tbody>
                         {entry.lines.map((line, index) => (
-                          <tr key={`${entry.id}-${index}`}>
+                          <tr key={`${entry.entry_number}-${index}`}>
                             <td>
                               {line.account_code} · {line.account_name}
                             </td>
                             <td
                               className={
-                                line.type === 'DEBIT'
+                                line.debit !== null
                                   ? 'amount-cell amount-cell-debit'
                                   : 'amount-cell-empty'
                               }
                             >
-                              {line.type === 'DEBIT' ? formatAmount(line.amount) : '—'}
+                              {line.debit !== null ? formatAmount(line.debit) : '—'}
                             </td>
                             <td
                               className={
-                                line.type === 'CREDIT'
+                                line.credit !== null
                                   ? 'amount-cell amount-cell-credit'
                                   : 'amount-cell-empty'
                               }
                             >
-                              {line.type === 'CREDIT' ? formatAmount(line.amount) : '—'}
+                              {line.credit !== null ? formatAmount(line.credit) : '—'}
                             </td>
                           </tr>
                         ))}

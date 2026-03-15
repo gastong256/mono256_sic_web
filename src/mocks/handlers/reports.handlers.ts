@@ -262,6 +262,195 @@ function buildLedgerPayload(
   return { payload }
 }
 
+function buildJournalBookPayload(
+  companyId: number,
+  companyName: string,
+  dateFrom: string | null,
+  dateTo: string | null
+) {
+  const entries = applyDateFilter(listJournalEntryDetailsByCompany(companyId), dateFrom, dateTo)
+    .sort((a, b) =>
+      a.date === b.date ? a.entry_number - b.entry_number : a.date.localeCompare(b.date)
+    )
+    .map((entry) => ({
+      entry_number: entry.entry_number,
+      date: entry.date,
+      description: entry.description,
+      source_type: entry.source_type,
+      source_ref: entry.source_ref,
+      lines: entry.lines.map((line) => ({
+        account_code: line.account_code,
+        account_name: line.account_name,
+        debit: line.type === 'DEBIT' ? formatMoney(Number(line.amount)) : null,
+        credit: line.type === 'CREDIT' ? formatMoney(Number(line.amount)) : null,
+      })),
+      total_debit: formatMoney(entry.total_debit),
+      total_credit: formatMoney(entry.total_credit),
+    }))
+
+  const grandTotalDebit = entries.reduce((acc, entry) => acc + Number(entry.total_debit), 0)
+  const grandTotalCredit = entries.reduce((acc, entry) => acc + Number(entry.total_credit), 0)
+
+  return {
+    company_id: companyId,
+    company: companyName,
+    date_from: dateFrom,
+    date_to: dateTo,
+    entries,
+    results: entries,
+    grand_total_debit: formatMoney(grandTotalDebit),
+    grand_total_credit: formatMoney(grandTotalCredit),
+    totals: {
+      total_debit: formatMoney(grandTotalDebit),
+      total_credit: formatMoney(grandTotalCredit),
+    },
+  }
+}
+
+function buildTrialBalancePayload(
+  companyId: number,
+  companyName: string,
+  dateFrom: string | null,
+  dateTo: string | null
+) {
+  const entries = applyDateFilter(listJournalEntryDetailsByCompany(companyId), dateFrom, dateTo)
+  const movementAccounts = new Map(
+    listCompanyMovementAccounts(companyId).map((account) => [account.id, account])
+  )
+  const collectiveConfig = getAccountChartConfig().filter((item) => item.level === 1)
+  const accountMap = new Map<
+    number,
+    {
+      account_code: string
+      account_name: string
+      account_type: string
+      total_debit: number
+      total_credit: number
+    }
+  >()
+
+  entries.forEach((entry) => {
+    entry.lines.forEach((line) => {
+      const debit = line.type === 'DEBIT' ? Number(line.amount) : 0
+      const credit = line.type === 'CREDIT' ? Number(line.amount) : 0
+      const movementAccount = movementAccounts.get(line.account_id)
+      const current = accountMap.get(line.account_id) ?? {
+        account_code: line.account_code,
+        account_name: line.account_name,
+        account_type: movementAccount ? getLedgerAccountType(movementAccount) : '',
+        total_debit: 0,
+        total_credit: 0,
+      }
+
+      current.total_debit += debit
+      current.total_credit += credit
+      accountMap.set(line.account_id, current)
+    })
+  })
+
+  const groupMap = new Map<
+    string,
+    {
+      account_code: string
+      account_name: string
+      account_type: string
+      subtotal_debit: number
+      subtotal_credit: number
+      accounts: Array<{
+        account_code: string
+        account_name: string
+        account_type: string
+        total_debit: number
+        total_credit: number
+        debit_balance: number | null
+        credit_balance: number | null
+      }>
+    }
+  >()
+
+  Array.from(accountMap.values())
+    .sort((a, b) => a.account_code.localeCompare(b.account_code))
+    .forEach((account) => {
+      const parts = account.account_code.split('.')
+      const groupCode = parts.length >= 2 ? `${parts[0]}.${parts[1]}` : account.account_code
+      const groupConfig = collectiveConfig.find((item) => item.code === groupCode)
+      const balance = account.total_debit - account.total_credit
+      const currentGroup = groupMap.get(groupCode) ?? {
+        account_code: groupCode,
+        account_name: groupConfig?.name ?? `Colectiva ${groupCode}`,
+        account_type: groupConfig?.code ? account.account_type : account.account_type,
+        subtotal_debit: 0,
+        subtotal_credit: 0,
+        accounts: [],
+      }
+
+      currentGroup.subtotal_debit += account.total_debit
+      currentGroup.subtotal_credit += account.total_credit
+      currentGroup.accounts.push({
+        account_code: account.account_code,
+        account_name: account.account_name,
+        account_type: account.account_type,
+        total_debit: account.total_debit,
+        total_credit: account.total_credit,
+        debit_balance: balance > 0 ? balance : null,
+        credit_balance: balance < 0 ? Math.abs(balance) : null,
+      })
+
+      groupMap.set(groupCode, currentGroup)
+    })
+
+  const rows = Array.from(groupMap.values())
+    .sort((a, b) => a.account_code.localeCompare(b.account_code))
+    .map((group) => {
+      const balance = group.subtotal_debit - group.subtotal_credit
+      return {
+        account_code: group.account_code,
+        account_name: group.account_name,
+        account_type: group.account_type,
+        subtotal_debit: formatMoney(group.subtotal_debit),
+        subtotal_credit: formatMoney(group.subtotal_credit),
+        subtotal_debit_balance: balance > 0 ? formatMoney(balance) : null,
+        subtotal_credit_balance: balance < 0 ? formatMoney(Math.abs(balance)) : null,
+        accounts: group.accounts.map((account) => ({
+          ...account,
+          total_debit: formatMoney(account.total_debit),
+          total_credit: formatMoney(account.total_credit),
+          debit_balance: account.debit_balance === null ? null : formatMoney(account.debit_balance),
+          credit_balance:
+            account.credit_balance === null ? null : formatMoney(account.credit_balance),
+        })),
+      }
+    })
+
+  const grandTotalDebit = rows.reduce((acc, row) => acc + Number(row.subtotal_debit), 0)
+  const grandTotalCredit = rows.reduce((acc, row) => acc + Number(row.subtotal_credit), 0)
+  const totalDebitBalance = rows.reduce(
+    (acc, row) => acc + (row.subtotal_debit_balance ? Number(row.subtotal_debit_balance) : 0),
+    0
+  )
+  const totalCreditBalance = rows.reduce(
+    (acc, row) => acc + (row.subtotal_credit_balance ? Number(row.subtotal_credit_balance) : 0),
+    0
+  )
+
+  return {
+    company_id: companyId,
+    company: companyName,
+    date_from: dateFrom,
+    date_to: dateTo,
+    rows,
+    groups: rows,
+    grand_total_debit: formatMoney(grandTotalDebit),
+    grand_total_credit: formatMoney(grandTotalCredit),
+    totals: {
+      total_debit: formatMoney(grandTotalDebit),
+      total_credit: formatMoney(grandTotalCredit),
+      total_debit_balance: formatMoney(totalDebitBalance),
+      total_credit_balance: formatMoney(totalCreditBalance),
+    },
+  }
+}
+
 export const reportsHandlers = [
   http.get(`${BASE}/companies/:companyId/reports/journal-book/`, async ({ request, params }) => {
     await delay(160)
@@ -276,30 +465,12 @@ export const reportsHandlers = [
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
     }
 
-    const url = new URL(request.url)
-    const dateFrom = url.searchParams.get('date_from')
-    const dateTo = url.searchParams.get('date_to')
-
-    if (dateFrom && dateTo && dateFrom > dateTo) {
-      return HttpResponse.json(
-        { detail: 'date_from no puede ser mayor a date_to.' },
-        { status: 400 }
-      )
+    const { dateFrom, dateTo, validationError } = parseAndValidateReportRequest(request)
+    if (validationError) {
+      return HttpResponse.json(validationError.body, { status: validationError.status })
     }
 
-    const entries = applyDateFilter(listJournalEntryDetailsByCompany(companyId), dateFrom, dateTo)
-
-    const grandTotalDebit = entries.reduce((acc, entry) => acc + entry.total_debit, 0)
-    const grandTotalCredit = entries.reduce((acc, entry) => acc + entry.total_credit, 0)
-
-    return HttpResponse.json({
-      company_id: companyId,
-      date_from: dateFrom,
-      date_to: dateTo,
-      entries,
-      grand_total_debit: grandTotalDebit,
-      grand_total_credit: grandTotalCredit,
-    })
+    return HttpResponse.json(buildJournalBookPayload(companyId, company.name, dateFrom, dateTo))
   }),
 
   http.get(
@@ -389,108 +560,12 @@ export const reportsHandlers = [
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
     }
 
-    const url = new URL(request.url)
-    const dateFrom = url.searchParams.get('date_from')
-    const dateTo = url.searchParams.get('date_to')
-
-    if (dateFrom && dateTo && dateFrom > dateTo) {
-      return HttpResponse.json(
-        { detail: 'date_from no puede ser mayor a date_to.' },
-        { status: 400 }
-      )
+    const { dateFrom, dateTo, validationError } = parseAndValidateReportRequest(request)
+    if (validationError) {
+      return HttpResponse.json(validationError.body, { status: validationError.status })
     }
 
-    const entries = applyDateFilter(listJournalEntryDetailsByCompany(companyId), dateFrom, dateTo)
-    const accountMap = new Map<
-      number,
-      {
-        account_id: number
-        code: string
-        name: string
-        total_debit: number
-        total_credit: number
-        balance: number
-      }
-    >()
-
-    entries.forEach((entry) => {
-      entry.lines.forEach((line) => {
-        const debit = line.type === 'DEBIT' ? Number(line.amount) : 0
-        const credit = line.type === 'CREDIT' ? Number(line.amount) : 0
-        const current = accountMap.get(line.account_id) ?? {
-          account_id: line.account_id,
-          code: line.account_code,
-          name: line.account_name,
-          total_debit: 0,
-          total_credit: 0,
-          balance: 0,
-        }
-
-        current.total_debit += debit
-        current.total_credit += credit
-        current.balance = current.total_debit - current.total_credit
-        accountMap.set(line.account_id, current)
-      })
-    })
-
-    const level2Config = getAccountChartConfig().filter((item) => item.level === 2)
-    const groupMap = new Map<
-      string,
-      {
-        level2_id: number
-        code: string
-        name: string
-        total_debit: number
-        total_credit: number
-        balance: number
-        accounts: Array<{
-          account_id: number
-          code: string
-          name: string
-          total_debit: number
-          total_credit: number
-          balance: number
-        }>
-      }
-    >()
-
-    Array.from(accountMap.values())
-      .sort((a, b) => a.code.localeCompare(b.code))
-      .forEach((account) => {
-        const parts = account.code.split('.')
-        const level2Code = parts.length >= 2 ? `${parts[0]}.${parts[1]}` : account.code
-        const level2 = level2Config.find((item) => item.code === level2Code)
-        const fallbackLevel2Id = Number(parts.join(''))
-        const group = groupMap.get(level2Code) ?? {
-          level2_id:
-            level2?.account_id ?? (Number.isFinite(fallbackLevel2Id) ? fallbackLevel2Id : 0),
-          code: level2Code,
-          name: level2?.name ?? `Colectiva ${level2Code}`,
-          total_debit: 0,
-          total_credit: 0,
-          balance: 0,
-          accounts: [],
-        }
-
-        group.total_debit += account.total_debit
-        group.total_credit += account.total_credit
-        group.balance = group.total_debit - group.total_credit
-        group.accounts.push(account)
-        groupMap.set(level2Code, group)
-      })
-
-    const rows = Array.from(groupMap.values()).sort((a, b) => a.code.localeCompare(b.code))
-    const grandTotalDebit = rows.reduce((acc, row) => acc + row.total_debit, 0)
-    const grandTotalCredit = rows.reduce((acc, row) => acc + row.total_credit, 0)
-
-    return HttpResponse.json({
-      company_id: companyId,
-      date_from: dateFrom,
-      date_to: dateTo,
-      rows,
-      grand_total_debit: grandTotalDebit,
-      grand_total_credit: grandTotalCredit,
-    })
+    return HttpResponse.json(buildTrialBalancePayload(companyId, company.name, dateFrom, dateTo))
   }),
 
   http.get(

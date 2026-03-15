@@ -1,6 +1,5 @@
-import type { JournalEntryDetail } from '@/features/journal/types/journal.types'
-import { normalizeJournalEntryDetailPayload } from '@/features/journal/adapters/journal.adapters'
 import type {
+  JournalBookEntry,
   JournalBookReportParams,
   JournalBookReportResponse,
   LedgerMovement,
@@ -36,10 +35,36 @@ function toNullableNumberValue(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-function normalizeJournalEntries(payload: unknown): JournalEntryDetail[] {
+function normalizeJournalBookLines(payload: unknown): JournalBookEntry['lines'] {
   return extractListPayload<unknown>(payload)
-    .map(normalizeJournalEntryDetailPayload)
-    .filter((entry) => entry.id > 0)
+    .map((line) => {
+      if (!isRecord(line)) return null
+      return {
+        account_code: toStringValue(line.account_code),
+        account_name: toStringValue(line.account_name),
+        debit: toNullableNumberValue(line.debit),
+        credit: toNullableNumberValue(line.credit),
+      }
+    })
+    .filter((line): line is JournalBookEntry['lines'][number] => line !== null)
+}
+
+function normalizeJournalEntries(payload: unknown): JournalBookEntry[] {
+  return extractListPayload<unknown>(payload)
+    .map((entry) => {
+      if (!isRecord(entry)) return null
+      return {
+        entry_number: toNumberValue(entry.entry_number),
+        date: toStringValue(entry.date),
+        description: toStringValue(entry.description),
+        source_type: toStringValue(entry.source_type),
+        source_ref: toStringValue(entry.source_ref),
+        lines: normalizeJournalBookLines(entry.lines),
+        total_debit: toNumberValue(entry.total_debit),
+        total_credit: toNumberValue(entry.total_credit),
+      }
+    })
+    .filter((entry): entry is JournalBookEntry => entry !== null && entry.entry_number > 0)
 }
 
 export function normalizeJournalBookReportPayload(
@@ -66,6 +91,7 @@ export function normalizeJournalBookReportPayload(
 
   return {
     company_id: isRecord(payload) ? toNumberValue(payload.company_id, companyId) : companyId,
+    company: isRecord(payload) ? toStringValue(payload.company) : '',
     date_from: isRecord(payload)
       ? toStringValue(payload.date_from) || params.dateFrom || null
       : (params.dateFrom ?? null),
@@ -73,6 +99,7 @@ export function normalizeJournalBookReportPayload(
       ? toStringValue(payload.date_to) || params.dateTo || null
       : (params.dateTo ?? null),
     entries,
+    results: entries,
     grand_total_debit: Number.isFinite(totalDebit) ? totalDebit : 0,
     grand_total_credit: Number.isFinite(totalCredit) ? totalCredit : 0,
   }
@@ -165,45 +192,53 @@ export function normalizeTrialBalanceReportPayload(
       if (!isRecord(group)) return null
       const accounts = extractListPayload<unknown>(group.accounts ?? group.rows).map((account) => {
         if (!isRecord(account)) return null
-        const accountId = toNumberValue(account.account_id ?? account.id)
-        if (accountId <= 0) return null
         return {
-          account_id: accountId,
-          code: toStringValue(account.code ?? account.account_code),
-          name: toStringValue(account.name ?? account.account_name),
+          account_code: toStringValue(account.account_code ?? account.code),
+          account_name: toStringValue(account.account_name ?? account.name),
+          account_type: toStringValue(account.account_type),
           total_debit: toNumberValue(account.total_debit),
           total_credit: toNumberValue(account.total_credit),
-          balance: toNumberValue(account.balance),
+          debit_balance: toNullableNumberValue(account.debit_balance),
+          credit_balance: toNullableNumberValue(account.credit_balance),
         }
       })
 
       return {
-        level2_id: toNumberValue(group.level2_id ?? group.id),
-        code: toStringValue(group.code),
-        name: toStringValue(group.name),
-        total_debit: toNumberValue(group.total_debit),
-        total_credit: toNumberValue(group.total_credit),
-        balance: toNumberValue(group.balance),
+        account_code: toStringValue(group.account_code ?? group.code),
+        account_name: toStringValue(group.account_name ?? group.name),
+        account_type: toStringValue(group.account_type),
+        subtotal_debit: toNumberValue(group.subtotal_debit ?? group.total_debit),
+        subtotal_credit: toNumberValue(group.subtotal_credit ?? group.total_credit),
+        subtotal_debit_balance: toNullableNumberValue(
+          group.subtotal_debit_balance ?? group.debit_balance
+        ),
+        subtotal_credit_balance: toNullableNumberValue(
+          group.subtotal_credit_balance ?? group.credit_balance
+        ),
         accounts: accounts.filter(
           (account): account is TrialBalanceReportResponse['rows'][number]['accounts'][number] =>
-            account !== null
+            account !== null && account.account_code.length > 0 && account.account_name.length > 0
         ),
       }
     })
-    .filter((row): row is TrialBalanceReportResponse['rows'][number] => row !== null)
+    .filter(
+      (row): row is TrialBalanceReportResponse['rows'][number] =>
+        row !== null && row.account_code.length > 0 && row.account_name.length > 0
+    )
 
   const totals = isRecord(payload) && isRecord(payload.totals) ? payload.totals : null
   const grandTotalDebit =
     toNumberValue(totals?.total_debit, NaN) ||
     toNumberValue((payload as UnknownRecord | undefined)?.grand_total_debit, NaN) ||
-    rows.reduce((acc, row) => acc + row.total_debit, 0)
+    rows.reduce((acc, row) => acc + row.subtotal_debit, 0)
   const grandTotalCredit =
     toNumberValue(totals?.total_credit, NaN) ||
     toNumberValue((payload as UnknownRecord | undefined)?.grand_total_credit, NaN) ||
-    rows.reduce((acc, row) => acc + row.total_credit, 0)
+    rows.reduce((acc, row) => acc + row.subtotal_credit, 0)
 
   return {
     company_id: isRecord(payload) ? toNumberValue(payload.company_id, companyId) : companyId,
+    company: isRecord(payload) ? toStringValue(payload.company) : '',
     date_from: isRecord(payload)
       ? toStringValue(payload.date_from) || params.dateFrom || null
       : (params.dateFrom ?? null),
@@ -211,7 +246,14 @@ export function normalizeTrialBalanceReportPayload(
       ? toStringValue(payload.date_to) || params.dateTo || null
       : (params.dateTo ?? null),
     rows,
+    groups: rows,
     grand_total_debit: Number.isFinite(grandTotalDebit) ? grandTotalDebit : 0,
     grand_total_credit: Number.isFinite(grandTotalCredit) ? grandTotalCredit : 0,
+    totals: {
+      total_debit: toNumberValue(totals?.total_debit, grandTotalDebit),
+      total_credit: toNumberValue(totals?.total_credit, grandTotalCredit),
+      total_debit_balance: toNumberValue(totals?.total_debit_balance),
+      total_credit_balance: toNumberValue(totals?.total_credit_balance),
+    },
   }
 }

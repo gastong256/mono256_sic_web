@@ -2,6 +2,7 @@ import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { useDeleteCompany } from '@/features/companies/hooks/useDeleteCompany'
 import type { Company } from '@/features/companies/types/company.types'
 import { useToast } from '@/shared/ui/ToastProvider'
+import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 interface DeleteCompanyDialogProps {
   company: Company | null
@@ -19,8 +20,17 @@ export function DeleteCompanyDialog({ company, onClose }: DeleteCompanyDialogPro
         pushToast('Empresa eliminada.', 'success')
         onClose()
       },
-      onError: () => {
-        pushToast('No se pudo eliminar la empresa.', 'error')
+      onError: (error) => {
+        pushToast(
+          getHttpErrorMessage(error, {
+            defaultMessage: 'No se pudo eliminar la empresa.',
+            forbiddenMessage: 'No tenés permisos para eliminar esta empresa.',
+            notFoundMessage: 'La empresa ya no existe.',
+            conflictMessage:
+              'La empresa tiene registros contables protegidos y no puede eliminarse.',
+          }),
+          'error'
+        )
       },
     })
   }
