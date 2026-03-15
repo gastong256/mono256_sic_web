@@ -1,0 +1,40 @@
+import { expect, test } from '@playwright/test'
+import { companyRow, createCompany, openCompaniesPage } from './support/companies'
+import { clearSession, loginAs, uniqueName } from './support/session'
+
+test.describe('Companies critical flow', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearSession(page)
+  })
+
+  test('creates, edits and deletes a company', async ({ page }) => {
+    const companyName = uniqueName('Empresa Critica')
+    const updatedName = `${companyName} Editada`
+
+    await loginAs(page, 'admin')
+    await createCompany(page, { name: companyName, taxId: '30-12345678-9' })
+
+    const createdRow = await companyRow(page, companyName)
+    await createdRow.getByRole('button', { name: `Editar ${companyName}` }).click()
+
+    const editDialog = page.getByRole('dialog', { name: /editar empresa/i })
+    await editDialog.getByLabel('Nombre').fill(updatedName)
+    await editDialog.getByLabel('CUIT').fill('30-87654321-0')
+    await editDialog.getByRole('button', { name: 'Guardar cambios' }).click()
+
+    await expect(page.getByRole('cell', { name: updatedName, exact: true })).toBeVisible()
+    await expect(page.getByText('Empresa actualizada correctamente.')).toBeVisible()
+
+    const updatedRow = await companyRow(page, updatedName)
+    await updatedRow.getByRole('button', { name: `Eliminar ${updatedName}` }).click()
+
+    const deleteDialog = page.getByRole('dialog', { name: /eliminar empresa/i })
+    await deleteDialog.getByRole('button', { name: 'Eliminar' }).click()
+
+    await expect(page.getByText('Empresa eliminada.')).toBeVisible()
+    await expect(page.getByRole('cell', { name: updatedName, exact: true })).not.toBeVisible()
+
+    await openCompaniesPage(page)
+    await expect(page.getByRole('cell', { name: updatedName, exact: true })).not.toBeVisible()
+  })
+})

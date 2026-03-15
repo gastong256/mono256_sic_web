@@ -1,25 +1,9 @@
 import { expect, test } from '@playwright/test'
-import type { Page } from '@playwright/test'
-
-const DEMO_USER = {
-  username: 'admin',
-  password: 'password',
-}
-
-async function login(page: Page) {
-  await page.goto('/login')
-
-  await page.getByLabel('Usuario').fill(DEMO_USER.username)
-  await page.getByLabel('Contraseña').fill(DEMO_USER.password)
-  await page.getByRole('button', { name: 'Ingresar' }).click()
-
-  await expect(page).toHaveURL('/')
-}
+import { clearSession, loginAs, logout } from './support/session'
 
 test.describe('Auth flow (baseline)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login')
-    await page.evaluate(() => localStorage.clear())
+    await clearSession(page)
   })
 
   test('redirects unauthenticated users from protected routes to login', async ({ page }) => {
@@ -38,7 +22,7 @@ test.describe('Auth flow (baseline)', () => {
   })
 
   test('allows login and shows main navigation', async ({ page }) => {
-    await login(page)
+    await loginAs(page, 'admin')
 
     await expect(page.getByRole('button', { name: 'Empresas' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Perfil' })).toBeVisible()
@@ -46,10 +30,8 @@ test.describe('Auth flow (baseline)', () => {
   })
 
   test('logs out and blocks protected routes again', async ({ page }) => {
-    await login(page)
-
-    await page.getByRole('button', { name: 'Salir' }).click()
-    await expect(page).toHaveURL('/login')
+    await loginAs(page, 'admin')
+    await logout(page)
 
     await page.goto('/profile')
     await expect(page).toHaveURL(/\/login\?returnTo=%2Fprofile/)

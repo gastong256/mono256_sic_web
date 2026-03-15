@@ -1,25 +1,10 @@
 import { expect, test } from '@playwright/test'
-import type { Page } from '@playwright/test'
-
-const DEMO_USER = {
-  username: 'admin',
-  password: 'password',
-}
-
-async function login(page: Page) {
-  await page.goto('/login')
-
-  await page.getByLabel('Usuario').fill(DEMO_USER.username)
-  await page.getByLabel('Contraseña').fill(DEMO_USER.password)
-  await page.getByRole('button', { name: 'Ingresar' }).click()
-
-  await expect(page).toHaveURL('/')
-}
+import { clearSession, loginAs, openBooksMenu } from './support/session'
+import { createCompany } from './support/companies'
 
 test.describe('App baseline smoke', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login')
-    await page.evaluate(() => localStorage.clear())
+    await clearSession(page)
   })
 
   test('registers a new student from public register page', async ({ page }) => {
@@ -37,33 +22,24 @@ test.describe('App baseline smoke', () => {
   })
 
   test('creates a company and renders it in companies table', async ({ page }) => {
-    await login(page)
-    await page.getByRole('button', { name: 'Empresas' }).click()
-    await expect(page).toHaveURL('/companies')
-
-    const companyName = `Empresa E2E ${Date.now()}`
-
-    await page.getByRole('button', { name: 'Nueva empresa' }).click()
-    await page.getByRole('dialog').getByLabel('Nombre').fill(companyName)
-    await page.getByRole('button', { name: 'Crear empresa' }).click()
-
-    await expect(page.getByRole('cell', { name: companyName, exact: true })).toBeVisible()
+    await loginAs(page, 'admin')
+    await createCompany(page, { name: `Empresa E2E ${Date.now()}` })
   })
 
   test('navigates reports pages from libros menu', async ({ page }) => {
-    await login(page)
+    await loginAs(page, 'admin')
 
-    await page.getByRole('button', { name: 'Libros' }).click()
+    await openBooksMenu(page)
     await page.getByRole('link', { name: 'Libro Diario' }).click()
     await expect(page).toHaveURL('/reports/journal-book')
     await expect(page.getByRole('heading', { name: 'Libro Diario' })).toBeVisible()
 
-    await page.getByRole('button', { name: 'Libros' }).click()
+    await openBooksMenu(page)
     await page.getByRole('link', { name: 'Libro Mayor' }).click()
     await expect(page).toHaveURL('/reports/ledger')
     await expect(page.getByRole('heading', { name: 'Libro Mayor' })).toBeVisible()
 
-    await page.getByRole('button', { name: 'Libros' }).click()
+    await openBooksMenu(page)
     await page.getByRole('link', { name: 'Balance de comprobacion' }).click()
     await expect(page).toHaveURL('/reports/trial-balance')
     await expect(page.getByRole('heading', { name: 'Balance de Comprobacion' })).toBeVisible()
