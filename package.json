@@ -1,6 +1,6 @@
 {
   "name": "sic-web",
-  "version": "1.6.3",
+  "version": "1.6.4",
   "description": "Accounting system that implements SIC (Angrisani) concepts. Web application.",
   "private": true,
   "type": "module",

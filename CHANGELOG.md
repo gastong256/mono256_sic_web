@@ -1,3 +1,7 @@
+## <small>1.6.4 (2026-03-15)</small>
+
+* fix: ci run semantic-release after successful ci and deploy vercel only on releases ([c943549](https://github.com/gastong256/mono256_sic_web/commit/c943549))
+
 ## <small>1.6.3 (2026-03-15)</small>
 
 * fix: align ledger view with backend payload contract ([a84a90d](https://github.com/gastong256/mono256_sic_web/commit/a84a90d))
