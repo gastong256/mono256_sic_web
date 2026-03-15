@@ -1,13 +1,21 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { teacherApi } from '@/features/teacher/api/teacher.api'
-
-export const teacherStudentCompaniesQueryKey = (courseId: number, studentId: number) =>
-  ['teacher', 'courses', courseId, 'students', studentId, 'companies'] as const
+import { teacherQueryKeys } from '@/features/teacher/hooks/teacherQueryKeys'
 
 export function useTeacherStudentCompanies(courseId: number, studentId: number) {
+  const queryClient = useQueryClient()
+
   return useQuery({
-    queryKey: teacherStudentCompaniesQueryKey(courseId, studentId),
-    queryFn: () => teacherApi.studentCompanies(courseId, studentId),
+    queryKey: teacherQueryKeys.studentCompanies(courseId, studentId),
+    queryFn: async () => {
+      const summary = await queryClient.ensureQueryData({
+        queryKey: teacherQueryKeys.courseCompaniesSummary(courseId),
+        queryFn: () => teacherApi.courseCompaniesSummary(courseId),
+      })
+      return (
+        summary.students.find((candidate) => candidate.student_id === studentId)?.companies ?? []
+      )
+    },
     enabled: courseId > 0 && studentId > 0,
   })
 }

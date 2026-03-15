@@ -1,4 +1,5 @@
 import type {
+  CourseItem,
   TeacherAvailableStudent,
   TeacherAvailableStudentsResponse,
   TeacherCompanyItem,
@@ -8,30 +9,31 @@ import type {
   TeacherStudentCompanies,
 } from '@/features/teacher/types/teacher.types'
 import { extractListPayload, extractPaginationMeta } from '@/shared/lib/apiPagination'
+import { isRecord, toDecimalString, toNumberValue, toStringValue } from '@/shared/lib/valueParsers'
 
-type UnknownRecord = Record<string, unknown>
+export function normalizeTeacherCourse(raw: unknown): CourseItem | null {
+  if (!isRecord(raw)) return null
+  const id = toNumberValue(raw.id)
+  if (id <= 0) return null
 
-function isRecord(value: unknown): value is UnknownRecord {
-  return typeof value === 'object' && value !== null
-}
-
-function toStringValue(value: unknown, fallback = ''): string {
-  return typeof value === 'string' ? value : fallback
-}
-
-function toNumberValue(value: unknown, fallback = 0): number {
-  if (typeof value === 'number' && Number.isFinite(value)) return value
-  if (typeof value === 'string') {
-    const parsed = Number(value)
-    if (Number.isFinite(parsed)) return parsed
+  return {
+    id,
+    name: toStringValue(raw.name),
+    ...(typeof raw.code === 'string' ? { code: raw.code } : {}),
+    ...(raw.teacher_id === null || typeof raw.teacher_id === 'number'
+      ? { teacher_id: raw.teacher_id }
+      : {}),
+    ...(typeof raw.teacher_username === 'string' ? { teacher_username: raw.teacher_username } : {}),
+    ...(typeof raw.student_count === 'number' ? { student_count: raw.student_count } : {}),
+    ...(typeof raw.created_at === 'string' ? { created_at: raw.created_at } : {}),
+    ...(typeof raw.updated_at === 'string' ? { updated_at: raw.updated_at } : {}),
   }
-  return fallback
 }
 
-function toDecimalString(value: unknown, fallback = '0'): string {
-  if (typeof value === 'string' && value.trim().length > 0) return value
-  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
-  return fallback
+export function normalizeTeacherCoursesPayload(payload: unknown): CourseItem[] {
+  return extractListPayload<unknown>(payload)
+    .map(normalizeTeacherCourse)
+    .filter((course): course is CourseItem => course !== null)
 }
 
 function normalizeCompany(raw: unknown): TeacherCompanyItem | null {

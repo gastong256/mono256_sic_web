@@ -1,22 +1,9 @@
-type UnknownRecord = Record<string, unknown>
+import { isRecord, toNumberValue, toStringOrNull } from '@/shared/lib/valueParsers'
 
 export interface PaginationMeta {
   count: number | null
   next: string | null
   previous: string | null
-}
-
-function isRecord(value: unknown): value is UnknownRecord {
-  return typeof value === 'object' && value !== null
-}
-
-function toStringOrNull(value: unknown): string | null {
-  if (typeof value === 'string' && value.length > 0) return value
-  return null
-}
-
-function toCountOrNull(value: unknown): number | null {
-  return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
 export function extractListPayload<T>(payload: unknown): T[] {
@@ -50,7 +37,10 @@ export function extractPaginationMeta(payload: unknown, fallbackCount?: number):
   }
 
   return {
-    count: toCountOrNull(payload.count) ?? fallbackCount ?? null,
+    count: (() => {
+      const parsedCount = toNumberValue(payload.count, Number.NaN)
+      return Number.isFinite(parsedCount) ? parsedCount : (fallbackCount ?? null)
+    })(),
     next: toStringOrNull(payload.next),
     previous: toStringOrNull(payload.previous),
   }

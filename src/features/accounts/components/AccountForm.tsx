@@ -8,7 +8,7 @@ import { Input } from '@/shared/ui/Input'
 import { useCreateAccount } from '@/features/accounts/hooks/useCreateAccount'
 import { useUpdateAccount } from '@/features/accounts/hooks/useUpdateAccount'
 import type { Account } from '@/features/accounts/types/account.types'
-import { extractApiMessage, extractFieldValidationErrors } from '@/shared/lib/httpErrors'
+import { resolveFormApiError } from '@/shared/lib/formErrors'
 
 // ── Validation schema ─────────────────────────────────────────────────────────
 
@@ -69,21 +69,13 @@ export function AccountForm({
     onClose()
   }
 
-  function extractApiError(
-    error: unknown
-  ): { field: keyof AccountFormValues; message: string } | string | null {
-    const fieldErrors = extractFieldValidationErrors(error)
-    if (fieldErrors.name) return { field: 'name', message: fieldErrors.name }
-    if (fieldErrors.code) return { field: 'code', message: fieldErrors.code }
-
-    const message = extractApiMessage(error)
-    if (message) return message
-    return 'No se pudo guardar la cuenta de movimiento. Intente nuevamente.'
-  }
-
   function onSubmit(values: AccountFormValues) {
     const handleError = (error: unknown) => {
-      const apiError = extractApiError(error)
+      const apiError = resolveFormApiError(
+        error,
+        ['name', 'code'] as const,
+        'No se pudo guardar la cuenta de movimiento. Intente nuevamente.'
+      )
       if (!apiError) return
       if (typeof apiError === 'object') {
         setError(apiError.field, { message: apiError.message })

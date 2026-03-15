@@ -59,14 +59,20 @@ export interface TeacherAvailableStudentsResponse {
   results: TeacherAvailableStudent[]
 }
 
-export interface CourseCreatePayload {
-  name: string
-  code?: string
-  teacher_id?: number
+export interface TeacherAvailableStudentsParams {
+  search?: string
+  page?: number
 }
 
-export interface CourseUpdatePayload {
-  name?: string
+export interface TeacherJournalFilters {
+  dateFrom?: string
+  dateTo?: string
+  studentId?: number
+  companyId?: number
+}
+
+export interface CourseCreatePayload {
+  name: string
   code?: string
   teacher_id?: number
 }
@@ -80,18 +86,4 @@ export interface CourseItem {
   student_count?: number
   created_at?: string
   updated_at?: string
-}
-
-export interface CourseEnrollmentItem {
-  student_id: number
-  student_username: string
-  student_full_name: string
-  created_at?: string
-}
-
-export interface CourseEnrollmentsResponse {
-  count: number
-  next: string | null
-  previous: string | null
-  results: CourseEnrollmentItem[]
 }

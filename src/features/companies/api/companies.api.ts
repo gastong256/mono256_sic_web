@@ -12,9 +12,6 @@ export const companiesApi = {
       httpClient.get<unknown>('/companies/', { params: { page } }).then((r) => r.data)
     ),
 
-  get: (id: number): Promise<Company> =>
-    httpClient.get<Company>(`/companies/${id}/`).then((r) => r.data),
-
   create: (payload: CreateCompanyPayload): Promise<Company> =>
     httpClient.post<Company>('/companies/', payload).then((r) => r.data),
 

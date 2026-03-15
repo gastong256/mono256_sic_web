@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { companiesApi } from '@/features/companies/api/companies.api'
-
-export const COMPANIES_QUERY_KEY = ['companies'] as const
+import { companyQueryKeys } from '@/features/companies/hooks/companyQueryKeys'
 
 interface UseCompaniesOptions {
   enabled?: boolean
@@ -9,7 +8,7 @@ interface UseCompaniesOptions {
 
 export function useCompanies(options?: UseCompaniesOptions) {
   return useQuery({
-    queryKey: COMPANIES_QUERY_KEY,
+    queryKey: companyQueryKeys.root,
     queryFn: companiesApi.list,
     enabled: options?.enabled ?? true,
     staleTime: 5 * 60 * 1000,

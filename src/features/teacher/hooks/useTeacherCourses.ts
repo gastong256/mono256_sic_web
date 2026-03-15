@@ -18,7 +18,6 @@ export function useCreateCourse() {
     mutationFn: (payload: CourseCreatePayload) => teacherApi.createCourse(payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: teacherQueryKeys.courses })
-      await queryClient.invalidateQueries({ queryKey: teacherQueryKeys.root })
     },
   })
 }

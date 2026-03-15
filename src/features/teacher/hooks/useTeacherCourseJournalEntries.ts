@@ -1,11 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { teacherApi } from '@/features/teacher/api/teacher.api'
 import { teacherQueryKeys } from '@/features/teacher/hooks/teacherQueryKeys'
+import type { TeacherJournalFilters } from '@/features/teacher/types/teacher.types'
 
-export function useTeacherCourseJournalEntries(
-  courseId: number,
-  params?: { dateFrom?: string; dateTo?: string; studentId?: number; companyId?: number }
-) {
+export function useTeacherCourseJournalEntries(courseId: number, params?: TeacherJournalFilters) {
   return useQuery({
     queryKey: teacherQueryKeys.courseJournalEntries(courseId, params),
     queryFn: () =>

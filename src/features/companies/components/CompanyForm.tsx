@@ -8,9 +8,9 @@ import { Input } from '@/shared/ui/Input'
 import { useCreateCompany } from '@/features/companies/hooks/useCreateCompany'
 import { useUpdateCompany } from '@/features/companies/hooks/useUpdateCompany'
 import type { Company } from '@/features/companies/types/company.types'
+import { resolveFormApiError } from '@/shared/lib/formErrors'
 import { Alert } from '@/shared/ui/Alert'
 import { useToast } from '@/shared/ui/ToastProvider'
-import { extractApiMessage, extractFieldValidationErrors } from '@/shared/lib/httpErrors'
 
 // ── Validation schema ─────────────────────────────────────────────────────────
 
@@ -60,19 +60,6 @@ export function CompanyForm({ isOpen, onClose, company }: CompanyFormProps) {
     onClose()
   }
 
-  function extractApiError(
-    error: unknown
-  ): { field: keyof CompanyFormValues; message: string } | string | null {
-    const fieldErrors = extractFieldValidationErrors(error)
-    if (fieldErrors.name) return { field: 'name', message: fieldErrors.name }
-    if (fieldErrors.tax_id) return { field: 'tax_id', message: fieldErrors.tax_id }
-
-    const message = extractApiMessage(error)
-    if (message) return message
-
-    return 'No se pudo guardar la empresa. Intente nuevamente.'
-  }
-
   function onSubmit(values: CompanyFormValues) {
     const payload = {
       name: values.name,
@@ -80,7 +67,11 @@ export function CompanyForm({ isOpen, onClose, company }: CompanyFormProps) {
     }
 
     const handleError = (error: unknown) => {
-      const apiError = extractApiError(error)
+      const apiError = resolveFormApiError(
+        error,
+        ['name', 'tax_id'] as const,
+        'No se pudo guardar la empresa. Intente nuevamente.'
+      )
       if (!apiError) return
       if (typeof apiError === 'object') {
         setError(apiError.field, { message: apiError.message })

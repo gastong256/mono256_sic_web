@@ -1,4 +1,5 @@
 import { isAxiosError, type AxiosError } from 'axios'
+import { isRecord, toPositiveNumberValue, type UnknownRecord } from '@/shared/lib/valueParsers'
 
 type HttpErrorMessages = {
   defaultMessage: string
@@ -9,12 +10,6 @@ type HttpErrorMessages = {
   conflictMessage?: string
   rateLimitMessage?: string
   serverErrorMessage?: string
-}
-
-type UnknownRecord = Record<string, unknown>
-
-function isRecord(value: unknown): value is UnknownRecord {
-  return typeof value === 'object' && value !== null
 }
 
 function firstString(value: unknown): string | null {
@@ -45,15 +40,6 @@ function getRetryAfterHeader(error: AxiosError<unknown>): string | number | null
   if (Array.isArray(value)) {
     const first = (value as unknown[])[0]
     return typeof first === 'string' || typeof first === 'number' ? first : null
-  }
-  return null
-}
-
-function toPositiveNumber(value: unknown): number | null {
-  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value
-  if (typeof value === 'string') {
-    const parsed = Number(value)
-    if (Number.isFinite(parsed) && parsed > 0) return parsed
   }
   return null
 }
@@ -110,30 +96,30 @@ export function getRetryAfterSeconds(error: unknown): number | null {
   if (!isAxiosError<unknown>(error)) return null
 
   const headerRaw = getRetryAfterHeader(error)
-  const parsedHeader = toPositiveNumber(headerRaw)
+  const parsedHeader = toPositiveNumberValue(headerRaw)
   if (parsedHeader !== null) return parsedHeader
 
   const payload = getAxiosPayload(error)
   const payloadRecord = isRecord(payload) ? payload : null
-  const topLevelRetryAfter = toPositiveNumber(payloadRecord?.retry_after)
+  const topLevelRetryAfter = toPositiveNumberValue(payloadRecord?.retry_after)
   if (topLevelRetryAfter !== null) return topLevelRetryAfter
 
   const envelope = readErrorEnvelope(payload)
   const detail = envelope?.detail
 
   const detailRetryAfter = isRecord(detail)
-    ? toPositiveNumber(detail.retry_after)
-    : toPositiveNumber(detail)
+    ? toPositiveNumberValue(detail.retry_after)
+    : toPositiveNumberValue(detail)
   if (detailRetryAfter !== null) return detailRetryAfter
 
   if (payloadRecord && isRecord(payloadRecord.detail)) {
-    const payloadDetailRetryAfter = toPositiveNumber(payloadRecord.detail.retry_after)
+    const payloadDetailRetryAfter = toPositiveNumberValue(payloadRecord.detail.retry_after)
     if (payloadDetailRetryAfter !== null) return payloadDetailRetryAfter
   }
 
   const asString = firstString(detail)
   if (asString) {
-    const parsedFromText = toPositiveNumber(asString)
+    const parsedFromText = toPositiveNumberValue(asString)
     if (parsedFromText !== null) return parsedFromText
   }
 

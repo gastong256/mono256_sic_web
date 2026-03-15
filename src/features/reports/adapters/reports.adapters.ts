@@ -9,31 +9,13 @@ import type {
   TrialBalanceReportResponse,
 } from '@/features/reports/types/reports.types'
 import { extractListPayload } from '@/shared/lib/apiPagination'
-
-type UnknownRecord = Record<string, unknown>
-
-function isRecord(value: unknown): value is UnknownRecord {
-  return typeof value === 'object' && value !== null
-}
-
-function toStringValue(value: unknown, fallback = ''): string {
-  return typeof value === 'string' ? value : fallback
-}
-
-function toNumberValue(value: unknown, fallback = 0): number {
-  if (typeof value === 'number' && Number.isFinite(value)) return value
-  if (typeof value === 'string') {
-    const parsed = Number(value)
-    if (Number.isFinite(parsed)) return parsed
-  }
-  return fallback
-}
-
-function toNullableNumberValue(value: unknown): number | null {
-  if (value === null || value === undefined || value === '') return null
-  const parsed = toNumberValue(value, NaN)
-  return Number.isFinite(parsed) ? parsed : null
-}
+import {
+  isRecord,
+  toNullableNumberValue,
+  toNumberValue,
+  toStringValue,
+  type UnknownRecord,
+} from '@/shared/lib/valueParsers'
 
 function normalizeJournalBookLines(payload: unknown): JournalBookEntry['lines'] {
   return extractListPayload<unknown>(payload)

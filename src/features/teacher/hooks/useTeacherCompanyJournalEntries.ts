@@ -1,34 +1,23 @@
 import { useQuery } from '@tanstack/react-query'
 import { teacherApi } from '@/features/teacher/api/teacher.api'
-
-export const teacherCompanyJournalQueryKey = (
-  courseId: number,
-  studentId: number,
-  companyId: number,
-  params?: { dateFrom?: string; dateTo?: string }
-) =>
-  [
-    'teacher',
-    'courses',
-    courseId,
-    'students',
-    studentId,
-    'companies',
-    companyId,
-    'journal',
-    params?.dateFrom ?? null,
-    params?.dateTo ?? null,
-  ] as const
+import { teacherQueryKeys } from '@/features/teacher/hooks/teacherQueryKeys'
+import type { TeacherJournalFilters } from '@/features/teacher/types/teacher.types'
 
 export function useTeacherCompanyJournalEntries(
   courseId: number,
   studentId: number,
   companyId: number | null,
-  params?: { dateFrom?: string; dateTo?: string }
+  params?: Pick<TeacherJournalFilters, 'dateFrom' | 'dateTo'>
 ) {
   return useQuery({
-    queryKey: teacherCompanyJournalQueryKey(courseId, studentId, companyId ?? 0, params),
-    queryFn: () => teacherApi.companyJournal(courseId, studentId, companyId!, params),
+    queryKey: teacherQueryKeys.studentCompanyJournal(courseId, studentId, companyId ?? 0, params),
+    queryFn: () =>
+      teacherApi.courseJournalEntries(courseId, {
+        studentId,
+        companyId: companyId ?? undefined,
+        dateFrom: params?.dateFrom,
+        dateTo: params?.dateTo,
+      }),
     enabled: courseId > 0 && studentId > 0 && companyId !== null && companyId > 0,
   })
 }

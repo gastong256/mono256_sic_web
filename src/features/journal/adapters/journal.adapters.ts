@@ -4,27 +4,7 @@ import type {
   JournalLine,
 } from '@/features/journal/types/journal.types'
 import { extractListPayload } from '@/shared/lib/apiPagination'
-
-type UnknownRecord = Record<string, unknown>
-
-function isRecord(value: unknown): value is UnknownRecord {
-  return typeof value === 'object' && value !== null
-}
-
-function toNumberValue(value: unknown, fallback = 0): number {
-  if (typeof value === 'number' && Number.isFinite(value)) return value
-  if (typeof value === 'string') {
-    const parsed = Number(value)
-    if (Number.isFinite(parsed)) return parsed
-  }
-  return fallback
-}
-
-function toDecimalString(value: unknown, fallback = '0'): string {
-  if (typeof value === 'string' && value.trim().length > 0) return value
-  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
-  return fallback
-}
+import { isRecord, toDecimalString, toNumberValue } from '@/shared/lib/valueParsers'
 
 function normalizeLine(value: unknown): JournalLine | null {
   if (!isRecord(value)) return null

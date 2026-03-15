@@ -1,7 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router'
+import { accountQueryKeys } from '@/features/accounts/hooks/accountQueryKeys'
 import { authApi } from '@/features/auth/api/auth.api'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { companyQueryKeys } from '@/features/companies/hooks/companyQueryKeys'
+import { accountChartQueryKeys } from '@/features/settings/hooks/accountChartQueryKeys'
+import { teacherQueryKeys } from '@/features/teacher/hooks/teacherQueryKeys'
 import { decodeJwtPayload } from '@/shared/lib/jwt'
 import { logger } from '@/shared/lib/logger'
 
@@ -35,12 +39,12 @@ export function useLogin() {
       // 3. Invalidate auth/business domains that may be stale after login
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['me'] }),
-        queryClient.invalidateQueries({ queryKey: ['companies'] }),
-        queryClient.invalidateQueries({ queryKey: ['accounts'] }),
+        queryClient.invalidateQueries({ queryKey: companyQueryKeys.root }),
+        queryClient.invalidateQueries({ queryKey: accountQueryKeys.root }),
         queryClient.invalidateQueries({ queryKey: ['journal'] }),
-        queryClient.invalidateQueries({ queryKey: ['teacher'] }),
+        queryClient.invalidateQueries({ queryKey: teacherQueryKeys.root }),
         queryClient.invalidateQueries({ queryKey: ['admin'] }),
-        queryClient.invalidateQueries({ queryKey: ['account-chart'] }),
+        queryClient.invalidateQueries({ queryKey: accountChartQueryKeys.root }),
       ])
 
       // 4. Redirect: honour ?returnTo=, fall back to home

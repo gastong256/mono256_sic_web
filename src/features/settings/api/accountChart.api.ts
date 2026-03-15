@@ -1,158 +1,105 @@
 import { httpClient } from '@/shared/lib/http'
+import { extractListPayload } from '@/shared/lib/apiPagination'
+import { isRecord, toNumberValue, toStringValue } from '@/shared/lib/valueParsers'
 import type { AccountLevelConfig } from '@/shared/types'
 
-type VisibilityNode = {
+type VisibilityNodePayload = {
   id?: number
   account_id?: number
   code?: string
   name?: string
   level?: number
-  depth?: number
   is_visible?: boolean
   visible?: boolean
-  children?: VisibilityNode[]
+  children?: VisibilityNodePayload[]
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
+function normalizeVisibilityNode(
+  raw: unknown,
+  inferredLevel?: 0 | 1
+): (AccountLevelConfig & { children: VisibilityNodePayload[] }) | null {
+  if (!isRecord(raw)) return null
+
+  const accountId = toNumberValue(raw.account_id ?? raw.id)
+  const declaredLevel = toNumberValue(raw.level, Number.NaN)
+  const level = declaredLevel === 0 || declaredLevel === 1 ? declaredLevel : inferredLevel
+
+  if (accountId <= 0 || level === undefined) return null
+
+  const code = toStringValue(raw.code)
+  const name = toStringValue(raw.name)
+  if (code.length === 0 || name.length === 0) return null
+
+  return {
+    account_id: accountId,
+    level,
+    code,
+    name,
+    visible:
+      typeof raw.is_visible === 'boolean'
+        ? raw.is_visible
+        : typeof raw.visible === 'boolean'
+          ? raw.visible
+          : true,
+    children: Array.isArray(raw.children) ? (raw.children as VisibilityNodePayload[]) : [],
+  }
 }
 
-function flattenByTreeDepth(nodes: VisibilityNode[]): AccountLevelConfig[] {
-  const acc: AccountLevelConfig[] = []
+function flattenVisibilityPayload(payload: unknown): AccountLevelConfig[] {
+  const roots = extractListPayload<unknown>(payload)
+  const items: AccountLevelConfig[] = []
   const seen = new Set<number>()
 
-  function visit(node: VisibilityNode, depth: number) {
-    const rawId = node.account_id ?? node.id
-    const accountId = Number(rawId)
+  function visit(node: unknown, inferredLevel?: 0 | 1) {
+    const normalized = normalizeVisibilityNode(node, inferredLevel)
+    if (!normalized || seen.has(normalized.account_id)) return
 
-    if (
-      (depth === 1 || depth === 2) &&
-      Number.isFinite(accountId) &&
-      accountId > 0 &&
-      node.code &&
-      node.name &&
-      !seen.has(accountId)
-    ) {
-      seen.add(accountId)
-      acc.push({
-        account_id: accountId,
-        level: depth === 1 ? 0 : 1,
-        code: node.code,
-        name: node.name,
-        visible: node.is_visible ?? node.visible ?? true,
-      })
-    }
+    seen.add(normalized.account_id)
+    items.push({
+      account_id: normalized.account_id,
+      level: normalized.level,
+      code: normalized.code,
+      name: normalized.name,
+      visible: normalized.visible,
+    })
 
-    if (Array.isArray(node.children) && node.children.length > 0) {
-      node.children.forEach((child) => visit(child, depth + 1))
-    }
+    const childLevel = normalized.level === 0 ? 1 : undefined
+    normalized.children.forEach((child) => visit(child, childLevel))
   }
 
-  nodes.forEach((node) => visit(node, 1))
-  return acc
+  roots.forEach((node) => visit(node))
+  return items
 }
 
-function flattenByDeclaredLevel(nodes: VisibilityNode[]): AccountLevelConfig[] {
-  const declaredLevels = nodes
-    .map((node) => Number(node.level ?? node.depth))
-    .filter((level) => Number.isFinite(level))
-
-  if (declaredLevels.length === 0) return []
-
-  const acc: AccountLevelConfig[] = []
-  const seen = new Set<number>()
-
-  nodes.forEach((node) => {
-    const normalizedLevel = Number(node.level ?? node.depth)
-    const accountId = Number(node.account_id ?? node.id)
-    if (
-      (normalizedLevel === 0 || normalizedLevel === 1) &&
-      Number.isFinite(accountId) &&
-      accountId > 0 &&
-      node.code &&
-      node.name &&
-      !seen.has(accountId)
-    ) {
-      seen.add(accountId)
-      acc.push({
-        account_id: accountId,
-        level: normalizedLevel,
-        code: node.code,
-        name: node.name,
-        visible: node.is_visible ?? node.visible ?? true,
+function buildVisibilityUpdates(payload: AccountLevelConfig[]) {
+  return Array.from(
+    payload.reduce((acc, item) => {
+      acc.set(item.account_id, {
+        account_id: item.account_id,
+        is_visible: item.visible,
       })
-    }
-  })
-
-  return acc
-}
-
-function flattenVisibilityPayload(nodes: VisibilityNode[]): AccountLevelConfig[] {
-  const byDepth = flattenByTreeDepth(nodes)
-
-  // If payload arrives flat (no nested children), use declared level/depth as fallback.
-  if (byDepth.length > 0 && byDepth.some((item) => item.level === 1)) {
-    return byDepth
-  }
-
-  const byLevel = flattenByDeclaredLevel(nodes)
-  return byLevel.length > 0 ? byLevel : byDepth
+      return acc
+    }, new Map<number, { account_id: number; is_visible: boolean }>())
+  ).map(([, value]) => value)
 }
 
 export const accountChartApi = {
   getConfig: (params?: { teacherId?: number }): Promise<AccountLevelConfig[]> =>
     httpClient
-      .get<VisibilityNode[] | { results: VisibilityNode[] } | { data: VisibilityNode[] }>(
-        '/accounts/visibility/',
-        {
-          params:
-            params?.teacherId && params.teacherId > 0
-              ? { teacher_id: params.teacherId }
-              : undefined,
-        }
-      )
-      .then((r) => {
-        const payload = r.data
-        const nodes = Array.isArray(payload)
-          ? payload
-          : 'results' in payload
-            ? payload.results
-            : payload.data
-        return flattenVisibilityPayload(nodes ?? [])
-      }),
+      .get<unknown>('/accounts/visibility/', {
+        params:
+          params?.teacherId && params.teacherId > 0 ? { teacher_id: params.teacherId } : undefined,
+      })
+      .then((response) => flattenVisibilityPayload(response.data)),
 
   updateConfig: (
     payload: AccountLevelConfig[],
     params?: { teacherId?: number }
   ): Promise<AccountLevelConfig[]> =>
-    (() => {
-      const uniqueUpdates = Array.from(
-        payload.reduce((acc, item) => {
-          acc.set(item.account_id, {
-            account_id: item.account_id,
-            is_visible: item.visible,
-          })
-          return acc
-        }, new Map<number, { account_id: number; is_visible: boolean }>())
-      ).map(([, value]) => value)
-
-      return httpClient
-        .patch<unknown>('/accounts/visibility/batch/', {
-          ...(params?.teacherId && params.teacherId > 0 ? { teacher_id: params.teacherId } : null),
-          updates: uniqueUpdates,
-        })
-        .then((r) => r.data)
-        .then((latest) => {
-          if (Array.isArray(latest)) {
-            return flattenVisibilityPayload(latest as VisibilityNode[])
-          }
-          if (isRecord(latest) && Array.isArray(latest.results)) {
-            return flattenVisibilityPayload(latest.results as VisibilityNode[])
-          }
-          if (isRecord(latest) && Array.isArray(latest.data)) {
-            return flattenVisibilityPayload(latest.data as VisibilityNode[])
-          }
-          return accountChartApi.getConfig({ teacherId: params?.teacherId })
-        })
-    })(),
+    httpClient
+      .patch<unknown>('/accounts/visibility/batch/', {
+        ...(params?.teacherId && params.teacherId > 0 ? { teacher_id: params.teacherId } : null),
+        updates: buildVisibilityUpdates(payload),
+      })
+      .then((response) => flattenVisibilityPayload(response.data)),
 }

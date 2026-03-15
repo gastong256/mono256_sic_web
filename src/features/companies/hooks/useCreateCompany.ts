@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { companiesApi } from '@/features/companies/api/companies.api'
-import { COMPANIES_QUERY_KEY } from '@/features/companies/hooks/useCompanies'
+import { companyQueryKeys } from '@/features/companies/hooks/companyQueryKeys'
 import { logger } from '@/shared/lib/logger'
 
 export function useCreateCompany() {
@@ -10,8 +10,7 @@ export function useCreateCompany() {
     mutationFn: companiesApi.create,
     onSuccess: async (company) => {
       logger.info({ message: 'Empresa creada', companyId: company.id, name: company.name })
-      await queryClient.invalidateQueries({ queryKey: COMPANIES_QUERY_KEY })
-      await queryClient.invalidateQueries({ queryKey: ['companies', 'detail'] })
+      await queryClient.invalidateQueries({ queryKey: companyQueryKeys.root })
     },
     onError: (error) => {
       logger.error({ message: 'Error al crear empresa', error: String(error) })

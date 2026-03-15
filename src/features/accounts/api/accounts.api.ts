@@ -1,9 +1,11 @@
 import { httpClient } from '@/shared/lib/http'
+import { extractListPayload } from '@/shared/lib/apiPagination'
 import type {
   Account,
   CreateAccountPayload,
   UpdateAccountPayload,
 } from '@/features/accounts/types/account.types'
+import { isRecord } from '@/shared/lib/valueParsers'
 
 type AccountNodePayload = {
   id?: number
@@ -13,10 +15,6 @@ type AccountNodePayload = {
   level?: number
   is_leaf?: boolean
   children?: AccountNodePayload[]
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }
 
 function normalizeAccountNode(node: AccountNodePayload, treeLevel: number): Account | null {
@@ -42,20 +40,18 @@ function normalizeAccountNode(node: AccountNodePayload, treeLevel: number): Acco
 }
 
 function extractAccountNodes(payload: unknown): AccountNodePayload[] {
-  if (Array.isArray(payload)) return payload as AccountNodePayload[]
-  if (isRecord(payload) && Array.isArray(payload.results)) {
-    return payload.results as AccountNodePayload[]
-  }
-  if (isRecord(payload) && Array.isArray(payload.data)) {
-    return payload.data as AccountNodePayload[]
-  }
-  return []
+  return extractListPayload<AccountNodePayload>(payload)
 }
 
 function normalizeAccountTree(payload: unknown): Account[] {
   return extractAccountNodes(payload)
     .map((node) => normalizeAccountNode(node, 0))
     .filter((node): node is Account => node !== null)
+}
+
+function normalizeSingleAccountNode(payload: unknown): Account | null {
+  if (!isRecord(payload)) return null
+  return normalizeAccountNode(payload as AccountNodePayload, 2)
 }
 
 export const accountsApi = {
@@ -72,7 +68,7 @@ export const accountsApi = {
       return Promise.reject(new Error('Debe seleccionar una cuenta padre válida.'))
     }
     return httpClient.post<unknown>(`/accounts/company/${companyId}/`, payload).then((r) => {
-      const normalized = normalizeAccountNode(r.data as AccountNodePayload, 2)
+      const normalized = normalizeSingleAccountNode(r.data)
       if (!normalized) throw new Error('Respuesta inválida al crear la cuenta.')
       return normalized
     })
@@ -84,7 +80,7 @@ export const accountsApi = {
     payload: UpdateAccountPayload
   ): Promise<Account> =>
     httpClient.patch<unknown>(`/accounts/company/${companyId}/${accountId}/`, payload).then((r) => {
-      const normalized = normalizeAccountNode(r.data as AccountNodePayload, 2)
+      const normalized = normalizeSingleAccountNode(r.data)
       if (!normalized) throw new Error('Respuesta inválida al actualizar la cuenta.')
       return normalized
     }),

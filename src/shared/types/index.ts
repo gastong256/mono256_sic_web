@@ -23,15 +23,3 @@ export interface AccountLevelConfig {
 export interface AdminRoleUpdatePayload {
   role: Role
 }
-
-export interface ApiError {
-  message: string
-  code?: string
-}
-
-export interface PaginatedResponse<T> {
-  data: T[]
-  total: number
-  page: number
-  per_page: number
-}

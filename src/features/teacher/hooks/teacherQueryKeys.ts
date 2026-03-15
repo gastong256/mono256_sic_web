@@ -1,14 +1,17 @@
+import type {
+  TeacherAvailableStudentsParams,
+  TeacherJournalFilters,
+} from '@/features/teacher/types/teacher.types'
+
 export const teacherQueryKeys = {
   root: ['teacher'] as const,
   courses: ['teacher', 'courses'] as const,
   course: (courseId: number) => ['teacher', 'courses', courseId] as const,
-  courseCompanies: (courseId: number) => ['teacher', 'courses', courseId, 'companies'] as const,
   courseCompaniesSummary: (courseId: number) =>
     ['teacher', 'courses', courseId, 'companies', 'summary'] as const,
-  courseJournalEntries: (
-    courseId: number,
-    params?: { dateFrom?: string; dateTo?: string; studentId?: number; companyId?: number }
-  ) =>
+  studentCompanies: (courseId: number, studentId: number) =>
+    ['teacher', 'courses', courseId, 'students', studentId, 'companies'] as const,
+  courseJournalEntries: (courseId: number, params?: TeacherJournalFilters) =>
     [
       'teacher',
       'courses',
@@ -19,7 +22,25 @@ export const teacherQueryKeys = {
       params?.studentId ?? null,
       params?.companyId ?? null,
     ] as const,
-  availableStudents: (courseId: number, params?: { search?: string; page?: number }) =>
+  studentCompanyJournal: (
+    courseId: number,
+    studentId: number,
+    companyId: number,
+    params?: Pick<TeacherJournalFilters, 'dateFrom' | 'dateTo'>
+  ) =>
+    [
+      'teacher',
+      'courses',
+      courseId,
+      'students',
+      studentId,
+      'companies',
+      companyId,
+      'journal',
+      params?.dateFrom ?? null,
+      params?.dateTo ?? null,
+    ] as const,
+  availableStudents: (courseId: number, params?: TeacherAvailableStudentsParams) =>
     [
       'teacher',
       'students',
