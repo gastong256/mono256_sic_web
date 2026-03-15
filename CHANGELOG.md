@@ -1,3 +1,7 @@
+## 1.7.0 (2026-03-15)
+
+* feat: align teacher dashboard and account domain with backend contract ([d7a269d](https://github.com/gastong256/mono256_sic_web/commit/d7a269d))
+
 ## <small>1.6.5 (2026-03-15)</small>
 
 * fix: align implemented flows with backend api contract ([71f973b](https://github.com/gastong256/mono256_sic_web/commit/71f973b))
