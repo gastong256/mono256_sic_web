@@ -1,3 +1,7 @@
+## <small>1.6.3 (2026-03-15)</small>
+
+* fix: align ledger view with backend payload contract ([a84a90d](https://github.com/gastong256/mono256_sic_web/commit/a84a90d))
+
 ## <small>1.6.2 (2026-03-12)</small>
 
 * fix: normalize account trees from backend levels for supervision and companies ([cd29945](https://github.com/gastong256/mono256_sic_web/commit/cd29945))
