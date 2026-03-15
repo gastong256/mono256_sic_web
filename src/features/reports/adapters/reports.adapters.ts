@@ -30,6 +30,12 @@ function toNumberValue(value: unknown, fallback = 0): number {
   return fallback
 }
 
+function toNullableNumberValue(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null
+  const parsed = toNumberValue(value, NaN)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
 function normalizeJournalEntries(payload: unknown): JournalEntryDetail[] {
   return extractListPayload<unknown>(payload)
     .map(normalizeJournalEntryDetailPayload)
@@ -77,12 +83,12 @@ function normalizeLedgerMovements(raw: unknown): LedgerMovement[] {
     .map((movement) => {
       if (!isRecord(movement)) return null
       return {
-        entry_id: toNumberValue(movement.entry_id ?? movement.id),
         entry_number: toNumberValue(movement.entry_number),
         date: toStringValue(movement.date),
         description: toStringValue(movement.description),
-        debit: toNumberValue(movement.debit),
-        credit: toNumberValue(movement.credit),
+        source_ref: toStringValue(movement.source_ref),
+        debit: toNullableNumberValue(movement.debit),
+        credit: toNullableNumberValue(movement.credit),
         balance: toNumberValue(movement.balance),
       }
     })
@@ -94,33 +100,40 @@ export function normalizeLedgerReportPayload(
   companyId: number,
   params: LedgerReportParams
 ): LedgerReportResponse {
-  const accounts =
+  const rawAccounts =
     isRecord(payload) && Array.isArray(payload.accounts)
       ? payload.accounts
       : isRecord(payload) && Array.isArray(payload.cards)
         ? payload.cards
         : extractListPayload<unknown>(payload)
 
-  const cards = accounts
+  const cards = rawAccounts
     .map((account) => {
       if (!isRecord(account)) return null
-      const accountId = toNumberValue(account.account_id ?? account.id)
-      if (accountId <= 0) return null
+      const accountCode = toStringValue(account.account_code ?? account.code)
+      const accountName = toStringValue(account.account_name ?? account.name)
+      if (accountCode.length === 0 || accountName.length === 0) return null
+      const periodTotals = isRecord(account.period_totals) ? account.period_totals : null
 
       return {
-        account_id: accountId,
-        account_code: toStringValue(account.account_code ?? account.code),
-        account_name: toStringValue(account.account_name ?? account.name),
-        total_debit: toNumberValue(account.total_debit),
-        total_credit: toNumberValue(account.total_credit),
-        ending_balance: toNumberValue(account.ending_balance ?? account.balance),
+        account_code: accountCode,
+        account_name: accountName,
+        account_type: toStringValue(account.account_type),
+        normal_balance: toStringValue(account.normal_balance) === 'CREDIT' ? 'CREDIT' : 'DEBIT',
+        opening_balance: toNumberValue(account.opening_balance),
         movements: normalizeLedgerMovements(account.movements ?? account.entries),
+        period_totals: {
+          total_debit: toNumberValue(periodTotals?.total_debit ?? account.total_debit),
+          total_credit: toNumberValue(periodTotals?.total_credit ?? account.total_credit),
+        },
+        closing_balance: toNumberValue(account.closing_balance ?? account.ending_balance),
       }
     })
     .filter((card): card is LedgerReportResponse['cards'][number] => card !== null)
 
   return {
     company_id: isRecord(payload) ? toNumberValue(payload.company_id, companyId) : companyId,
+    company: isRecord(payload) ? toStringValue(payload.company) : '',
     date_from: isRecord(payload)
       ? toStringValue(payload.date_from) || params.dateFrom || null
       : (params.dateFrom ?? null),
@@ -131,6 +144,7 @@ export function normalizeLedgerReportPayload(
       ? toNumberValue(payload.account_id, params.accountId ?? 0) || null
       : (params.accountId ?? null),
     cards,
+    accounts: cards,
   }
 }
 

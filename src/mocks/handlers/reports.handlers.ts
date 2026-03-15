@@ -1,5 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import { env } from '@/shared/config/env'
+import type { Account } from '@/features/accounts/types/account.types'
 import {
   canAccessCompany,
   getAccountChartConfig,
@@ -7,6 +8,7 @@ import {
   getRequestUser,
   listJournalEntryDetailsByCompany,
 } from '@/mocks/data/mockDb'
+import { listCompanyMovementAccounts } from '@/mocks/handlers/accounts.handlers'
 
 const BASE = env.VITE_API_BASE_URL
 
@@ -44,12 +46,51 @@ function applyDateFilter(
   })
 }
 
+function todayAsIsoDate() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function isValidIsoDate(value: string | null): boolean {
+  if (!value) return true
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`))
+}
+
+function formatMoney(value: number): string {
+  return value.toFixed(2)
+}
+
+function getLedgerAccountType(account: Account): string {
+  switch (account.type) {
+    case 'asset':
+      return 'AS'
+    case 'liability':
+      return 'LI'
+    case 'equity':
+      return 'EQ'
+    case 'revenue':
+      return 'IN'
+    case 'expense':
+      return 'EX'
+    default:
+      return account.type.toUpperCase().slice(0, 2)
+  }
+}
+
+function getNormalBalance(account: Account): 'DEBIT' | 'CREDIT' {
+  return account.type === 'asset' || account.type === 'expense' ? 'DEBIT' : 'CREDIT'
+}
+
+type ReportValidationError = {
+  body: Record<string, string> | { detail: string }
+  status: number
+}
+
 function parseAndValidateReportRequest(request: Request): {
   dateFrom: string | null
   dateTo: string | null
   accountIdRaw: string | null
   accountId: number | null
-  badRequestMessage: string | null
+  validationError: ReportValidationError | null
 } {
   const url = new URL(request.url)
   const dateFrom = url.searchParams.get('date_from')
@@ -57,13 +98,37 @@ function parseAndValidateReportRequest(request: Request): {
   const accountIdRaw = url.searchParams.get('account_id')
   const accountId = accountIdRaw && accountIdRaw.trim().length > 0 ? Number(accountIdRaw) : null
 
+  if (!isValidIsoDate(dateFrom)) {
+    return {
+      dateFrom,
+      dateTo,
+      accountIdRaw,
+      accountId,
+      validationError: {
+        body: { date_from: 'Fecha inválida. Use formato YYYY-MM-DD.' },
+        status: 400,
+      },
+    }
+  }
+  if (!isValidIsoDate(dateTo)) {
+    return {
+      dateFrom,
+      dateTo,
+      accountIdRaw,
+      accountId,
+      validationError: {
+        body: { date_to: 'Fecha inválida. Use formato YYYY-MM-DD.' },
+        status: 400,
+      },
+    }
+  }
   if (dateFrom && dateTo && dateFrom > dateTo) {
     return {
       dateFrom,
       dateTo,
       accountIdRaw,
       accountId,
-      badRequestMessage: 'date_from no puede ser mayor a date_to.',
+      validationError: { body: { detail: 'date_from no puede ser mayor a date_to.' }, status: 400 },
     }
   }
   if (accountIdRaw && (Number.isNaN(accountId) || accountId === null || accountId <= 0)) {
@@ -72,11 +137,129 @@ function parseAndValidateReportRequest(request: Request): {
       dateTo,
       accountIdRaw,
       accountId,
-      badRequestMessage: 'account_id inválido.',
+      validationError: { body: { account_id: 'ID de cuenta inválido.' }, status: 400 },
     }
   }
 
-  return { dateFrom, dateTo, accountIdRaw, accountId, badRequestMessage: null }
+  return { dateFrom, dateTo, accountIdRaw, accountId, validationError: null }
+}
+
+function buildLedgerPayload(
+  companyId: number,
+  companyName: string,
+  rawDateFrom: string | null,
+  rawDateTo: string | null,
+  accountId: number | null
+) {
+  const movementAccounts = listCompanyMovementAccounts(companyId).sort((a, b) =>
+    a.code.localeCompare(b.code)
+  )
+  const accountById = new Map(movementAccounts.map((account) => [account.id, account]))
+
+  if (accountId !== null && !accountById.has(accountId)) {
+    return {
+      error: HttpResponse.json({ account_id: 'ID de cuenta inválido.' }, { status: 400 }),
+    }
+  }
+
+  const effectiveDateTo = rawDateTo ?? todayAsIsoDate()
+  const selectedAccounts =
+    accountId === null
+      ? movementAccounts
+      : movementAccounts.filter((account) => account.id === accountId)
+
+  const entriesUntilDateTo = applyDateFilter(
+    listJournalEntryDetailsByCompany(companyId),
+    null,
+    effectiveDateTo
+  ).sort((a, b) =>
+    a.date === b.date ? a.entry_number - b.entry_number : a.date.localeCompare(b.date)
+  )
+
+  const cards = selectedAccounts.map((account) => {
+    const normalBalance = getNormalBalance(account)
+    const signedAmount = (debit: number, credit: number) =>
+      normalBalance === 'DEBIT' ? debit - credit : credit - debit
+
+    let openingBalance = 0
+    const movements: Array<{
+      date: string
+      entry_number: number
+      description: string
+      source_ref: string
+      debit: string | null
+      credit: string | null
+      balance: string
+    }> = []
+    let totalDebit = 0
+    let totalCredit = 0
+    let runningBalance = 0
+
+    entriesUntilDateTo.forEach((entry) => {
+      entry.lines.forEach((line) => {
+        if (line.account_id !== account.id) return
+
+        const debit = line.type === 'DEBIT' ? Number(line.amount) : 0
+        const credit = line.type === 'CREDIT' ? Number(line.amount) : 0
+
+        if (rawDateFrom && entry.date < rawDateFrom) {
+          openingBalance += signedAmount(debit, credit)
+          return
+        }
+
+        totalDebit += debit
+        totalCredit += credit
+        runningBalance += signedAmount(debit, credit)
+        movements.push({
+          date: entry.date,
+          entry_number: entry.entry_number,
+          description: entry.description,
+          source_ref: entry.source_ref,
+          debit: debit > 0 ? formatMoney(debit) : null,
+          credit: credit > 0 ? formatMoney(credit) : null,
+          balance: formatMoney(openingBalance + runningBalance),
+        })
+      })
+    })
+
+    const closingBalance = openingBalance + runningBalance
+
+    return {
+      account_code: account.code,
+      account_name: account.name,
+      account_type: getLedgerAccountType(account),
+      normal_balance: normalBalance,
+      opening_balance: formatMoney(openingBalance),
+      movements,
+      period_totals: {
+        total_debit: formatMoney(totalDebit),
+        total_credit: formatMoney(totalCredit),
+      },
+      closing_balance: formatMoney(closingBalance),
+    }
+  })
+
+  const effectiveDateFrom =
+    rawDateFrom ??
+    (() => {
+      const selectedAccountIds = new Set(selectedAccounts.map((account) => account.id))
+      const firstMovementDate = entriesUntilDateTo.find((entry) =>
+        entry.lines.some((line) => selectedAccountIds.has(line.account_id))
+      )?.date
+      return firstMovementDate ?? effectiveDateTo
+    })()
+
+  const payload = {
+    company_id: companyId,
+    company: companyName,
+    date_from: effectiveDateFrom,
+    date_to: effectiveDateTo,
+    account_id: accountId,
+    cards,
+    accounts: cards,
+  }
+
+  return { payload }
 }
 
 export const reportsHandlers = [
@@ -134,9 +317,9 @@ export const reportsHandlers = [
         return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
       }
 
-      const { badRequestMessage } = parseAndValidateReportRequest(request)
-      if (badRequestMessage) {
-        return HttpResponse.json({ detail: badRequestMessage }, { status: 400 })
+      const { validationError } = parseAndValidateReportRequest(request)
+      if (validationError) {
+        return HttpResponse.json(validationError.body, { status: validationError.status })
       }
 
       return buildXlsxDownloadResponse(`libro-diario-${companyId}.xlsx`)
@@ -156,95 +339,15 @@ export const reportsHandlers = [
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
     }
 
-    const url = new URL(request.url)
-    const dateFrom = url.searchParams.get('date_from')
-    const dateTo = url.searchParams.get('date_to')
-    const accountIdRaw = url.searchParams.get('account_id')
-    const accountId = accountIdRaw && accountIdRaw.trim().length > 0 ? Number(accountIdRaw) : null
-
-    if (dateFrom && dateTo && dateFrom > dateTo) {
-      return HttpResponse.json(
-        { detail: 'date_from no puede ser mayor a date_to.' },
-        { status: 400 }
-      )
-    }
-    if (accountIdRaw && (Number.isNaN(accountId) || accountId === null || accountId <= 0)) {
-      return HttpResponse.json({ detail: 'account_id inválido.' }, { status: 400 })
+    const { dateFrom, dateTo, accountId, validationError } = parseAndValidateReportRequest(request)
+    if (validationError) {
+      return HttpResponse.json(validationError.body, { status: validationError.status })
     }
 
-    const entries = applyDateFilter(
-      listJournalEntryDetailsByCompany(companyId),
-      dateFrom,
-      dateTo
-    ).sort((a, b) =>
-      a.date === b.date ? a.entry_number - b.entry_number : a.date.localeCompare(b.date)
-    )
+    const report = buildLedgerPayload(companyId, company.name, dateFrom, dateTo, accountId)
+    if ('error' in report) return report.error
 
-    const cardsMap = new Map<
-      number,
-      {
-        account_id: number
-        account_code: string
-        account_name: string
-        total_debit: number
-        total_credit: number
-        ending_balance: number
-        movements: Array<{
-          entry_id: number
-          entry_number: number
-          date: string
-          description: string
-          debit: number
-          credit: number
-          balance: number
-        }>
-      }
-    >()
-
-    entries.forEach((entry) => {
-      entry.lines.forEach((line) => {
-        if (accountId !== null && line.account_id !== accountId) return
-
-        const debit = line.type === 'DEBIT' ? Number(line.amount) : 0
-        const credit = line.type === 'CREDIT' ? Number(line.amount) : 0
-        const card = cardsMap.get(line.account_id) ?? {
-          account_id: line.account_id,
-          account_code: line.account_code,
-          account_name: line.account_name,
-          total_debit: 0,
-          total_credit: 0,
-          ending_balance: 0,
-          movements: [],
-        }
-
-        card.total_debit += debit
-        card.total_credit += credit
-        card.ending_balance += debit - credit
-        card.movements.push({
-          entry_id: entry.id,
-          entry_number: entry.entry_number,
-          date: entry.date,
-          description: entry.description,
-          debit,
-          credit,
-          balance: card.ending_balance,
-        })
-
-        cardsMap.set(line.account_id, card)
-      })
-    })
-
-    const cards = Array.from(cardsMap.values()).sort((a, b) =>
-      a.account_code.localeCompare(b.account_code)
-    )
-
-    return HttpResponse.json({
-      company_id: companyId,
-      date_from: dateFrom,
-      date_to: dateTo,
-      account_id: accountId,
-      cards,
-    })
+    return HttpResponse.json(report.payload)
   }),
 
   http.get(`${BASE}/companies/:companyId/reports/ledger.xlsx`, async ({ request, params }) => {
@@ -260,9 +363,14 @@ export const reportsHandlers = [
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
     }
 
-    const { badRequestMessage } = parseAndValidateReportRequest(request)
-    if (badRequestMessage) {
-      return HttpResponse.json({ detail: badRequestMessage }, { status: 400 })
+    const { dateFrom, dateTo, accountId, validationError } = parseAndValidateReportRequest(request)
+    if (validationError) {
+      return HttpResponse.json(validationError.body, { status: validationError.status })
+    }
+
+    const report = buildLedgerPayload(companyId, company.name, dateFrom, dateTo, accountId)
+    if ('error' in report) {
+      return report.error
     }
 
     return buildXlsxDownloadResponse(`libro-mayor-${companyId}.xlsx`)
@@ -400,9 +508,9 @@ export const reportsHandlers = [
         return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
       }
 
-      const { badRequestMessage } = parseAndValidateReportRequest(request)
-      if (badRequestMessage) {
-        return HttpResponse.json({ detail: badRequestMessage }, { status: 400 })
+      const { validationError } = parseAndValidateReportRequest(request)
+      if (validationError) {
+        return HttpResponse.json(validationError.body, { status: validationError.status })
       }
 
       return buildXlsxDownloadResponse(`balance-comprobacion-${companyId}.xlsx`)

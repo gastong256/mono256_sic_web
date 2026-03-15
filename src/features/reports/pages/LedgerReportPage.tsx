@@ -11,15 +11,20 @@ import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { buildDefaultXlsxFilename, saveBlobAsFile } from '@/shared/lib/fileDownload'
 import { useToast } from '@/shared/ui/ToastProvider'
-import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
+import { extractFieldValidationErrors, getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
   style: 'currency',
   currency: 'ARS',
 })
 
-function formatAmount(value: number) {
-  return arsFormatter.format(value)
+function formatAmount(value: string | number | null) {
+  const amount = typeof value === 'number' ? value : Number(value)
+  return arsFormatter.format(Number.isFinite(amount) ? amount : 0)
+}
+
+function hasAmount(value: number | null) {
+  return value !== null && Math.abs(value) > 0
 }
 
 export function LedgerReportPage() {
@@ -42,17 +47,19 @@ export function LedgerReportPage() {
   const { data: accounts = [] } = useJournalAccounts(activeCompanyId ?? 0)
   const { data, isLoading, isError, error } = useLedgerReport(activeCompanyId, filters)
   const downloadMutation = useDownloadLedgerReport()
-  const reportErrorMessage = useMemo(
-    () =>
-      getHttpErrorMessage(error, {
-        defaultMessage: 'No se pudo cargar el Libro Mayor.',
-        badRequestMessage: 'Revisá los filtros aplicados e intentá nuevamente.',
-        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
-        forbiddenMessage: 'No tenés permisos para consultar este reporte.',
-        notFoundMessage: 'La empresa no existe o ya no está disponible.',
-      }),
-    [error]
-  )
+  const fieldErrors = useMemo(() => extractFieldValidationErrors(error), [error])
+  const reportErrorMessage = useMemo(() => {
+    const accountError = fieldErrors.account_id
+    if (accountError) return accountError
+
+    return getHttpErrorMessage(error, {
+      defaultMessage: 'No se pudo cargar el Libro Mayor.',
+      badRequestMessage: 'Revisá los filtros aplicados e intentá nuevamente.',
+      unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
+      forbiddenMessage: 'No tenés permisos para consultar este reporte.',
+      notFoundMessage: 'La empresa no existe o ya no está disponible.',
+    })
+  }, [error, fieldErrors.account_id])
 
   const canSearch = !hasInvalidRange && activeCompanyId !== null
 
@@ -177,6 +184,20 @@ export function LedgerReportPage() {
 
       {activeCompanyId !== null && !isLoading && !isError && data && (
         <section className="space-y-4">
+          <div className="glass-panel rounded-xl p-3 text-sm">
+            <p className="font-semibold text-[var(--text-strong)]">
+              {data.company || 'Empresa seleccionada'}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="metric-chip">Desde: {data.date_from ?? '—'}</span>
+              <span className="metric-chip">Hasta: {data.date_to ?? '—'}</span>
+              <span className="metric-chip">
+                Cuenta:{' '}
+                {data.account_id === null ? 'Todas las cuentas de movimiento' : data.account_id}
+              </span>
+            </div>
+          </div>
+
           {data.cards.length === 0 ? (
             <EmptyState
               icon="ledger"
@@ -185,17 +206,31 @@ export function LedgerReportPage() {
               className="py-8"
             />
           ) : (
-            data.cards.map((card) => (
-              <article key={card.account_id} className="ui-fade-in ui-lift data-table-shell">
+            data.cards.map((card, index) => (
+              <article
+                key={`${card.account_code}-${index}`}
+                className="ui-fade-in ui-lift data-table-shell"
+              >
                 <div className="data-table-head border-b border-[var(--border-soft)] px-3 py-2">
                   <p className="font-semibold text-[var(--text-strong)]">
                     {card.account_code} · {card.account_name}
                   </p>
+                  <p className="mt-1 text-sm text-[var(--text-muted)]">
+                    Tipo {card.account_type || '—'} · Saldo normal{' '}
+                    {card.normal_balance === 'CREDIT' ? 'acreedor' : 'deudor'}
+                  </p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="metric-chip">Debe {formatAmount(card.total_debit)}</span>
-                    <span className="metric-chip">Haber {formatAmount(card.total_credit)}</span>
                     <span className="metric-chip">
-                      Saldo final {formatAmount(card.ending_balance)}
+                      Saldo inicial {formatAmount(card.opening_balance)}
+                    </span>
+                    <span className="metric-chip">
+                      Debe {formatAmount(card.period_totals.total_debit)}
+                    </span>
+                    <span className="metric-chip">
+                      Haber {formatAmount(card.period_totals.total_credit)}
+                    </span>
+                    <span className="metric-chip">
+                      Saldo final {formatAmount(card.closing_balance)}
                     </span>
                   </div>
                 </div>
@@ -206,6 +241,7 @@ export function LedgerReportPage() {
                         <th scope="col">Asiento</th>
                         <th scope="col">Fecha</th>
                         <th scope="col">Detalle</th>
+                        <th scope="col">Ref.</th>
                         <th scope="col" className="amount-col">
                           Debe
                         </th>
@@ -218,30 +254,52 @@ export function LedgerReportPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {card.movements.map((movement) => (
+                      <tr className="data-table-head">
+                        <td>—</td>
+                        <td>{data.date_from ?? '—'}</td>
+                        <td>Saldo inicial</td>
+                        <td>—</td>
+                        <td className="amount-cell-empty">—</td>
+                        <td className="amount-cell-empty">—</td>
+                        <td className="amount-cell">{formatAmount(card.opening_balance)}</td>
+                      </tr>
+
+                      {card.movements.length === 0 && (
+                        <tr>
+                          <td
+                            colSpan={7}
+                            className="px-3 py-4 text-center text-sm text-[var(--text-muted)]"
+                          >
+                            Sin movimientos en el periodo consultado.
+                          </td>
+                        </tr>
+                      )}
+
+                      {card.movements.map((movement, movementIndex) => (
                         <tr
-                          key={`${card.account_id}-${movement.entry_id}-${movement.entry_number}`}
+                          key={`${card.account_code}-${movement.entry_number}-${movement.date}-${movementIndex}`}
                         >
                           <td>#{movement.entry_number}</td>
                           <td>{movement.date}</td>
                           <td>{movement.description}</td>
+                          <td>{movement.source_ref || '—'}</td>
                           <td
                             className={
-                              movement.debit > 0
+                              hasAmount(movement.debit)
                                 ? 'amount-cell amount-cell-debit'
                                 : 'amount-cell-empty'
                             }
                           >
-                            {movement.debit > 0 ? formatAmount(movement.debit) : '—'}
+                            {hasAmount(movement.debit) ? formatAmount(movement.debit) : '—'}
                           </td>
                           <td
                             className={
-                              movement.credit > 0
+                              hasAmount(movement.credit)
                                 ? 'amount-cell amount-cell-credit'
                                 : 'amount-cell-empty'
                             }
                           >
-                            {movement.credit > 0 ? formatAmount(movement.credit) : '—'}
+                            {hasAmount(movement.credit) ? formatAmount(movement.credit) : '—'}
                           </td>
                           <td className="amount-cell">{formatAmount(movement.balance)}</td>
                         </tr>

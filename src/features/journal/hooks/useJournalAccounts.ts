@@ -4,8 +4,18 @@ import { accountChartApi } from '@/features/settings/api/accountChart.api'
 import type { Account } from '@/features/accounts/types/account.types'
 import { applyChartVisibility } from '@/shared/lib/accountTreeVisibility'
 
-function flattenLeaves(accounts: Account[]): Account[] {
-  return accounts.flatMap((a) => (a.children?.length ? flattenLeaves(a.children) : [a]))
+export function collectMovementAccounts(accounts: Account[]): Account[] {
+  return accounts.flatMap((account) => {
+    const children = account.children ?? []
+    const nestedAccounts = collectMovementAccounts(children)
+
+    // Company-associated posting accounts live at the movement level.
+    if (account.depth > 2 && children.length === 0) {
+      return [account]
+    }
+
+    return nestedAccounts
+  })
 }
 
 export function useJournalAccounts(companyId: number) {
@@ -17,7 +27,7 @@ export function useJournalAccounts(companyId: number) {
         accountChartApi.getConfig(),
       ])
       const visibleTree = applyChartVisibility(tree, config)
-      return flattenLeaves(visibleTree)
+      return collectMovementAccounts(visibleTree)
     },
     enabled: companyId > 0,
   })

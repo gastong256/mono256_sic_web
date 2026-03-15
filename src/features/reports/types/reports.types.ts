@@ -15,31 +15,39 @@ export interface JournalBookReportParams {
 }
 
 export interface LedgerMovement {
-  entry_id: number
   entry_number: number
   date: string
   description: string
-  debit: number
-  credit: number
+  source_ref: string
+  debit: number | null
+  credit: number | null
   balance: number
 }
 
-export interface LedgerAccountCard {
-  account_id: number
-  account_code: string
-  account_name: string
+export interface LedgerPeriodTotals {
   total_debit: number
   total_credit: number
-  ending_balance: number
+}
+
+export interface LedgerAccountCard {
+  account_code: string
+  account_name: string
+  account_type: string
+  normal_balance: 'DEBIT' | 'CREDIT'
+  opening_balance: number
   movements: LedgerMovement[]
+  period_totals: LedgerPeriodTotals
+  closing_balance: number
 }
 
 export interface LedgerReportResponse {
   company_id: number
+  company: string
   date_from: string | null
   date_to: string | null
   account_id: number | null
   cards: LedgerAccountCard[]
+  accounts: LedgerAccountCard[]
 }
 
 export interface LedgerReportParams extends JournalBookReportParams {

@@ -138,8 +138,12 @@ const accountParents: Record<number, number> = {
   311: 41,
 }
 
+export function listCompanyMovementAccounts(companyId: number): Account[] {
+  return [...(companyLevel3Accounts[companyId] ?? [])]
+}
+
 function buildCompanyTree(companyId: number): Account[] {
-  const level3 = companyLevel3Accounts[companyId] ?? []
+  const level3 = listCompanyMovementAccounts(companyId)
 
   return globalChart.map((level1) => ({
     ...level1,
