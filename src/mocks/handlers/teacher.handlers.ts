@@ -171,7 +171,6 @@ export const teacherHandlers = [
         count: students.length,
         next: null,
         previous: null,
-        results: students,
         students,
       })
     }
@@ -183,7 +182,6 @@ export const teacherHandlers = [
       count: paged.count,
       next: paged.next,
       previous: paged.previous,
-      results: paged.results,
       students: paged.results,
     })
   }),
@@ -230,7 +228,6 @@ export const teacherHandlers = [
         count: entries.length,
         next: null,
         previous: null,
-        results: entries,
         entries,
       })
     }
@@ -240,7 +237,6 @@ export const teacherHandlers = [
       count: paged.count,
       next: paged.next,
       previous: paged.previous,
-      results: paged.results,
       entries: paged.results,
     })
   }),
@@ -271,7 +267,6 @@ export const teacherHandlers = [
         count: data.results.length,
         next: null,
         previous: null,
-        results: data.results,
         entries: data.results,
       })
     }

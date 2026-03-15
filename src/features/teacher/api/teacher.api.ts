@@ -85,7 +85,7 @@ export const teacherApi = {
     filters?: TeacherJournalFilters
   ): Promise<TeacherCourseJournalEntry[]> =>
     fetchTeacherCourseJournalEntriesPayload(courseId, filters).then(
-      (payload) => normalizeTeacherCourseJournalEntriesPayload(payload).results
+      (payload) => normalizeTeacherCourseJournalEntriesPayload(payload).entries
     ),
 
   availableStudents: (

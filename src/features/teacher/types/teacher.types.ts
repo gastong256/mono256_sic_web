@@ -41,7 +41,7 @@ export interface TeacherCourseJournalEntriesResponse {
   count: number
   next: string | null
   previous: string | null
-  results: TeacherCourseJournalEntry[]
+  entries: TeacherCourseJournalEntry[]
 }
 
 export interface TeacherAvailableStudent {

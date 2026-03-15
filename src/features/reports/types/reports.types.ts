@@ -4,7 +4,6 @@ export interface JournalBookReportResponse {
   date_from: string | null
   date_to: string | null
   entries: JournalBookEntry[]
-  results: JournalBookEntry[]
   grand_total_debit: number
   grand_total_credit: number
 }
@@ -64,7 +63,6 @@ export interface LedgerReportResponse {
   date_from: string | null
   date_to: string | null
   account_id: number | null
-  cards: LedgerAccountCard[]
   accounts: LedgerAccountCard[]
 }
 
@@ -105,7 +103,6 @@ export interface TrialBalanceReportResponse {
   company: string
   date_from: string | null
   date_to: string | null
-  rows: TrialBalanceGroupRow[]
   groups: TrialBalanceGroupRow[]
   grand_total_debit: number
   grand_total_credit: number

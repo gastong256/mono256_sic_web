@@ -171,16 +171,17 @@ function normalizeTeacherJournalEntry(raw: unknown): TeacherCourseJournalEntry |
 export function normalizeTeacherCourseJournalEntriesPayload(
   payload: unknown
 ): TeacherCourseJournalEntriesResponse {
-  const results = extractListPayload<unknown>(payload)
+  const entries = isRecord(payload) && Array.isArray(payload.entries) ? payload.entries : []
+  const normalizedEntries = extractListPayload<unknown>(entries)
     .map(normalizeTeacherJournalEntry)
     .filter((entry): entry is TeacherCourseJournalEntry => entry !== null)
-  const meta = extractPaginationMeta(payload, results.length)
+  const meta = extractPaginationMeta(payload, normalizedEntries.length)
 
   return {
-    count: meta.count ?? results.length,
+    count: meta.count ?? normalizedEntries.length,
     next: meta.next,
     previous: meta.previous,
-    results,
+    entries: normalizedEntries,
   }
 }
 

@@ -176,7 +176,7 @@ export function TrialBalanceReportPage() {
             </div>
           </div>
 
-          {data.rows.length === 0 ? (
+          {data.groups.length === 0 ? (
             <EmptyState
               icon="balance"
               title="Sin movimientos en el periodo"
@@ -206,33 +206,33 @@ export function TrialBalanceReportPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.rows.map((row) => (
-                      <Fragment key={`g-${row.account_code}`}>
+                    {data.groups.map((group) => (
+                      <Fragment key={`g-${group.account_code}`}>
                         <tr className="data-table-head">
                           <td className="font-semibold text-[var(--text-strong)]">
-                            {row.account_code} · {row.account_name}
+                            {group.account_code} · {group.account_name}
                           </td>
                           <td className="font-semibold text-[var(--text-muted)]">
-                            {row.account_type || '—'}
+                            {group.account_type || '—'}
                           </td>
                           <td className="amount-cell font-semibold">
-                            {formatAmount(row.subtotal_debit)}
+                            {formatAmount(group.subtotal_debit)}
                           </td>
                           <td className="amount-cell font-semibold">
-                            {formatAmount(row.subtotal_credit)}
+                            {formatAmount(group.subtotal_credit)}
                           </td>
                           <td className="amount-cell font-semibold">
-                            {row.subtotal_debit_balance !== null
-                              ? formatAmount(row.subtotal_debit_balance)
+                            {group.subtotal_debit_balance !== null
+                              ? formatAmount(group.subtotal_debit_balance)
                               : '—'}
                           </td>
                           <td className="amount-cell font-semibold">
-                            {row.subtotal_credit_balance !== null
-                              ? formatAmount(row.subtotal_credit_balance)
+                            {group.subtotal_credit_balance !== null
+                              ? formatAmount(group.subtotal_credit_balance)
                               : '—'}
                           </td>
                         </tr>
-                        {row.accounts.map((account) => (
+                        {group.accounts.map((account) => (
                           <tr key={`a-${account.account_code}`}>
                             <td className="pl-8">
                               {account.account_code} · {account.account_name}

@@ -198,7 +198,7 @@ export function LedgerReportPage() {
             </div>
           </div>
 
-          {data.cards.length === 0 ? (
+          {data.accounts.length === 0 ? (
             <EmptyState
               icon="ledger"
               title="Sin movimientos en el periodo"
@@ -206,7 +206,7 @@ export function LedgerReportPage() {
               className="py-8"
             />
           ) : (
-            data.cards.map((card, index) => (
+            data.accounts.map((card, index) => (
               <article
                 key={`${card.account_code}-${index}`}
                 className="ui-fade-in ui-lift data-table-shell"

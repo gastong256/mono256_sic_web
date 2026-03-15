@@ -163,7 +163,7 @@ function buildLedgerPayload(
     a.date === b.date ? a.entry_number - b.entry_number : a.date.localeCompare(b.date)
   )
 
-  const cards = selectedAccounts.map((account) => {
+  const accounts = selectedAccounts.map((account) => {
     const normalBalance = getNormalBalance(account)
     const signedAmount = (debit: number, credit: number) =>
       normalBalance === 'DEBIT' ? debit - credit : credit - debit
@@ -242,8 +242,7 @@ function buildLedgerPayload(
     date_from: effectiveDateFrom,
     date_to: effectiveDateTo,
     account_id: accountId,
-    cards,
-    accounts: cards,
+    accounts,
   }
 
   return { payload }
@@ -284,7 +283,6 @@ function buildJournalBookPayload(
     date_from: dateFrom,
     date_to: dateTo,
     entries,
-    results: entries,
     grand_total_debit: formatMoney(grandTotalDebit),
     grand_total_credit: formatMoney(grandTotalCredit),
     totals: {
@@ -386,7 +384,7 @@ function buildTrialBalancePayload(
       groupMap.set(groupCode, currentGroup)
     })
 
-  const rows = Array.from(groupMap.values())
+  const groups = Array.from(groupMap.values())
     .sort((a, b) => a.account_code.localeCompare(b.account_code))
     .map((group) => {
       const balance = group.subtotal_debit - group.subtotal_credit
@@ -409,13 +407,13 @@ function buildTrialBalancePayload(
       }
     })
 
-  const grandTotalDebit = rows.reduce((acc, row) => acc + Number(row.subtotal_debit), 0)
-  const grandTotalCredit = rows.reduce((acc, row) => acc + Number(row.subtotal_credit), 0)
-  const totalDebitBalance = rows.reduce(
+  const grandTotalDebit = groups.reduce((acc, row) => acc + Number(row.subtotal_debit), 0)
+  const grandTotalCredit = groups.reduce((acc, row) => acc + Number(row.subtotal_credit), 0)
+  const totalDebitBalance = groups.reduce(
     (acc, row) => acc + (row.subtotal_debit_balance ? Number(row.subtotal_debit_balance) : 0),
     0
   )
-  const totalCreditBalance = rows.reduce(
+  const totalCreditBalance = groups.reduce(
     (acc, row) => acc + (row.subtotal_credit_balance ? Number(row.subtotal_credit_balance) : 0),
     0
   )
@@ -425,8 +423,7 @@ function buildTrialBalancePayload(
     company: companyName,
     date_from: dateFrom,
     date_to: dateTo,
-    rows,
-    groups: rows,
+    groups,
     grand_total_debit: formatMoney(grandTotalDebit),
     grand_total_credit: formatMoney(grandTotalCredit),
     totals: {
