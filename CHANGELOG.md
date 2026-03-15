@@ -1,3 +1,9 @@
+## 1.8.0 (2026-03-15)
+
+* test: add critical flows coverage across core domains ([442787a](https://github.com/gastong256/mono256_sic_web/commit/442787a))
+* fix: ci stabilize playwright chromium setup in github actions ([5fdeef2](https://github.com/gastong256/mono256_sic_web/commit/5fdeef2))
+* feat: clean shared parsing, teacher flows and query cache structure ([e32a7cd](https://github.com/gastong256/mono256_sic_web/commit/e32a7cd))
+
 ## 1.7.0 (2026-03-15)
 
 * feat: align teacher dashboard and account domain with backend contract ([d7a269d](https://github.com/gastong256/mono256_sic_web/commit/d7a269d))
