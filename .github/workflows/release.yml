@@ -1,12 +1,12 @@
 name: Release
 
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
 
-# Prevent concurrent releases
 concurrency:
-  group: release
+  group: release-${{ github.event.workflow_run.head_branch }}
   cancel-in-progress: false
 
 permissions:
@@ -18,20 +18,23 @@ jobs:
   release:
     name: Semantic Release
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    # Skip if the commit is the release commit itself
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    timeout-minutes: 15
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      !contains(github.event.workflow_run.head_commit.message, '[skip ci]')
 
     steps:
-      - name: Checkout
+      - name: Checkout tested commit
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
           persist-credentials: false
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        # version is read automatically from packageManager in package.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -53,9 +56,62 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Ensure tested commit is still the tip of main
+        id: freshness
+        run: |
+          git fetch origin main --tags
+          if [ "$(git rev-parse origin/main)" != "${{ github.event.workflow_run.head_sha }}" ]; then
+            echo "is_stale=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "is_stale=false" >> "$GITHUB_OUTPUT"
+
+      - name: Attach checked out commit to main
+        if: steps.freshness.outputs.is_stale != 'true'
+        run: |
+          git checkout -B main "${{ github.event.workflow_run.head_sha }}"
+          git branch --set-upstream-to=origin/main main
+
+      - name: Capture latest tag before release
+        if: steps.freshness.outputs.is_stale != 'true'
+        id: tags-before
+        run: |
+          latest_tag="$(git tag --sort=-version:refname | head -n 1)"
+          echo "latest_tag=$latest_tag" >> "$GITHUB_OUTPUT"
+
       - name: Release
+        if: steps.freshness.outputs.is_stale != 'true'
         run: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           HUSKY: '0'
+
+      - name: Capture latest tag after release
+        if: steps.freshness.outputs.is_stale != 'true'
+        id: tags-after
+        run: |
+          git fetch --tags origin
+          latest_tag="$(git tag --sort=-version:refname | head -n 1)"
+          echo "latest_tag=$latest_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Detect published release
+        if: steps.freshness.outputs.is_stale != 'true'
+        id: release-detect
+        run: |
+          before="${{ steps.tags-before.outputs.latest_tag }}"
+          after="${{ steps.tags-after.outputs.latest_tag }}"
+
+          if [ -n "$after" ] && [ "$before" != "$after" ]; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "tag=$after" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "published=false" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger Vercel production deploy
+        if: steps.release-detect.outputs.published == 'true'
+        run: curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_URL"
+        env:
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
