@@ -1,3 +1,7 @@
+## 1.9.0 (2026-03-16)
+
+* feat: adopt backend bootstrap and aggregated endpoints ([dcc6411](https://github.com/gastong256/mono256_sic_web/commit/dcc6411))
+
 ## <small>1.8.1 (2026-03-15)</small>
 
 * fix: switch report and teacher flows to canonical response keys ([4fd27c1](https://github.com/gastong256/mono256_sic_web/commit/4fd27c1))
