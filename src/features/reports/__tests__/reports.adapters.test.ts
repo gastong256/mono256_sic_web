@@ -89,6 +89,13 @@ describe('normalizeLedgerReportPayload', () => {
           closing_balance: '4000.00',
         },
       ],
+      account_options: [
+        {
+          id: 42,
+          code: '1.01.01',
+          name: 'Caja Principal',
+        },
+      ],
     }
 
     const result = normalizeLedgerReportPayload(payload, 12, {})
@@ -116,6 +123,7 @@ describe('normalizeLedgerReportPayload', () => {
       credit: null,
       balance: 4000,
     })
+    expect(result.account_options).toEqual([{ id: 42, code: '1.01.01', name: 'Caja Principal' }])
   })
 
   it('preserves valid empty-account responses for account filters', () => {

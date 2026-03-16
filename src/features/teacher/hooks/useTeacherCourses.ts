@@ -5,8 +5,8 @@ import { teacherQueryKeys } from '@/features/teacher/hooks/teacherQueryKeys'
 
 export function useTeacherCoursesList() {
   return useQuery({
-    queryKey: teacherQueryKeys.courses,
-    queryFn: teacherApi.listCourses,
+    queryKey: teacherQueryKeys.coursesOverview,
+    queryFn: teacherApi.coursesOverview,
     staleTime: 2 * 60 * 1000,
   })
 }
@@ -17,7 +17,10 @@ export function useCreateCourse() {
   return useMutation({
     mutationFn: (payload: CourseCreatePayload) => teacherApi.createCourse(payload),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: teacherQueryKeys.courses })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: teacherQueryKeys.coursesOverview }),
+        queryClient.invalidateQueries({ queryKey: teacherQueryKeys.courses }),
+      ])
     },
   })
 }

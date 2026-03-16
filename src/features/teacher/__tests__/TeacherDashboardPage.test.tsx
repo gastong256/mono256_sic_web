@@ -2,13 +2,10 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router'
-import { http, HttpResponse } from 'msw'
 import { TeacherDashboardPage } from '@/features/teacher/pages/TeacherDashboardPage'
 import { ToastProvider } from '@/shared/ui/ToastProvider'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { registerTokenProvider } from '@/shared/lib/http'
-import { env } from '@/shared/config/env'
-import { server } from '@/mocks/server'
 
 function makeAccessToken(username: string) {
   const payload = btoa(JSON.stringify({ username }))
@@ -79,22 +76,6 @@ describe('TeacherDashboardPage', () => {
     expect(await screen.findByText(/sofía student/i)).toBeInTheDocument()
     expect(await screen.findByText(/2 empresa\(s\) · 2 asiento\(s\)/i)).toBeInTheDocument()
     expect(await screen.findByText(/pedro student/i)).toBeInTheDocument()
-  })
-
-  it('keeps the student list visible when journal counts fail for a course', async () => {
-    server.use(
-      http.get(`${env.VITE_API_BASE_URL}/teacher/courses/1/journal-entries/all/`, () =>
-        HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
-      )
-    )
-
-    renderTeacherDashboardPage()
-
-    expect(await screen.findByText('Contabilidad I')).toBeInTheDocument()
-    expect(await screen.findByText(/sofía student/i)).toBeInTheDocument()
-    expect((await screen.findAllByText(/asientos no disponibles/i)).length).toBeGreaterThan(0)
-    expect(
-      await screen.findByText(/no tenés permisos para ver los asientos de este curso/i)
-    ).toBeInTheDocument()
+    expect(await screen.findByText(/3 empresa\(s\) · 3 asiento\(s\)/i)).toBeInTheDocument()
   })
 })

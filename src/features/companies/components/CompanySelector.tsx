@@ -1,13 +1,14 @@
 import { useEffect } from 'react'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { useCompanies } from '@/features/companies/hooks/useCompanies'
+import { useAuthenticatedBootstrap } from '@/features/auth/hooks/useAuthenticatedBootstrap'
 import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
 
 export function CompanySelector() {
   const { accessToken } = useAuthStore()
   const { activeCompanyId, setActiveCompanyId } = useActiveCompanyStore()
   const isAuthenticated = Boolean(accessToken)
-  const { data: companies, isLoading } = useCompanies({ enabled: isAuthenticated })
+  const { data: bootstrap, isLoading } = useAuthenticatedBootstrap()
+  const companies = bootstrap?.companies
 
   // Keep active company valid after login/user switch/company deletion.
   useEffect(() => {

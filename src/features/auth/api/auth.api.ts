@@ -1,5 +1,5 @@
 import { httpClient } from '@/shared/lib/http'
-import type { User } from '@/shared/types'
+import type { RegistrationCodeInfo, User } from '@/shared/types'
 import { isAxiosError } from 'axios'
 import { getRetryAfterSeconds } from '@/shared/lib/httpErrors'
 
@@ -30,13 +30,9 @@ export interface RegisterPayload {
   registration_code: string
 }
 
-export interface RegistrationCodeResponse {
-  code: string
-  window_minutes: number
-  allow_previous_window: boolean
-  valid_from: string
-  valid_until: string
-}
+export type RegistrationCodeResponse = RegistrationCodeInfo
+
+export type MeInclude = 'companies' | 'capabilities' | 'registration_code'
 
 export interface UpdateMePayload {
   email?: string
@@ -78,7 +74,15 @@ export const authApi = {
    * GET /me
    * Returns the current authenticated user. Requires Authorization header.
    */
-  me: (): Promise<User> => httpClient.get<User>('/auth/me/').then((r) => r.data),
+  me: (options?: { include?: MeInclude[] }): Promise<User> =>
+    httpClient
+      .get<User>('/auth/me/', {
+        params:
+          options?.include && options.include.length > 0
+            ? { include: options.include.join(',') }
+            : undefined,
+      })
+      .then((r) => r.data),
 
   /**
    * PATCH /auth/me/

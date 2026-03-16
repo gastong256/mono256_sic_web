@@ -151,6 +151,46 @@ function applyBatchUpdates(
 }
 
 export const chartConfigHandlers = [
+  http.get(`${BASE}/accounts/visibility/bootstrap/`, async ({ request }) => {
+    await delay(80)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+    const url = new URL(request.url)
+    const teacherIdRaw = url.searchParams.get('teacher_id')
+    const scope = resolveScope(user, teacherIdRaw)
+    if (scope.response) return scope.response
+
+    const selectedTeacherId =
+      user.role === 'admin'
+        ? Number(teacherIdRaw ?? '0') ||
+          listUsers().find((candidate) => candidate.role === 'teacher')?.id ||
+          null
+        : user.role === 'teacher'
+          ? user.id
+          : null
+
+    const teachers =
+      user.role === 'admin'
+        ? listUsers()
+            .filter((candidate) => candidate.role === 'teacher')
+            .map((teacher) => ({
+              id: teacher.id,
+              username: teacher.username,
+              first_name: teacher.first_name,
+              last_name: teacher.last_name,
+              full_name: `${teacher.first_name} ${teacher.last_name}`.trim(),
+              role: 'teacher',
+            }))
+        : []
+
+    return HttpResponse.json({
+      selected_teacher_id: selectedTeacherId,
+      teachers,
+      chart: buildVisibilityTree(getScopeConfig(scope.scopeKey)),
+    })
+  }),
+
   http.get(`${BASE}/accounts/visibility/`, async ({ request }) => {
     await delay(80)
 

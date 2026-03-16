@@ -57,6 +57,12 @@ export interface LedgerAccountCard {
   closing_balance: number
 }
 
+export interface LedgerAccountOption {
+  id: number
+  code: string
+  name: string
+}
+
 export interface LedgerReportResponse {
   company_id: number
   company: string
@@ -64,6 +70,7 @@ export interface LedgerReportResponse {
   date_to: string | null
   account_id: number | null
   accounts: LedgerAccountCard[]
+  account_options: LedgerAccountOption[]
 }
 
 export interface LedgerReportParams extends JournalBookReportParams {

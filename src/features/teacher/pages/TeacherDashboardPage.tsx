@@ -85,7 +85,7 @@ export function TeacherDashboardPage() {
         <div className="space-y-5">
           {courses.map((course) => (
             <TeacherCoursePanel
-              key={course.id}
+              key={course.course_id}
               course={course}
               onOpenEnroll={openEnrollModal}
               onUnenroll={handleUnenroll}

@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import {
-  useRegistrationCode,
-  useRotateRegistrationCode,
-} from '@/features/auth/hooks/useRegistrationCode'
+import { useRotateRegistrationCode } from '@/features/auth/hooks/useRegistrationCode'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
+import type { RegistrationCodeInfo } from '@/shared/types'
 
 function formatRemaining(seconds: number): string {
   const safe = Math.max(0, seconds)
@@ -14,12 +12,16 @@ function formatRemaining(seconds: number): string {
   return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
 }
 
-export function RegistrationCodeCard() {
+type RegistrationCodeCardProps = {
+  data: RegistrationCodeInfo | null | undefined
+  isLoading: boolean
+  isError: boolean
+}
+
+export function RegistrationCodeCard({ data, isLoading, isError }: RegistrationCodeCardProps) {
   const role = useAuthStore((state) => state.user?.role)
   const canSee = role === 'teacher' || role === 'admin'
   const canRotate = role === 'admin'
-
-  const { data, isLoading, isError } = useRegistrationCode()
   const { mutateAsync: rotateCode, isPending: rotating } = useRotateRegistrationCode()
 
   const [showConfirm, setShowConfirm] = useState(false)

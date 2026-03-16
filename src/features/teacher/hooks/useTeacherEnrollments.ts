@@ -24,10 +24,12 @@ export function useEnrollStudent() {
     onSuccess: async (_data, variables) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: teacherQueryKeys.courses }),
+        queryClient.invalidateQueries({ queryKey: teacherQueryKeys.coursesOverview }),
         queryClient.invalidateQueries({
           queryKey: teacherQueryKeys.availableStudents(variables.courseId),
         }),
         queryClient.invalidateQueries({ queryKey: teacherQueryKeys.course(variables.courseId) }),
+        queryClient.invalidateQueries({ queryKey: ['teacher', 'students'] }),
       ])
     },
   })
@@ -42,10 +44,12 @@ export function useUnenrollStudent() {
     onSuccess: async (_data, variables) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: teacherQueryKeys.courses }),
+        queryClient.invalidateQueries({ queryKey: teacherQueryKeys.coursesOverview }),
         queryClient.invalidateQueries({
           queryKey: teacherQueryKeys.availableStudents(variables.courseId),
         }),
         queryClient.invalidateQueries({ queryKey: teacherQueryKeys.course(variables.courseId) }),
+        queryClient.invalidateQueries({ queryKey: ['teacher', 'students'] }),
       ])
     },
   })

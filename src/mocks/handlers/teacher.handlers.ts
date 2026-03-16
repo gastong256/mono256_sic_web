@@ -7,9 +7,11 @@ import {
   getCourseForUser,
   getRequestUser,
   getRegistrationCode,
+  getTeacherStudentContext,
   listAvailableStudentsForCourse,
   listCourseEnrollmentsForUser,
   listCoursesForUser,
+  listTeacherCoursesOverview,
   listTeacherCourseCompanies,
   listTeacherCourseJournalEntries,
   unenrollStudentFromCourse,
@@ -81,7 +83,43 @@ export const teacherHandlers = [
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
     }
 
-    return HttpResponse.json(paginateFromRequest(listCoursesForUser(user), request))
+    const url = new URL(request.url)
+    const all = isAllParam(url.searchParams.get('all'))
+    const summary = url.searchParams.get('summary')
+    const courses = listCoursesForUser(user).map((course) =>
+      summary === 'selector'
+        ? {
+            id: course.id,
+            name: course.name,
+            code: course.code,
+          }
+        : course
+    )
+
+    if (all) {
+      return HttpResponse.json({
+        count: courses.length,
+        next: null,
+        previous: null,
+        results: courses,
+      })
+    }
+
+    return HttpResponse.json(paginateFromRequest(courses, request))
+  }),
+
+  http.get(`${BASE}/teacher/courses/overview/`, async ({ request }) => {
+    await delay(120)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+    if (user.role !== 'teacher' && user.role !== 'admin') {
+      return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    }
+
+    return HttpResponse.json({
+      courses: listTeacherCoursesOverview(user),
+    })
   }),
 
   http.post(`${BASE}/courses/`, async ({ request }) => {
@@ -271,6 +309,26 @@ export const teacherHandlers = [
       })
     }
   ),
+
+  http.get(`${BASE}/teacher/students/:studentId/context/`, async ({ request, params }) => {
+    await delay(120)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+
+    const url = new URL(request.url)
+    const companyId = Number(url.searchParams.get('company_id') ?? '0')
+    const entriesLimit = Number(url.searchParams.get('entries_limit') ?? '25')
+    const context = getTeacherStudentContext(user, Number(params.studentId), {
+      ...(Number.isFinite(companyId) && companyId > 0 ? { company_id: companyId } : null),
+      ...(Number.isFinite(entriesLimit) && entriesLimit > 0
+        ? { entries_limit: entriesLimit }
+        : null),
+    })
+
+    if (context === null) return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    return HttpResponse.json(context)
+  }),
 
   http.get(`${BASE}/teacher/students/available/`, async ({ request }) => {
     await delay(120)

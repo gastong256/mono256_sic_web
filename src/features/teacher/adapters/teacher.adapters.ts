@@ -4,8 +4,11 @@ import type {
   TeacherAvailableStudentsResponse,
   TeacherCompanyItem,
   TeacherCourseCompaniesResponse,
+  TeacherCourseOverviewItem,
+  TeacherCourseOverviewStudent,
   TeacherCourseJournalEntriesResponse,
   TeacherCourseJournalEntry,
+  TeacherStudentContextResponse,
   TeacherStudentCompanies,
 } from '@/features/teacher/types/teacher.types'
 import { extractListPayload, extractPaginationMeta } from '@/shared/lib/apiPagination'
@@ -168,13 +171,17 @@ function normalizeTeacherJournalEntry(raw: unknown): TeacherCourseJournalEntry |
   }
 }
 
+function normalizeTeacherJournalEntriesList(payload: unknown): TeacherCourseJournalEntry[] {
+  return extractListPayload<unknown>(payload)
+    .map(normalizeTeacherJournalEntry)
+    .filter((entry): entry is TeacherCourseJournalEntry => entry !== null)
+}
+
 export function normalizeTeacherCourseJournalEntriesPayload(
   payload: unknown
 ): TeacherCourseJournalEntriesResponse {
   const entries = isRecord(payload) && Array.isArray(payload.entries) ? payload.entries : []
-  const normalizedEntries = extractListPayload<unknown>(entries)
-    .map(normalizeTeacherJournalEntry)
-    .filter((entry): entry is TeacherCourseJournalEntry => entry !== null)
+  const normalizedEntries = normalizeTeacherJournalEntriesList(entries)
   const meta = extractPaginationMeta(payload, normalizedEntries.length)
 
   return {
@@ -182,6 +189,104 @@ export function normalizeTeacherCourseJournalEntriesPayload(
     next: meta.next,
     previous: meta.previous,
     entries: normalizedEntries,
+  }
+}
+
+function normalizeTeacherCourseOverviewStudent(raw: unknown): TeacherCourseOverviewStudent | null {
+  if (!isRecord(raw)) return null
+  const studentId = toNumberValue(raw.student_id)
+  if (studentId <= 0) return null
+
+  const firstName = toStringValue(raw.first_name)
+  const lastName = toStringValue(raw.last_name)
+  const fullNameFromParts = `${firstName} ${lastName}`.trim()
+
+  return {
+    student_id: studentId,
+    student_username: toStringValue(raw.student_username ?? raw.username),
+    student_full_name: toStringValue(raw.student_full_name ?? raw.full_name) || fullNameFromParts,
+    company_count: toNumberValue(raw.company_count),
+    journal_entry_count: toNumberValue(raw.journal_entry_count),
+  }
+}
+
+export function normalizeTeacherCoursesOverviewPayload(
+  payload: unknown
+): TeacherCourseOverviewItem[] {
+  const courses =
+    isRecord(payload) && Array.isArray(payload.courses)
+      ? payload.courses
+      : extractListPayload(payload)
+
+  return extractListPayload<unknown>(courses)
+    .map((course) => {
+      if (!isRecord(course)) return null
+      const courseId = toNumberValue(course.course_id ?? course.id)
+      if (courseId <= 0) return null
+
+      const totals = isRecord(course.totals) ? course.totals : null
+
+      return {
+        course_id: courseId,
+        course_name: toStringValue(course.course_name ?? course.name),
+        course_code: toStringValue(course.course_code ?? course.code) || null,
+        teacher_id: toNumberValue(course.teacher_id),
+        teacher_username: toStringValue(course.teacher_username),
+        student_count: toNumberValue(course.student_count),
+        totals: {
+          company_count: toNumberValue(totals?.company_count),
+          journal_entry_count: toNumberValue(totals?.journal_entry_count),
+        },
+        students: extractListPayload<unknown>(course.students)
+          .map(normalizeTeacherCourseOverviewStudent)
+          .filter((student): student is TeacherCourseOverviewStudent => student !== null),
+      }
+    })
+    .filter((course): course is TeacherCourseOverviewItem => course !== null)
+}
+
+export function normalizeTeacherStudentContextPayload(
+  payload: unknown
+): TeacherStudentContextResponse {
+  const student = isRecord(payload) && isRecord(payload.student) ? payload.student : null
+  const companies = isRecord(payload) && Array.isArray(payload.companies) ? payload.companies : []
+  const journalEntries =
+    isRecord(payload) && Array.isArray(payload.journal_entries) ? payload.journal_entries : []
+
+  return {
+    student: {
+      id: toNumberValue(student?.id),
+      username: toStringValue(student?.username),
+      first_name: toStringValue(student?.first_name),
+      last_name: toStringValue(student?.last_name),
+      full_name: toStringValue(student?.full_name),
+      course_id: toNumberValue(student?.course_id, 0) || null,
+      course_name: toStringValue(student?.course_name),
+    },
+    companies: extractListPayload<unknown>(companies)
+      .map((company) => {
+        if (!isRecord(company)) return null
+        const id = toNumberValue(company.id)
+        if (id <= 0) return null
+        return {
+          id,
+          name: toStringValue(company.name),
+          tax_id: toStringValue(company.tax_id) || null,
+          account_count: toNumberValue(company.account_count),
+          journal_entry_count: toNumberValue(company.journal_entry_count),
+          last_entry_date: toStringValue(company.last_entry_date) || null,
+          books_closed_until: toStringValue(company.books_closed_until) || null,
+          created_at: toStringValue(company.created_at),
+          updated_at: toStringValue(company.updated_at),
+        }
+      })
+      .filter(
+        (company): company is TeacherStudentContextResponse['companies'][number] => company !== null
+      ),
+    selected_company_id: isRecord(payload)
+      ? toNumberValue(payload.selected_company_id, 0) || null
+      : null,
+    journal_entries: normalizeTeacherJournalEntriesList(journalEntries),
   }
 }
 

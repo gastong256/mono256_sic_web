@@ -2,6 +2,7 @@ import { http, HttpResponse, delay } from 'msw'
 import { env } from '@/shared/config/env'
 import {
   authenticate,
+  buildAuthMeResponse,
   getRequestUser,
   refreshAccessToken,
   registerStudent,
@@ -90,7 +91,15 @@ export const authHandlers = [
       return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
     }
 
-    return HttpResponse.json(user)
+    const url = new URL(request.url)
+    const include = (url.searchParams.get('include') ?? '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter((value): value is 'companies' | 'capabilities' | 'registration_code' =>
+        ['companies', 'capabilities', 'registration_code'].includes(value)
+      )
+
+    return HttpResponse.json(buildAuthMeResponse(user, include))
   }),
 
   http.patch(`${BASE}/auth/me/`, async ({ request }) => {

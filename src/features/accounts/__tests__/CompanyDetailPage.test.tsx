@@ -78,15 +78,40 @@ describe('CompanyDetailPage', () => {
     localStorage.clear()
   })
 
-  it('applies visibility config and hides global branches for students', async () => {
+  it('renders the backend-filtered account tree for students without requesting visibility', async () => {
     setAuthenticatedUser('student')
     server.use(
-      http.get(`${env.VITE_API_BASE_URL}/accounts/visibility/`, () =>
+      http.get(`${env.VITE_API_BASE_URL}/accounts/company/1/`, () =>
         HttpResponse.json([
-          { account_id: 1, level: 0, code: '1', name: 'Activo', visible: true },
-          { account_id: 5, level: 0, code: '5', name: 'Egresos', visible: true },
-          { account_id: 11, level: 1, code: '1.01', name: 'Caja y Bancos', visible: false },
-          { account_id: 52, level: 1, code: '5.02', name: 'Gastos Operativos', visible: true },
+          {
+            id: 5,
+            code: '5',
+            name: 'Egresos',
+            type: 'EX',
+            level: 0,
+            is_leaf: false,
+            children: [
+              {
+                id: 52,
+                code: '5.02',
+                name: 'Gastos Operativos',
+                type: 'EX',
+                level: 1,
+                is_leaf: false,
+                children: [
+                  {
+                    id: 303,
+                    code: '5.02.01',
+                    name: 'Sueldos y Jornales',
+                    type: 'EX',
+                    level: 2,
+                    is_leaf: true,
+                    children: [],
+                  },
+                ],
+              },
+            ],
+          },
         ])
       )
     )
@@ -95,9 +120,9 @@ describe('CompanyDetailPage', () => {
 
     expect(await screen.findByText('Gastos Operativos')).toBeInTheDocument()
     await waitFor(() => {
+      expect(screen.queryByText('Activo')).not.toBeInTheDocument()
       expect(screen.queryByText('Caja y Bancos')).not.toBeInTheDocument()
       expect(screen.queryByText('Caja en Pesos')).not.toBeInTheDocument()
-      expect(screen.queryByText('Banco Nación Cta. Cte.')).not.toBeInTheDocument()
     })
   })
 

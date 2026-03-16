@@ -18,7 +18,12 @@ test.describe('Reports critical flows', () => {
     await openBooksMenu(page)
     await page.getByRole('link', { name: 'Libro Mayor' }).click()
     await expect(page.getByRole('heading', { name: 'Libro Mayor' })).toBeVisible()
-    await expect(page.getByText(/1\.01\.01 · Caja en Pesos/i)).toBeVisible()
+    await expect(
+      page
+        .locator('article')
+        .filter({ hasText: /1\.01\.01 · Caja en Pesos/i })
+        .first()
+    ).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Pago de sueldos' }).first()).toBeVisible()
 
     await openBooksMenu(page)

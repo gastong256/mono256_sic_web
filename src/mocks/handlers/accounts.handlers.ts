@@ -1,7 +1,12 @@
 import { http, HttpResponse, delay } from 'msw'
 import { env } from '@/shared/config/env'
 import type { Account } from '@/features/accounts/types/account.types'
-import { canAccessCompany, getCompanyById, getRequestUser } from '@/mocks/data/mockDb'
+import {
+  canAccessCompany,
+  getAccountChartConfig,
+  getCompanyById,
+  getRequestUser,
+} from '@/mocks/data/mockDb'
 
 const BASE = env.VITE_API_BASE_URL
 
@@ -105,6 +110,26 @@ function buildCompanyTree(companyId: number): Account[] {
   })
 }
 
+function applyStudentVisibility(tree: Account[]): Account[] {
+  const visibilityByCode = new Map(getAccountChartConfig().map((item) => [item.code, item.visible]))
+
+  function visit(nodes: Account[]): Account[] {
+    return nodes.flatMap((node) => {
+      if (node.level <= 1 && visibilityByCode.get(node.code) === false) return []
+      const children = visit(node.children ?? [])
+      return [
+        {
+          ...node,
+          is_leaf: children.length === 0,
+          children,
+        },
+      ]
+    })
+  }
+
+  return visit(tree)
+}
+
 export function resetAccountsMock() {
   nextAccountId = 400
   companyLevel3Accounts[1] = [
@@ -156,7 +181,9 @@ export const accountsHandlers = [
     const cId = Number(params.companyId)
     const accessError = ensureCompanyAccess(request, cId)
     if (accessError) return accessError
-    return HttpResponse.json(buildCompanyTree(cId))
+    const user = getRequestUser(request)
+    const tree = buildCompanyTree(cId)
+    return HttpResponse.json(user?.role === 'student' ? applyStudentVisibility(tree) : tree)
   }),
 
   // POST /accounts/company/:companyId/

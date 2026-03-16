@@ -4,27 +4,17 @@ import { useCompanyAccounts } from '@/features/accounts/hooks/useCompanyAccounts
 import { AccountTree } from '@/features/accounts/components/AccountTree'
 import { AccountForm } from '@/features/accounts/components/AccountForm'
 import { DeleteAccountDialog } from '@/features/accounts/components/DeleteAccountDialog'
-import { useAccountChartConfig } from '@/features/settings/hooks/useAccountChartConfig'
-import { applyChartVisibility } from '@/shared/lib/accountTreeVisibility'
 import { Spinner } from '@/shared/ui/Spinner'
 import type { Account } from '@/features/accounts/types/account.types'
 import { Alert } from '@/shared/ui/Alert'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
-import { useAuthStore } from '@/features/auth/store/auth.store'
 
 export function CompanyDetailPage() {
   const { companyId } = useParams<{ companyId: string }>()
   const navigate = useNavigate()
   const id = Number(companyId)
 
-  const userRole = useAuthStore((state) => state.user?.role)
-  const shouldLoadVisibilityConfig = userRole !== undefined && userRole !== 'admin'
-
   const { data: accounts = [], isLoading, error } = useCompanyAccounts(id)
-  const { data: chartConfig = [] } = useAccountChartConfig({
-    enabled: shouldLoadVisibilityConfig,
-  })
-  const visibleAccounts = applyChartVisibility(accounts, chartConfig)
   const loadErrorMessage = useMemo(
     () =>
       getHttpErrorMessage(error, {
@@ -86,16 +76,16 @@ export function CompanyDetailPage() {
       {error && !isLoading && <Alert tone="error">{loadErrorMessage}</Alert>}
 
       {/* Empty */}
-      {!isLoading && !error && visibleAccounts.length === 0 && (
+      {!isLoading && !error && accounts.length === 0 && (
         <div className="rounded-xl border-2 border-dashed border-gray-200 py-16 text-center">
           <p className="text-sm font-medium text-gray-500">No hay cuentas registradas.</p>
         </div>
       )}
 
       {/* Tree */}
-      {!isLoading && !error && visibleAccounts.length > 0 && (
+      {!isLoading && !error && accounts.length > 0 && (
         <AccountTree
-          accounts={visibleAccounts}
+          accounts={accounts}
           onAddChild={openCreate}
           onEdit={openEdit}
           onDelete={(a) => setDeletingAccount(a)}

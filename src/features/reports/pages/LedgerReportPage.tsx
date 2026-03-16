@@ -3,7 +3,6 @@ import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.
 import { useLedgerReport } from '@/features/reports/hooks/useLedgerReport'
 import { useDownloadLedgerReport } from '@/features/reports/hooks/useDownloadReports'
 import { getReportDownloadErrorMessage } from '@/features/reports/lib/downloadErrors'
-import { useJournalAccounts } from '@/features/journal/hooks/useJournalAccounts'
 import { Spinner } from '@/shared/ui/Spinner'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Button } from '@/shared/ui/Button'
@@ -44,8 +43,8 @@ export function LedgerReportPage() {
     [dateFromInput, dateToInput]
   )
 
-  const { data: accounts = [] } = useJournalAccounts(activeCompanyId ?? 0)
   const { data, isLoading, isError, error } = useLedgerReport(activeCompanyId, filters)
+  const accountOptions = useMemo(() => data?.account_options ?? [], [data])
   const downloadMutation = useDownloadLedgerReport()
   const fieldErrors = useMemo(() => extractFieldValidationErrors(error), [error])
   const reportErrorMessage = useMemo(() => {
@@ -128,7 +127,7 @@ export function LedgerReportPage() {
               className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-white px-2 py-1.5 focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
             >
               <option value="">Todas</option>
-              {accounts.map((account) => (
+              {accountOptions.map((account) => (
                 <option key={account.id} value={account.id}>
                   {account.code} · {account.name}
                 </option>

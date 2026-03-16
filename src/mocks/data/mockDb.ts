@@ -384,6 +384,44 @@ export function getRegistrationCode(): {
   return { ...registrationCodeState }
 }
 
+function buildUserCapabilities(user: User) {
+  return {
+    can_manage_courses: user.role === 'teacher' || user.role === 'admin',
+    can_manage_visibility: user.role === 'teacher' || user.role === 'admin',
+    can_view_registration_code: user.role === 'teacher' || user.role === 'admin',
+    can_manage_roles: user.role === 'admin',
+  }
+}
+
+export function buildAuthMeResponse(
+  user: User,
+  include: Array<'companies' | 'capabilities' | 'registration_code'>
+): User {
+  return {
+    ...user,
+    ...(include.includes('companies')
+      ? {
+          companies: listCompaniesForUser(user).map((company) => ({
+            id: company.id,
+            name: company.name,
+            owner_username: company.owner_username,
+          })),
+        }
+      : null),
+    ...(include.includes('capabilities')
+      ? {
+          capabilities: buildUserCapabilities(user),
+        }
+      : null),
+    ...(include.includes('registration_code')
+      ? {
+          registration_code:
+            user.role === 'teacher' || user.role === 'admin' ? getRegistrationCode() : null,
+        }
+      : null),
+  }
+}
+
 function generateRegistrationCode(): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
   let out = 'SIC-'
@@ -552,7 +590,7 @@ export function canAccessCompany(user: User, company: Company): boolean {
 }
 
 export function listCompaniesForUser(user: User): Company[] {
-  return companies.filter((company) => company.owner_username === user.username)
+  return companies.filter((company) => canAccessCompany(user, company))
 }
 
 export function canReviewCompany(user: User, company: Company): boolean {
@@ -850,6 +888,68 @@ export function listCoursesForUser(user: User): Array<{
   return visibleCourses.map(toCourseResponse)
 }
 
+export function listTeacherCoursesOverview(user: User): Array<{
+  course_id: number
+  course_name: string
+  course_code: string | null
+  teacher_id: number
+  teacher_username: string
+  student_count: number
+  totals: {
+    company_count: number
+    journal_entry_count: number
+  }
+  students: Array<{
+    student_id: number
+    student_username: string
+    student_full_name: string
+    company_count: number
+    journal_entry_count: number
+  }>
+}> {
+  return courses
+    .filter((course) => canAccessCourse(user, course))
+    .map((course) => {
+      const students = course.student_usernames
+        .map((username) => users.find((candidate) => candidate.username === username))
+        .filter((student): student is MockUserRecord => student !== undefined)
+        .map((student) => {
+          const studentCompanies = companies.filter(
+            (company) => company.owner_username === student.username
+          )
+          const studentCompanyIds = new Set(studentCompanies.map((company) => company.id))
+          const studentEntries = journalEntries.filter((entry) =>
+            studentCompanyIds.has(journalCompanyMap[entry.id])
+          )
+
+          return {
+            student_id: student.id,
+            student_username: student.username,
+            student_full_name: `${student.first_name} ${student.last_name}`.trim(),
+            company_count: studentCompanies.length,
+            journal_entry_count: studentEntries.length,
+          }
+        })
+
+      return {
+        course_id: course.id,
+        course_name: course.name,
+        course_code: course.code,
+        teacher_id: course.teacher_id,
+        teacher_username: course.teacher_username,
+        student_count: students.length,
+        totals: {
+          company_count: students.reduce((acc, student) => acc + student.company_count, 0),
+          journal_entry_count: students.reduce(
+            (acc, student) => acc + student.journal_entry_count,
+            0
+          ),
+        },
+        students,
+      }
+    })
+}
+
 export function createCourseForUser(
   user: User,
   payload: { name?: string; code?: string; teacher_id?: number }
@@ -1141,6 +1241,111 @@ export function listTeacherCourseJournalEntries(
     next: null,
     previous: null,
     results,
+  }
+}
+
+export function getTeacherStudentContext(
+  user: User,
+  studentId: number,
+  filters: { company_id?: number; entries_limit?: number }
+): {
+  student: {
+    id: number
+    username: string
+    first_name: string
+    last_name: string
+    full_name: string
+    course_id: number | null
+    course_name: string
+  }
+  companies: Array<{
+    id: number
+    name: string
+    tax_id: string
+    account_count: number
+    journal_entry_count: number
+    last_entry_date: string | null
+    books_closed_until: string | null
+    created_at: string
+    updated_at: string
+  }>
+  selected_company_id: number | null
+  journal_entries: Array<{
+    id: number
+    entry_number: number
+    date: string
+    description: string
+    source_type: string
+    source_ref: string
+    company_id: number
+    company_name: string
+    student_id: number
+    student_username: string
+    created_by: string
+    reversal_of_id: number
+    reversed_by_id: number | null
+    lines: JournalLine[]
+  }>
+} | null {
+  const student = users.find(
+    (candidate) => candidate.id === studentId && candidate.role === 'student'
+  )
+  if (!student) return null
+
+  const course = student.course_id
+    ? courses.find((candidate) => candidate.id === student.course_id)
+    : null
+  if (!course) return null
+  if (!canAccessCourse(user, course)) return null
+
+  const studentCompanies = companies
+    .filter((company) => company.owner_username === student.username)
+    .map((company) => {
+      const companyEntries = journalEntries
+        .filter((entry) => journalCompanyMap[entry.id] === company.id)
+        .sort((a, b) => b.date.localeCompare(a.date))
+      return {
+        id: company.id,
+        name: company.name,
+        tax_id: company.tax_id ?? '',
+        account_count: company.account_count,
+        journal_entry_count: companyEntries.length,
+        last_entry_date: companyEntries[0]?.date ?? null,
+        books_closed_until: company.books_closed_until ?? null,
+        created_at: company.created_at,
+        updated_at: company.updated_at,
+      }
+    })
+
+  const selectedCompanyId =
+    filters.company_id && studentCompanies.some((company) => company.id === filters.company_id)
+      ? filters.company_id
+      : null
+  const entriesLimit = Math.min(100, Math.max(1, filters.entries_limit ?? 25))
+
+  const journal_entries =
+    selectedCompanyId === null
+      ? []
+      : (
+          listTeacherCourseJournalEntries(user, course.id, {
+            student_id: studentId,
+            company_id: selectedCompanyId,
+          })?.results ?? []
+        ).slice(0, entriesLimit)
+
+  return {
+    student: {
+      id: student.id,
+      username: student.username,
+      first_name: student.first_name,
+      last_name: student.last_name,
+      full_name: `${student.first_name} ${student.last_name}`.trim(),
+      course_id: course.id,
+      course_name: course.name,
+    },
+    companies: studentCompanies,
+    selected_company_id: selectedCompanyId,
+    journal_entries,
   }
 }
 

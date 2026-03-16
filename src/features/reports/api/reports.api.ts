@@ -40,6 +40,7 @@ export const reportsApi = {
           ...(params.dateFrom ? { date_from: params.dateFrom } : null),
           ...(params.dateTo ? { date_to: params.dateTo } : null),
           ...(params.accountId ? { account_id: params.accountId } : null),
+          include: 'account_options',
         },
       })
       .then((r) => normalizeLedgerReportPayload(r.data, companyId, params)),

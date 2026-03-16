@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router'
-import { useTeacherStudentCompanies } from '@/features/teacher/hooks/useTeacherStudentCompanies'
-import { useTeacherCompanyJournalEntries } from '@/features/teacher/hooks/useTeacherCompanyJournalEntries'
+import { useParams } from 'react-router'
+import { useTeacherStudentContext } from '@/features/teacher/hooks/useTeacherStudentContext'
 import { Spinner } from '@/shared/ui/Spinner'
 import type { JournalLine } from '@/features/journal/types/journal.types'
 import type { TeacherCourseJournalEntry } from '@/features/teacher/types/teacher.types'
@@ -70,23 +69,21 @@ function entryTotals(entry: TeacherCourseJournalEntry): { debit: number; credit:
 
 export function TeacherStudentDetailPage() {
   const { studentId } = useParams<{ studentId: string }>()
-  const [searchParams] = useSearchParams()
   const parsedStudentId = Number(studentId)
-  const parsedCourseId = Number(searchParams.get('courseId'))
-
-  const {
-    data: companies = [],
-    isLoading,
-    error,
-  } = useTeacherStudentCompanies(parsedCourseId, parsedStudentId)
-
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null)
 
   const {
-    data: journalEntries = [],
-    isLoading: journalLoading,
+    data: context,
+    isLoading,
+    error,
+    isFetching: journalLoading,
     error: journalError,
-  } = useTeacherCompanyJournalEntries(parsedCourseId, parsedStudentId, selectedCompanyId)
+  } = useTeacherStudentContext(parsedStudentId, {
+    companyId: selectedCompanyId,
+    entriesLimit: 25,
+  })
+  const companies = useMemo(() => context?.companies ?? [], [context?.companies])
+  const journalEntries = useMemo(() => context?.journal_entries ?? [], [context?.journal_entries])
 
   const selectedCompany = useMemo(
     () => companies.find((company) => company.id === selectedCompanyId) ?? null,
@@ -135,12 +132,12 @@ export function TeacherStudentDetailPage() {
       <PageHeader
         icon="student"
         title="Detalle de alumno"
-        subtitle={`Alumno #${parsedStudentId}`}
+        subtitle={
+          context?.student.full_name
+            ? `${context.student.full_name} · ${context.student.course_name || 'Sin curso'}`
+            : `Alumno #${parsedStudentId}`
+        }
       />
-
-      {(Number.isNaN(parsedCourseId) || parsedCourseId <= 0) && (
-        <Alert tone="error">Falta el contexto de curso. Volvé al panel docente y reintentá.</Alert>
-      )}
 
       <section className="surface-card p-4">
         <h2 className="mb-3 text-lg font-semibold text-[var(--text-strong)]">

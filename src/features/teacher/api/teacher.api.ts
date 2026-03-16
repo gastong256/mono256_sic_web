@@ -3,9 +3,11 @@ import { fetchAllPages } from '@/shared/lib/fetchAllPages'
 import { httpClient } from '@/shared/lib/http'
 import {
   normalizeTeacherAvailableStudentsPayload,
+  normalizeTeacherCoursesOverviewPayload,
   normalizeTeacherCourseCompaniesPayload,
   normalizeTeacherCourseJournalEntriesPayload,
   normalizeTeacherCoursesPayload,
+  normalizeTeacherStudentContextPayload,
 } from '@/features/teacher/adapters/teacher.adapters'
 import type {
   CourseCreatePayload,
@@ -13,8 +15,10 @@ import type {
   TeacherAvailableStudentsParams,
   TeacherAvailableStudentsResponse,
   TeacherCourseCompaniesResponse,
+  TeacherCourseOverviewItem,
   TeacherCourseJournalEntry,
   TeacherJournalFilters,
+  TeacherStudentContextResponse,
 } from '@/features/teacher/types/teacher.types'
 
 function buildTeacherJournalQueryParams(
@@ -61,10 +65,17 @@ async function fetchTeacherCourseJournalEntriesPayload(
 }
 
 export const teacherApi = {
-  listCourses: async (): Promise<CourseItem[]> =>
-    fetchAllPages<unknown>((page) =>
-      httpClient.get<unknown>('/courses/', { params: { page } }).then((response) => response.data)
-    ).then((payload) => normalizeTeacherCoursesPayload(payload)),
+  listCourses: (): Promise<CourseItem[]> =>
+    httpClient
+      .get<unknown>('/courses/', {
+        params: { all: true, summary: 'selector' },
+      })
+      .then((response) => normalizeTeacherCoursesPayload(response.data)),
+
+  coursesOverview: (): Promise<TeacherCourseOverviewItem[]> =>
+    httpClient
+      .get<unknown>('/teacher/courses/overview/')
+      .then((response) => normalizeTeacherCoursesOverviewPayload(response.data)),
 
   createCourse: (payload: CourseCreatePayload): Promise<void> =>
     httpClient
@@ -107,4 +118,17 @@ export const teacherApi = {
 
   unenrollStudent: (courseId: number, studentId: number): Promise<void> =>
     httpClient.delete(`/courses/${courseId}/enrollments/${studentId}/`).then(() => {}),
+
+  studentContext: (
+    studentId: number,
+    params?: { companyId?: number; entriesLimit?: number }
+  ): Promise<TeacherStudentContextResponse> =>
+    httpClient
+      .get<unknown>(`/teacher/students/${studentId}/context/`, {
+        params: {
+          ...(params?.companyId ? { company_id: params.companyId } : null),
+          ...(params?.entriesLimit ? { entries_limit: params.entriesLimit } : null),
+        },
+      })
+      .then((response) => normalizeTeacherStudentContextPayload(response.data)),
 }

@@ -6,6 +6,7 @@ import type {
 export const teacherQueryKeys = {
   root: ['teacher'] as const,
   courses: ['teacher', 'courses'] as const,
+  coursesOverview: ['teacher', 'courses', 'overview'] as const,
   course: (courseId: number) => ['teacher', 'courses', courseId] as const,
   courseCompaniesSummary: (courseId: number) =>
     ['teacher', 'courses', courseId, 'companies', 'summary'] as const,
@@ -49,4 +50,6 @@ export const teacherQueryKeys = {
       params?.search ?? '',
       params?.page ?? 1,
     ] as const,
+  studentContext: (studentId: number, companyId: number | null, entriesLimit: number) =>
+    ['teacher', 'students', studentId, 'context', companyId, entriesLimit] as const,
 }

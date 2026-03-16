@@ -1,21 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { authApi } from '@/features/auth/api/auth.api'
-import { useAuthStore } from '@/features/auth/store/auth.store'
-
-export const REGISTRATION_CODE_QUERY_KEY = ['registration-code'] as const
-
-export function useRegistrationCode() {
-  const role = useAuthStore((state) => state.user?.role)
-
-  return useQuery({
-    queryKey: [...REGISTRATION_CODE_QUERY_KEY, role ?? 'none'] as const,
-    queryFn: () =>
-      role === 'admin' ? authApi.adminRegistrationCode() : authApi.teacherRegistrationCode(),
-    enabled: role === 'admin' || role === 'teacher',
-    staleTime: 5_000,
-    gcTime: 60_000,
-  })
-}
+import { ME_QUERY_KEY } from '@/features/auth/hooks/useMe'
 
 export function useRotateRegistrationCode() {
   const queryClient = useQueryClient()
@@ -23,7 +8,7 @@ export function useRotateRegistrationCode() {
   return useMutation({
     mutationFn: authApi.rotateRegistrationCode,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: REGISTRATION_CODE_QUERY_KEY })
+      await queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY })
     },
   })
 }

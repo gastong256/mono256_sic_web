@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { useMe } from '@/features/auth/hooks/useMe'
+import { useAuthenticatedBootstrap } from '@/features/auth/hooks/useAuthenticatedBootstrap'
 import { useLogout } from '@/features/auth/hooks/useLogout'
 import { CompanySelector } from '@/features/companies/components/CompanySelector'
 import { canManageRoles, canViewTeacherDashboard } from '@/shared/lib/authorization'
@@ -33,11 +33,12 @@ export function Layout() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
 
-  useMe()
+  const { data: bootstrap } = useAuthenticatedBootstrap()
 
   const handleLogout = useLogout()
-  const canViewTeacher = canViewTeacherDashboard(user)
-  const canAssignRoles = canManageRoles(user)
+  const canViewTeacher =
+    bootstrap?.capabilities?.can_manage_courses ?? canViewTeacherDashboard(user)
+  const canAssignRoles = bootstrap?.capabilities?.can_manage_roles ?? canManageRoles(user)
   const isAuthenticated = Boolean(accessToken)
 
   const showBreadcrumbs =

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useMe } from '@/features/auth/hooks/useMe'
+import { useAuthenticatedBootstrap } from '@/features/auth/hooks/useAuthenticatedBootstrap'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { Spinner } from '@/shared/ui/Spinner'
 import { getRequestId } from '@/shared/lib/tracing'
@@ -18,8 +18,8 @@ import { useToast } from '@/shared/ui/ToastProvider'
 
 export function ProfilePage() {
   const { pushToast } = useToast()
-  const { user } = useAuthStore()
-  const { isLoading, isError, error } = useMe()
+  const storedUser = useAuthStore((state) => state.user)
+  const { data: bootstrapUser, isLoading, isError, error } = useAuthenticatedBootstrap()
   const updateMeMutation = useUpdateMe()
   const [isEditing, setIsEditing] = useState(false)
   const [formValues, setFormValues] = useState({
@@ -40,6 +40,7 @@ export function ProfilePage() {
       }),
     [error]
   )
+  const user = bootstrapUser ?? storedUser
 
   useEffect(() => {
     if (!user) return
@@ -186,7 +187,7 @@ export function ProfilePage() {
         </div>
       </div>
 
-      <RegistrationCodeCard />
+      <RegistrationCodeCard data={user.registration_code} isLoading={isLoading} isError={isError} />
     </div>
   )
 }

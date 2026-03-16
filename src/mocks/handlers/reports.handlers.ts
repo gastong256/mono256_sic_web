@@ -136,7 +136,8 @@ function buildLedgerPayload(
   companyName: string,
   rawDateFrom: string | null,
   rawDateTo: string | null,
-  accountId: number | null
+  accountId: number | null,
+  includeAccountOptions: boolean
 ) {
   const movementAccounts = listCompanyMovementAccounts(companyId).sort((a, b) =>
     a.code.localeCompare(b.code)
@@ -243,6 +244,15 @@ function buildLedgerPayload(
     date_to: effectiveDateTo,
     account_id: accountId,
     accounts,
+    ...(includeAccountOptions
+      ? {
+          account_options: movementAccounts.map((account) => ({
+            id: account.id,
+            code: account.code,
+            name: account.name,
+          })),
+        }
+      : null),
   }
 
   return { payload }
@@ -499,7 +509,18 @@ export const reportsHandlers = [
       return HttpResponse.json(validationError.body, { status: validationError.status })
     }
 
-    const report = buildLedgerPayload(companyId, company.name, dateFrom, dateTo, accountId)
+    const include = new URL(request.url).searchParams.get('include') ?? ''
+    const report = buildLedgerPayload(
+      companyId,
+      company.name,
+      dateFrom,
+      dateTo,
+      accountId,
+      include
+        .split(',')
+        .map((value) => value.trim())
+        .includes('account_options')
+    )
     if ('error' in report) return report.error
 
     return HttpResponse.json(report.payload)
@@ -523,7 +544,7 @@ export const reportsHandlers = [
       return HttpResponse.json(validationError.body, { status: validationError.status })
     }
 
-    const report = buildLedgerPayload(companyId, company.name, dateFrom, dateTo, accountId)
+    const report = buildLedgerPayload(companyId, company.name, dateFrom, dateTo, accountId, false)
     if ('error' in report) {
       return report.error
     }

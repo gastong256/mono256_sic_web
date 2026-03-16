@@ -2,6 +2,7 @@ import type {
   JournalBookEntry,
   JournalBookReportParams,
   JournalBookReportResponse,
+  LedgerAccountOption,
   LedgerMovement,
   LedgerReportParams,
   LedgerReportResponse,
@@ -101,6 +102,19 @@ function normalizeLedgerMovements(raw: unknown): LedgerMovement[] {
     .filter((movement): movement is LedgerMovement => movement !== null)
 }
 
+function normalizeLedgerAccountOptions(raw: unknown): LedgerAccountOption[] {
+  return extractListPayload<unknown>(raw)
+    .map((option) => {
+      if (!isRecord(option)) return null
+      const id = toNumberValue(option.id)
+      const code = toStringValue(option.code)
+      const name = toStringValue(option.name)
+      if (id <= 0 || code.length === 0 || name.length === 0) return null
+      return { id, code, name }
+    })
+    .filter((option): option is LedgerAccountOption => option !== null)
+}
+
 export function normalizeLedgerReportPayload(
   payload: unknown,
   companyId: number,
@@ -148,6 +162,9 @@ export function normalizeLedgerReportPayload(
       ? toNumberValue(payload.account_id, params.accountId ?? 0) || null
       : (params.accountId ?? null),
     accounts,
+    account_options: isRecord(payload)
+      ? normalizeLedgerAccountOptions(payload.account_options)
+      : [],
   }
 }
 

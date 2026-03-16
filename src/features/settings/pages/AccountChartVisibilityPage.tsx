@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  useAccountChartConfig,
+  useAccountChartBootstrap,
   useUpdateAccountChartConfig,
 } from '@/features/settings/hooks/useAccountChartConfig'
-import { useAdminTeachers } from '@/features/admin/hooks/useAdminUsers'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import type { AccountLevelConfig } from '@/shared/types'
 import { Spinner } from '@/shared/ui/Spinner'
@@ -33,31 +32,28 @@ export function AccountChartVisibilityPage() {
   const [selectedTeacherId, setSelectedTeacherId] = useState<number | null>(null)
 
   const {
-    data: teachers = [],
-    isLoading: teachersLoading,
-    error: teachersError,
-  } = useAdminTeachers({ enabled: isAdmin })
+    data: bootstrap,
+    isLoading: bootstrapLoading,
+    error: bootstrapError,
+  } = useAccountChartBootstrap({
+    teacherId: selectedTeacherId ?? undefined,
+    enabled: isRoleResolved,
+  })
+  const teachers = bootstrap?.teachers ?? []
 
   useEffect(() => {
-    if (!isAdmin || teachers.length === 0) return
-    const selectedStillExists = teachers.some((teacher) => teacher.id === selectedTeacherId)
-    if (!selectedStillExists) {
-      setSelectedTeacherId(teachers[0].id)
+    if (!isAdmin) return
+    const nextTeacherId = bootstrap?.selected_teacher_id ?? null
+    if (nextTeacherId !== null && nextTeacherId !== selectedTeacherId) {
+      setSelectedTeacherId(nextTeacherId)
     }
-  }, [isAdmin, teachers, selectedTeacherId])
+  }, [bootstrap?.selected_teacher_id, isAdmin, selectedTeacherId])
 
   const teacherId = isAdmin ? (selectedTeacherId ?? undefined) : undefined
   const canLoadConfig =
     isRoleResolved && (!isAdmin || (typeof teacherId === 'number' && teacherId > 0))
 
-  const {
-    data = [],
-    isLoading,
-    error,
-  } = useAccountChartConfig({
-    teacherId,
-    enabled: canLoadConfig,
-  })
+  const data = useMemo(() => bootstrap?.chart ?? [], [bootstrap?.chart])
   const { mutate: saveConfig, isPending: saving } = useUpdateAccountChartConfig({
     teacherId,
   })
@@ -65,21 +61,21 @@ export function AccountChartVisibilityPage() {
   const [draft, setDraft] = useState<AccountLevelConfig[]>([])
   const loadErrorMessage = useMemo(
     () =>
-      getHttpErrorMessage(error, {
+      getHttpErrorMessage(bootstrapError, {
         defaultMessage: 'No se pudo cargar la configuración de visibilidad.',
         unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
         forbiddenMessage: 'No tenés permisos para configurar visibilidad del plan de cuentas.',
       }),
-    [error]
+    [bootstrapError]
   )
   const teachersErrorMessage = useMemo(
     () =>
-      getHttpErrorMessage(teachersError, {
+      getHttpErrorMessage(bootstrapError, {
         defaultMessage: 'No se pudieron cargar los docentes disponibles.',
         unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
         forbiddenMessage: 'No tenés permisos para consultar docentes.',
       }),
-    [teachersError]
+    [bootstrapError]
   )
 
   useEffect(() => {
@@ -113,7 +109,7 @@ export function AccountChartVisibilityPage() {
               Docente
               <select
                 value={selectedTeacherId ?? ''}
-                disabled={teachersLoading || teachers.length === 0}
+                disabled={bootstrapLoading || teachers.length === 0}
                 onChange={(event) => {
                   const nextId = Number(event.target.value)
                   setSelectedTeacherId(Number.isFinite(nextId) && nextId > 0 ? nextId : null)
@@ -130,34 +126,38 @@ export function AccountChartVisibilityPage() {
                 ))}
               </select>
             </label>
-            {teachersLoading && (
+            {bootstrapLoading && (
               <div className="pb-1">
                 <Spinner className="size-5 text-[var(--brand-500)]" label="Cargando docentes..." />
               </div>
             )}
           </div>
 
-          {teachersError && !teachersLoading && <Alert tone="error">{teachersErrorMessage}</Alert>}
+          {bootstrapError && !bootstrapLoading && (
+            <Alert tone="error">{teachersErrorMessage}</Alert>
+          )}
 
-          {!teachersLoading && !teachersError && teachers.length === 0 && (
+          {!bootstrapLoading && !bootstrapError && teachers.length === 0 && (
             <Alert tone="warning">No hay docentes disponibles para configurar.</Alert>
           )}
 
-          {!teachersLoading && !teachersError && teachers.length > 0 && !canLoadConfig && (
+          {!bootstrapLoading && !bootstrapError && teachers.length > 0 && !canLoadConfig && (
             <Alert tone="warning">Seleccioná un docente para cargar la configuración.</Alert>
           )}
         </section>
       )}
 
-      {canLoadConfig && isLoading && (
+      {canLoadConfig && bootstrapLoading && (
         <div className="flex justify-center py-16">
           <Spinner className="size-8 text-[var(--brand-500)]" label="Cargando configuracion..." />
         </div>
       )}
 
-      {canLoadConfig && error && !isLoading && <Alert tone="error">{loadErrorMessage}</Alert>}
+      {canLoadConfig && bootstrapError && !bootstrapLoading && (
+        <Alert tone="error">{loadErrorMessage}</Alert>
+      )}
 
-      {canLoadConfig && !isLoading && !error && (
+      {canLoadConfig && !bootstrapLoading && !bootstrapError && (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="divide-y divide-gray-100">
             {buildTree(draft).map((parent) => (

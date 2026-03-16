@@ -7,6 +7,28 @@ export interface TeacherCompanyItem {
   created_at: string
 }
 
+export interface TeacherCourseOverviewStudent {
+  student_id: number
+  student_username: string
+  student_full_name: string
+  company_count: number
+  journal_entry_count: number
+}
+
+export interface TeacherCourseOverviewItem {
+  course_id: number
+  course_name: string
+  course_code: string | null
+  teacher_id: number
+  teacher_username: string
+  student_count: number
+  totals: {
+    company_count: number
+    journal_entry_count: number
+  }
+  students: TeacherCourseOverviewStudent[]
+}
+
 export interface TeacherStudentCompanies {
   student_id: number
   student_username: string
@@ -42,6 +64,33 @@ export interface TeacherCourseJournalEntriesResponse {
   next: string | null
   previous: string | null
   entries: TeacherCourseJournalEntry[]
+}
+
+export interface TeacherStudentContextCompany {
+  id: number
+  name: string
+  tax_id: string | null
+  account_count: number
+  journal_entry_count: number
+  last_entry_date: string | null
+  books_closed_until: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface TeacherStudentContextResponse {
+  student: {
+    id: number
+    username: string
+    first_name: string
+    last_name: string
+    full_name: string
+    course_id: number | null
+    course_name: string
+  }
+  companies: TeacherStudentContextCompany[]
+  selected_company_id: number | null
+  journal_entries: TeacherCourseJournalEntry[]
 }
 
 export interface TeacherAvailableStudent {
