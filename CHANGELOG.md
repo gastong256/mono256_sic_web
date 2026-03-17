@@ -1,3 +1,7 @@
+## 1.10.0 (2026-03-17)
+
+* feat: support company opening workflow and accounting state guards ([bec5437](https://github.com/gastong256/mono256_sic_web/commit/bec5437))
+
 ## 1.9.0 (2026-03-16)
 
 * feat: adopt backend bootstrap and aggregated endpoints ([dcc6411](https://github.com/gastong256/mono256_sic_web/commit/dcc6411))
