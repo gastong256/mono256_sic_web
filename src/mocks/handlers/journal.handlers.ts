@@ -31,6 +31,15 @@ export const journalHandlers = [
     if (!company) return HttpResponse.json({ detail: 'Company not found' }, { status: 404 })
     if (!canAccessCompany(user, company))
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    if (company.accounting_ready === false) {
+      return HttpResponse.json(
+        {
+          detail:
+            'La empresa necesita registrarse con inventario inicial o general antes de operar contablemente.',
+        },
+        { status: 409 }
+      )
+    }
 
     const url = new URL(request.url)
     const pageRaw = Number(url.searchParams.get('page') ?? '1')
@@ -62,6 +71,15 @@ export const journalHandlers = [
     if (!company) return HttpResponse.json({ detail: 'Company not found' }, { status: 404 })
     if (!canAccessCompany(user, company))
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    if (company.accounting_ready === false) {
+      return HttpResponse.json(
+        {
+          detail:
+            'La empresa necesita registrarse con inventario inicial o general antes de operar contablemente.',
+        },
+        { status: 409 }
+      )
+    }
 
     const entry = getJournalEntry(companyId, Number(params.entryId))
     if (!entry) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
@@ -109,6 +127,15 @@ export const journalHandlers = [
       if (!company) return HttpResponse.json({ detail: 'Company not found' }, { status: 404 })
       if (!canAccessCompany(user, company))
         return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+      if (company.accounting_ready === false) {
+        return HttpResponse.json(
+          {
+            detail:
+              'La empresa necesita registrarse con inventario inicial o general antes de operar contablemente.',
+          },
+          { status: 409 }
+        )
+      }
 
       const body = (await request.json()) as ReverseJournalEntryPayload
       const reversed = reverseJournalEntry(companyId, Number(params.entryId), body, user.username)

@@ -7,10 +7,14 @@ export const journalBookReportQueryKey = (
   params: JournalBookReportParams
 ) => ['reports', 'journal-book', companyId, params.dateFrom ?? null, params.dateTo ?? null] as const
 
-export function useJournalBookReport(companyId: number | null, params: JournalBookReportParams) {
+export function useJournalBookReport(
+  companyId: number | null,
+  params: JournalBookReportParams,
+  options?: { enabled?: boolean }
+) {
   return useQuery({
     queryKey: journalBookReportQueryKey(companyId, params),
     queryFn: () => reportsApi.journalBook(companyId!, params),
-    enabled: companyId !== null && companyId > 0,
+    enabled: (options?.enabled ?? true) && companyId !== null && companyId > 0,
   })
 }

@@ -1,4 +1,4 @@
-import type { Company } from '@/features/companies/types/company.types'
+import type { Company, OpeningEntryPayload } from '@/features/companies/types/company.types'
 import type {
   CreateJournalEntryPayload,
   JournalEntry,
@@ -127,47 +127,103 @@ let registrationCodeState = {
   valid_until: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
 }
 
-let nextCompanyId = 5
+let nextCompanyId = 7
 const companies: Company[] = [
   {
     id: 1,
     name: 'Ferretería Los Andes',
+    description: 'Empresa operativa con apertura registrada',
     tax_id: '20-12345678-9',
     owner_username: 'student1',
     account_count: 3,
     books_closed_until: null,
+    is_demo: false,
+    is_read_only: false,
+    has_opening_entry: true,
+    accounting_ready: true,
+    opening_entry_id: 1,
     created_at: '2024-03-01T10:00:00Z',
     updated_at: '2024-03-01T10:00:00Z',
   },
   {
     id: 2,
     name: 'Librería del Centro',
+    description: 'Empresa creada sin apertura',
     tax_id: null,
     owner_username: 'student1',
-    account_count: 2,
+    account_count: 0,
     books_closed_until: null,
+    is_demo: false,
+    is_read_only: false,
+    has_opening_entry: false,
+    accounting_ready: false,
+    opening_entry_id: null,
     created_at: '2024-03-15T14:30:00Z',
     updated_at: '2024-03-15T14:30:00Z',
   },
   {
     id: 3,
     name: 'Panadería San Martín',
+    description: 'Empresa operativa',
     tax_id: '27-98765432-1',
     owner_username: 'student2',
     account_count: 0,
     books_closed_until: null,
+    is_demo: false,
+    is_read_only: false,
+    has_opening_entry: true,
+    accounting_ready: true,
+    opening_entry_id: 3,
     created_at: '2024-04-01T09:00:00Z',
     updated_at: '2024-04-01T09:00:00Z',
   },
   {
     id: 4,
     name: 'Academia Central',
+    description: 'Empresa del administrador',
     tax_id: '30-77889966-3',
     owner_username: 'admin',
     account_count: 1,
     books_closed_until: null,
+    is_demo: false,
+    is_read_only: false,
+    has_opening_entry: true,
+    accounting_ready: true,
+    opening_entry_id: null,
     created_at: '2024-04-20T09:00:00Z',
     updated_at: '2024-04-20T09:00:00Z',
+  },
+  {
+    id: 5,
+    name: 'Consultora Delta',
+    description: 'Empresa operativa sin actividad posterior a la apertura',
+    tax_id: '27-00112233-4',
+    owner_username: 'student1',
+    account_count: 1,
+    books_closed_until: null,
+    is_demo: false,
+    is_read_only: false,
+    has_opening_entry: true,
+    accounting_ready: true,
+    opening_entry_id: null,
+    created_at: '2024-04-25T09:00:00Z',
+    updated_at: '2024-04-25T09:00:00Z',
+  },
+  {
+    id: 6,
+    name: 'Empresa Demo Guiada',
+    description: 'Demo de solo lectura para explorar el sistema',
+    tax_id: null,
+    owner_username: 'student1',
+    account_count: 2,
+    books_closed_until: null,
+    is_demo: true,
+    is_read_only: true,
+    has_opening_entry: true,
+    accounting_ready: true,
+    opening_entry_id: null,
+    created_at: '2024-04-28T09:00:00Z',
+    updated_at: '2024-04-28T09:00:00Z',
   },
 ]
 
@@ -177,8 +233,8 @@ const journalEntries: JournalEntryDetail[] = [
     id: 1,
     entry_number: 1,
     date: '2024-03-01',
-    description: 'Apertura',
-    source_type: 'MANUAL',
+    description: 's/ Inventario Inicial',
+    source_type: 'OPENING',
     source_ref: '',
     created_by: 'student1',
     reversal_of_id: 0,
@@ -266,6 +322,15 @@ const journalCompanyMap: Record<number, number> = {
   1: 1,
   2: 1,
   3: 3,
+}
+
+let nextSyntheticAccountId = 900
+const syntheticAccounts: Record<number, { code: string; name: string }> = {
+  301: { code: '1.01.01', name: 'Caja en Pesos' },
+  302: { code: '1.01.02', name: 'Banco Nación Cta. Cte.' },
+  303: { code: '5.02.01', name: 'Sueldos y Jornales' },
+  310: { code: '1.01.01', name: 'Caja en Pesos' },
+  311: { code: '4.01.01', name: 'Ventas al Contado' },
 }
 
 let accountChartConfig: AccountLevelConfig[] = [
@@ -405,6 +470,11 @@ export function buildAuthMeResponse(
             id: company.id,
             name: company.name,
             owner_username: company.owner_username,
+            is_demo: company.is_demo ?? false,
+            is_read_only: company.is_read_only ?? false,
+            has_opening_entry: company.has_opening_entry ?? false,
+            accounting_ready: company.accounting_ready ?? false,
+            opening_entry_id: company.opening_entry_id ?? null,
           })),
         }
       : null),
@@ -638,26 +708,47 @@ export function getStudentUsernameForTeacher(teacher: User, studentId: number): 
 
 export function createCompany(
   ownerUsername: string,
-  payload: { name: string; tax_id?: string }
+  payload: {
+    name: string
+    description?: string
+    tax_id?: string
+    opening_entry?: OpeningEntryPayload
+  }
 ): Company {
   const now = new Date().toISOString()
   const newCompany: Company = {
     id: nextCompanyId++,
     name: payload.name,
+    description: payload.description ?? null,
     tax_id: payload.tax_id ?? null,
     owner_username: ownerUsername,
     account_count: 0,
     books_closed_until: null,
+    is_demo: false,
+    is_read_only: false,
+    has_opening_entry: false,
+    accounting_ready: false,
+    opening_entry_id: null,
     created_at: now,
     updated_at: now,
   }
   companies.push(newCompany)
+
+  if (payload.opening_entry) {
+    const created = createOpeningEntry(newCompany.id, payload.opening_entry, ownerUsername)
+    if (!('error' in created)) {
+      newCompany.has_opening_entry = true
+      newCompany.accounting_ready = true
+      newCompany.opening_entry_id = created.id
+    }
+  }
+
   return newCompany
 }
 
 export function updateCompany(
   companyId: number,
-  payload: { name?: string; tax_id?: string | null }
+  payload: { name?: string; description?: string | null; tax_id?: string | null }
 ): Company | null {
   const idx = companies.findIndex((company) => company.id === companyId)
   if (idx === -1) return null
@@ -665,6 +756,7 @@ export function updateCompany(
   companies[idx] = {
     ...companies[idx],
     ...(payload.name !== undefined ? { name: payload.name } : null),
+    ...(payload.description !== undefined ? { description: payload.description } : null),
     ...(payload.tax_id !== undefined ? { tax_id: payload.tax_id } : null),
     updated_at: new Date().toISOString(),
   }
@@ -683,21 +775,141 @@ export function getCompanyById(companyId: number): Company | null {
   return companies.find((company) => company.id === companyId) ?? null
 }
 
+function nextSyntheticCode(parentCode: string): string {
+  const suffixes = Object.values(syntheticAccounts)
+    .filter((account) => account.code.startsWith(`${parentCode}.`))
+    .map((account) => Number(account.code.split('.').at(-1)))
+    .filter((value) => Number.isFinite(value))
+
+  const next = (suffixes.length > 0 ? Math.max(...suffixes) : 0) + 1
+  return `${parentCode}.${String(next).padStart(2, '0')}`
+}
+
+function registerSyntheticAccount(
+  parentCode: string,
+  name: string
+): {
+  id: number
+  code: string
+  name: string
+} {
+  const existing = Object.entries(syntheticAccounts).find(
+    ([, account]) => account.code.startsWith(`${parentCode}.`) && account.name === name
+  )
+  if (existing) {
+    return {
+      id: Number(existing[0]),
+      code: existing[1].code,
+      name: existing[1].name,
+    }
+  }
+
+  const id = nextSyntheticAccountId++
+  const account = {
+    code: nextSyntheticCode(parentCode),
+    name,
+  }
+  syntheticAccounts[id] = account
+  return { id, ...account }
+}
+
+export function createOpeningEntry(
+  companyId: number,
+  payload: OpeningEntryPayload,
+  createdBy: string
+): JournalEntryDetail | { error: string; status: number } {
+  const company = getCompanyById(companyId)
+  if (!company) return { error: 'Company not found.', status: 404 }
+  if (company.is_read_only || company.is_demo) {
+    return { error: 'La empresa está en modo solo lectura.', status: 409 }
+  }
+  if (company.has_opening_entry) {
+    return { error: 'La empresa ya tiene apertura registrada.', status: 409 }
+  }
+
+  const existingEntries = journalEntries.filter(
+    (entry) => journalCompanyMap[entry.id] === companyId
+  )
+  if (existingEntries.length > 0) {
+    return { error: 'La empresa ya tiene asientos previos.', status: 409 }
+  }
+
+  const debitLines = payload.assets.map((item) => {
+    const account = registerSyntheticAccount(item.parent_code, item.name)
+    return {
+      account_id: account.id,
+      account_code: account.code,
+      account_name: account.name,
+      type: 'DEBIT' as const,
+      amount: item.amount,
+    }
+  })
+
+  const creditLines = payload.liabilities.map((item) => {
+    const account = registerSyntheticAccount(item.parent_code, item.name)
+    return {
+      account_id: account.id,
+      account_code: account.code,
+      account_name: account.name,
+      type: 'CREDIT' as const,
+      amount: item.amount,
+    }
+  })
+
+  const totalDebit = debitLines.reduce((sum, line) => sum + Number(line.amount), 0)
+  const liabilitiesTotal = creditLines.reduce((sum, line) => sum + Number(line.amount), 0)
+  const capitalAmount = totalDebit - liabilitiesTotal
+  if (capitalAmount <= 0) {
+    return { error: 'El capital resultante debe ser mayor a cero.', status: 400 }
+  }
+
+  const capitalAccount = registerSyntheticAccount('3.01', 'Capital')
+  const lines: JournalLine[] = [
+    ...debitLines,
+    ...creditLines,
+    {
+      account_id: capitalAccount.id,
+      account_code: capitalAccount.code,
+      account_name: capitalAccount.name,
+      type: 'CREDIT',
+      amount: capitalAmount.toFixed(2),
+    },
+  ]
+
+  const entry: JournalEntryDetail = {
+    id: nextJournalId++,
+    entry_number: 1,
+    date: payload.date,
+    description:
+      payload.inventory_kind === 'GENERAL' ? 's/ Inventario General' : 's/ Inventario Inicial',
+    source_type: 'OPENING',
+    source_ref: payload.source_ref ?? '',
+    created_by: createdBy,
+    reversal_of_id: 0,
+    reversed_by_id: null,
+    total_debit: totalDebit,
+    total_credit: totalDebit,
+    lines,
+  }
+
+  journalEntries.push(entry)
+  journalCompanyMap[entry.id] = companyId
+  company.has_opening_entry = true
+  company.accounting_ready = true
+  company.opening_entry_id = entry.id
+  company.account_count = lines.length
+  company.updated_at = new Date().toISOString()
+
+  return entry
+}
+
 function toJournalList(entry: JournalEntryDetail): JournalEntry {
   const { lines: _lines, ...listEntry } = entry
   return listEntry
 }
 
 function resolveAccountName(accountId: number): { code: string; name: string } {
-  const map: Record<number, { code: string; name: string }> = {
-    301: { code: '1.01.01', name: 'Caja en Pesos' },
-    302: { code: '1.01.02', name: 'Banco Nación Cta. Cte.' },
-    303: { code: '5.02.01', name: 'Sueldos y Jornales' },
-    310: { code: '1.01.01', name: 'Caja en Pesos' },
-    311: { code: '4.01.01', name: 'Ventas al Contado' },
-  }
-
-  return map[accountId] ?? { code: String(accountId), name: `Cuenta ${accountId}` }
+  return syntheticAccounts[accountId] ?? { code: String(accountId), name: `Cuenta ${accountId}` }
 }
 
 function summarize(lines: JournalLine[]): { totalDebit: number; totalCredit: number } {
@@ -742,6 +954,19 @@ export function createJournalEntry(
   payload: CreateJournalEntryPayload,
   createdBy: string
 ): JournalEntryDetail | { error: string } {
+  const company = getCompanyById(companyId)
+  if (!company) {
+    return { error: 'Company not found.' }
+  }
+  if (company.is_read_only) {
+    return { error: 'La empresa está en modo solo lectura.' }
+  }
+  if (company.accounting_ready === false) {
+    return {
+      error:
+        'La empresa necesita registrarse con inventario inicial o general antes de operar contablemente.',
+    }
+  }
   if (!payload.lines || payload.lines.length < 2) {
     return { error: 'Se requieren al menos 2 líneas.' }
   }
@@ -796,8 +1021,23 @@ export function reverseJournalEntry(
   payload: ReverseJournalEntryPayload,
   createdBy: string
 ): JournalEntryDetail | { error: string; status: number } {
+  const company = getCompanyById(companyId)
+  if (!company) return { error: 'Company not found.', status: 404 }
+  if (company.is_read_only) {
+    return { error: 'La empresa está en modo solo lectura.', status: 409 }
+  }
+  if (company.accounting_ready === false) {
+    return {
+      error:
+        'La empresa necesita registrarse con inventario inicial o general antes de operar contablemente.',
+      status: 409,
+    }
+  }
   const original = getJournalEntry(companyId, entryId)
   if (!original) return { error: 'Not found.', status: 404 }
+  if (original.source_type === 'OPENING') {
+    return { error: 'El asiento de apertura no puede reversarse.', status: 409 }
+  }
   if (original.reversed_by_id) {
     return { error: 'El asiento ya fue reversado.', status: 409 }
   }
@@ -1133,6 +1373,9 @@ export function listTeacherCourseCompanies(
             id: company.id,
             name: company.name,
             tax_id: company.tax_id ?? '',
+            has_opening_entry: company.has_opening_entry ?? false,
+            accounting_ready: company.accounting_ready ?? false,
+            opening_entry_id: company.opening_entry_id ?? null,
             created_at: company.created_at,
           })),
       })),
@@ -1311,6 +1554,9 @@ export function getTeacherStudentContext(
         account_count: company.account_count,
         journal_entry_count: companyEntries.length,
         last_entry_date: companyEntries[0]?.date ?? null,
+        has_opening_entry: company.has_opening_entry ?? false,
+        accounting_ready: company.accounting_ready ?? false,
+        opening_entry_id: company.opening_entry_id ?? null,
         books_closed_until: company.books_closed_until ?? null,
         created_at: company.created_at,
         updated_at: company.updated_at,

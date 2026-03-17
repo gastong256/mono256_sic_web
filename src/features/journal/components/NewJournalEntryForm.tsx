@@ -10,6 +10,9 @@ import { useJournalAccounts } from '@/features/journal/hooks/useJournalAccounts'
 import type { CreateJournalLinePayload } from '@/features/journal/types/journal.types'
 import { Alert } from '@/shared/ui/Alert'
 import { useToast } from '@/shared/ui/ToastProvider'
+import type { Company } from '@/features/companies/types/company.types'
+import { getCompanyAccountingBlockMessage } from '@/features/companies/lib/companyAccounting'
+import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 // ── Zod schema ────────────────────────────────────────────────────────────────
 
@@ -52,15 +55,23 @@ interface NewJournalEntryFormProps {
   isOpen: boolean
   onClose: () => void
   companyId: number
+  company?: Company | null
 }
 
-export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEntryFormProps) {
+export function NewJournalEntryForm({
+  isOpen,
+  onClose,
+  companyId,
+  company,
+}: NewJournalEntryFormProps) {
   const { pushToast } = useToast()
   const studentMutation = useCreateJournalEntry(companyId)
   const mutateAsync = studentMutation.mutateAsync
   const isPending = studentMutation.isPending
   const { data: accounts, isLoading: accountsLoading } = useJournalAccounts(companyId)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const isReadOnly = company?.is_read_only === true
+  const isAccountingReady = company?.accounting_ready !== false
 
   const {
     register,
@@ -100,6 +111,11 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
   }, [isOpen, reset])
 
   async function onSubmit(values: FormValues) {
+    if (!isAccountingReady || isReadOnly) {
+      setSubmitError(getCompanyAccountingBlockMessage(company))
+      return
+    }
+
     setSubmitError(null)
     const normalizedLines: CreateJournalLinePayload[] = []
 
@@ -124,8 +140,16 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
       pushToast('Asiento registrado correctamente.', 'success')
       onClose()
     } catch (error) {
-      pushToast('No se pudo guardar el asiento.', 'error')
-      setSubmitError(error instanceof Error ? error.message : 'No se pudo guardar el asiento.')
+      const message = getHttpErrorMessage(error, {
+        defaultMessage: 'No se pudo guardar el asiento.',
+        badRequestMessage: 'Revisá los datos del asiento e intentá nuevamente.',
+        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
+        forbiddenMessage: 'No tenés permisos para registrar asientos en esta empresa.',
+        notFoundMessage: 'La empresa ya no existe o no está disponible.',
+        conflictMessage: getCompanyAccountingBlockMessage(company),
+      })
+      pushToast(message, 'error')
+      setSubmitError(message)
     }
   }
 
@@ -138,6 +162,16 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
         className="space-y-5"
       >
         {submitError && <Alert tone="error">{submitError}</Alert>}
+
+        {!isAccountingReady && (
+          <Alert tone="warning">{getCompanyAccountingBlockMessage(company)}</Alert>
+        )}
+
+        {isReadOnly && (
+          <Alert tone="info">
+            Esta empresa está en modo solo lectura y no permite registrar asientos nuevos.
+          </Alert>
+        )}
 
         {/* Date + Description */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -316,7 +350,11 @@ export function NewJournalEntryForm({ isOpen, onClose, companyId }: NewJournalEn
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" isLoading={isPending} disabled={!isBalanced || isPending}>
+          <Button
+            type="submit"
+            isLoading={isPending}
+            disabled={!isBalanced || isPending || !isAccountingReady || isReadOnly}
+          >
             Guardar asiento
           </Button>
         </div>

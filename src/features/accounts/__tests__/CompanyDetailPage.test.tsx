@@ -10,6 +10,7 @@ import { registerTokenProvider } from '@/shared/lib/http'
 import { env } from '@/shared/config/env'
 import { server } from '@/mocks/server'
 import { resetAccountsMock } from '@/mocks/handlers/accounts.handlers'
+import { ToastProvider } from '@/shared/ui/ToastProvider'
 
 function makeAccessToken(username: string) {
   const payload = btoa(JSON.stringify({ username }))
@@ -59,14 +60,16 @@ function setAuthenticatedUser(
   })
 }
 
-function renderCompanyDetailPage() {
+function renderCompanyDetailPage(path = '/companies/1') {
   const queryClient = makeQueryClient()
   return render(
-    <MemoryRouter initialEntries={['/companies/1']}>
+    <MemoryRouter initialEntries={[path]}>
       <QueryClientProvider client={queryClient}>
-        <Routes>
-          <Route path="/companies/:companyId" element={<CompanyDetailPage />} />
-        </Routes>
+        <ToastProvider>
+          <Routes>
+            <Route path="/companies/:companyId" element={<CompanyDetailPage />} />
+          </Routes>
+        </ToastProvider>
       </QueryClientProvider>
     </MemoryRouter>
   )
@@ -170,5 +173,15 @@ describe('CompanyDetailPage', () => {
     await waitFor(() => {
       expect(screen.queryByText('Banco Nación Cta. Cte.')).not.toBeInTheDocument()
     })
+  })
+
+  it('shows read-only status and hides write actions for read-only companies', async () => {
+    setAuthenticatedUser('student')
+
+    renderCompanyDetailPage('/companies/6')
+
+    expect(await screen.findByText(/Empresa demo en modo solo lectura/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /\+ agregar cuenta/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /editar/i })).not.toBeInTheDocument()
   })
 })

@@ -3,9 +3,9 @@ import type { Account } from '@/features/accounts/types/account.types'
 
 interface AccountTreeProps {
   accounts: Account[]
-  onAddChild: (parent: Account) => void
-  onEdit: (account: Account) => void
-  onDelete: (account: Account) => void
+  onAddChild?: (parent: Account) => void
+  onEdit?: (account: Account) => void
+  onDelete?: (account: Account) => void
 }
 
 export function AccountTree({ accounts, onAddChild, onEdit, onDelete }: AccountTreeProps) {

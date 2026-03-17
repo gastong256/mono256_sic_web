@@ -18,9 +18,10 @@ function formatARS(value: string): string {
 interface JournalEntryCardProps {
   entry: JournalEntry
   companyId: number
+  isReadOnly?: boolean
 }
 
-export function JournalEntryCard({ entry, companyId }: JournalEntryCardProps) {
+export function JournalEntryCard({ entry, companyId, isReadOnly = false }: JournalEntryCardProps) {
   const { pushToast } = useToast()
   const [expanded, setExpanded] = useState(false)
   const [confirmReverseOpen, setConfirmReverseOpen] = useState(false)
@@ -44,7 +45,8 @@ export function JournalEntryCard({ entry, companyId }: JournalEntryCardProps) {
   const totalDebe = entry.total_debit
   const totalHaber = entry.total_credit
   const reverseMutation = useReverseJournalEntry(companyId)
-  const canReverse = !entry.reversal_of_id && !entry.reversed_by_id
+  const canReverse =
+    !isReadOnly && entry.source_type !== 'OPENING' && !entry.reversal_of_id && !entry.reversed_by_id
 
   async function handleReverseEntry() {
     try {
@@ -59,7 +61,10 @@ export function JournalEntryCard({ entry, companyId }: JournalEntryCardProps) {
           badRequestMessage: 'No se puede reversar este asiento en el estado actual.',
           forbiddenMessage: 'No tenés permisos para reversar este asiento.',
           notFoundMessage: 'El asiento ya no existe.',
-          conflictMessage: 'El asiento ya fue reversado previamente.',
+          conflictMessage:
+            entry.source_type === 'OPENING'
+              ? 'El asiento de apertura no puede reversarse desde este flujo.'
+              : 'El asiento ya fue reversado previamente.',
         }),
         'error'
       )
@@ -123,6 +128,13 @@ export function JournalEntryCard({ entry, companyId }: JournalEntryCardProps) {
               disabled={!canReverse || reverseMutation.isPending}
               onClick={() => setConfirmReverseOpen(true)}
               className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+              title={
+                isReadOnly
+                  ? 'Empresa en modo solo lectura'
+                  : entry.source_type === 'OPENING'
+                    ? 'La apertura contable no se reversa desde este flujo'
+                    : undefined
+              }
             >
               Reversar asiento
             </button>

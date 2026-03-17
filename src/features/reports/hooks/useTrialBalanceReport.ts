@@ -8,10 +8,14 @@ export const trialBalanceReportQueryKey = (
 ) =>
   ['reports', 'trial-balance', companyId, params.dateFrom ?? null, params.dateTo ?? null] as const
 
-export function useTrialBalanceReport(companyId: number | null, params: TrialBalanceReportParams) {
+export function useTrialBalanceReport(
+  companyId: number | null,
+  params: TrialBalanceReportParams,
+  options?: { enabled?: boolean }
+) {
   return useQuery({
     queryKey: trialBalanceReportQueryKey(companyId, params),
     queryFn: () => reportsApi.trialBalance(companyId!, params),
-    enabled: companyId !== null && companyId > 0,
+    enabled: (options?.enabled ?? true) && companyId !== null && companyId > 0,
   })
 }

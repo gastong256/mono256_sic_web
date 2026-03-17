@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useAuthenticatedBootstrap } from '@/features/auth/hooks/useAuthenticatedBootstrap'
 import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
+import { getCompanyStatusLabels } from '@/features/companies/lib/companyAccounting'
 
 export function CompanySelector() {
   const { accessToken } = useAuthStore()
@@ -23,10 +24,18 @@ export function CompanySelector() {
   if (!isAuthenticated || isLoading || !companies || companies.length === 0) return null
 
   if (companies.length === 1) {
+    const labels = getCompanyStatusLabels(companies[0])
     return (
-      <span className="inline-flex max-w-[16rem] items-center truncate rounded-full border border-[var(--border-soft)] bg-white/90 px-3 py-1 text-xs font-semibold text-[var(--text-strong)]">
-        Empresa activa: {companies[0].name}
-      </span>
+      <div className="flex max-w-[16rem] flex-col">
+        <span className="inline-flex items-center truncate rounded-full border border-[var(--border-soft)] bg-white/90 px-3 py-1 text-xs font-semibold text-[var(--text-strong)]">
+          Empresa activa: {companies[0].name}
+        </span>
+        {labels.length > 0 && (
+          <span className="mt-1 truncate text-[11px] font-semibold text-[var(--text-muted)]">
+            {labels.join(' · ')}
+          </span>
+        )}
+      </div>
     )
   }
 

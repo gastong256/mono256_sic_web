@@ -275,14 +275,17 @@ export function normalizeTeacherStudentContextPayload(
           account_count: toNumberValue(company.account_count),
           journal_entry_count: toNumberValue(company.journal_entry_count),
           last_entry_date: toStringValue(company.last_entry_date) || null,
+          has_opening_entry:
+            typeof company.has_opening_entry === 'boolean' ? company.has_opening_entry : undefined,
+          accounting_ready:
+            typeof company.accounting_ready === 'boolean' ? company.accounting_ready : undefined,
+          opening_entry_id: toNumberValue(company.opening_entry_id, 0) || null,
           books_closed_until: toStringValue(company.books_closed_until) || null,
           created_at: toStringValue(company.created_at),
           updated_at: toStringValue(company.updated_at),
         }
       })
-      .filter(
-        (company): company is TeacherStudentContextResponse['companies'][number] => company !== null
-      ),
+      .filter((company) => company !== null) as TeacherStudentContextResponse['companies'],
     selected_company_id: isRecord(payload)
       ? toNumberValue(payload.selected_company_id, 0) || null
       : null,

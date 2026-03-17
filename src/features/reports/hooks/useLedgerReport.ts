@@ -12,10 +12,14 @@ export const ledgerReportQueryKey = (companyId: number | null, params: LedgerRep
     params.accountId ?? null,
   ] as const
 
-export function useLedgerReport(companyId: number | null, params: LedgerReportParams) {
+export function useLedgerReport(
+  companyId: number | null,
+  params: LedgerReportParams,
+  options?: { enabled?: boolean }
+) {
   return useQuery({
     queryKey: ledgerReportQueryKey(companyId, params),
     queryFn: () => reportsApi.ledger(companyId!, params),
-    enabled: companyId !== null && companyId > 0,
+    enabled: (options?.enabled ?? true) && companyId !== null && companyId > 0,
   })
 }

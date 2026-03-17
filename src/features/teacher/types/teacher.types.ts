@@ -4,6 +4,9 @@ export interface TeacherCompanyItem {
   id: number
   name: string
   tax_id: string | null
+  has_opening_entry?: boolean
+  accounting_ready?: boolean
+  opening_entry_id?: number | null
   created_at: string
 }
 
@@ -73,6 +76,9 @@ export interface TeacherStudentContextCompany {
   account_count: number
   journal_entry_count: number
   last_entry_date: string | null
+  has_opening_entry?: boolean
+  accounting_ready?: boolean
+  opening_entry_id?: number | null
   books_closed_until: string | null
   created_at: string
   updated_at: string

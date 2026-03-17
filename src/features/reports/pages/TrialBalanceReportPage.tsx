@@ -1,5 +1,8 @@
 import { Fragment, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
+import { useActiveCompany } from '@/features/companies/hooks/useActiveCompany'
+import { getCompanyAccountingBlockMessage } from '@/features/companies/lib/companyAccounting'
 import { useTrialBalanceReport } from '@/features/reports/hooks/useTrialBalanceReport'
 import { useDownloadTrialBalanceReport } from '@/features/reports/hooks/useDownloadReports'
 import { getReportDownloadErrorMessage } from '@/features/reports/lib/downloadErrors'
@@ -23,18 +26,28 @@ function formatAmount(value: string | number | null) {
 }
 
 export function TrialBalanceReportPage() {
+  const navigate = useNavigate()
   const { pushToast } = useToast()
   const { activeCompanyId } = useActiveCompanyStore()
+  const {
+    activeCompany,
+    canManageOpening,
+    canWriteCompany,
+    isLoading: companyLoading,
+  } = useActiveCompany()
   const [dateFromInput, setDateFromInput] = useState('')
   const [dateToInput, setDateToInput] = useState('')
   const [filters, setFilters] = useState<{ dateFrom?: string; dateTo?: string }>({})
+  const isAccountingReady = activeCompany?.accounting_ready !== false
 
   const hasInvalidRange = useMemo(
     () => Boolean(dateFromInput && dateToInput && dateFromInput > dateToInput),
     [dateFromInput, dateToInput]
   )
 
-  const { data, isLoading, isError, error } = useTrialBalanceReport(activeCompanyId, filters)
+  const { data, isLoading, isError, error } = useTrialBalanceReport(activeCompanyId, filters, {
+    enabled: activeCompanyId !== null && !companyLoading && isAccountingReady,
+  })
   const downloadMutation = useDownloadTrialBalanceReport()
   const canSearch = !hasInvalidRange && activeCompanyId !== null
   const fieldErrors = useMemo(() => extractFieldValidationErrors(error), [error])
@@ -48,8 +61,9 @@ export function TrialBalanceReportPage() {
       unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
       forbiddenMessage: 'No tenés permisos para consultar este reporte.',
       notFoundMessage: 'La empresa no existe o ya no está disponible.',
+      conflictMessage: getCompanyAccountingBlockMessage(activeCompany),
     })
-  }, [error, fieldErrors.date_from, fieldErrors.date_to])
+  }, [activeCompany, error, fieldErrors.date_from, fieldErrors.date_to])
 
   async function handleDownload() {
     if (activeCompanyId === null) return
@@ -77,7 +91,7 @@ export function TrialBalanceReportPage() {
             type="button"
             variant="secondary"
             className="border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-            disabled={activeCompanyId === null || hasInvalidRange}
+            disabled={activeCompanyId === null || hasInvalidRange || !isAccountingReady}
             isLoading={downloadMutation.isPending}
             onClick={() => {
               void handleDownload()
@@ -141,6 +155,22 @@ export function TrialBalanceReportPage() {
 
       {activeCompanyId === null && (
         <Alert tone="warning">Selecciona una empresa para ver el Balance de Comprobacion.</Alert>
+      )}
+
+      {activeCompanyId !== null && activeCompany?.accounting_ready === false && (
+        <EmptyState
+          icon="balance"
+          title="Pendiente de apertura contable"
+          description={getCompanyAccountingBlockMessage(activeCompany)}
+          action={
+            canManageOpening && canWriteCompany ? (
+              <Button onClick={() => navigate(`/companies/${activeCompanyId}`)}>
+                Registrar apertura
+              </Button>
+            ) : undefined
+          }
+          className="py-12"
+        />
       )}
 
       {activeCompanyId !== null && isLoading && (

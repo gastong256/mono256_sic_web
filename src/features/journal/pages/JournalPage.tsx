@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Navigate } from 'react-router'
+import { Navigate, useNavigate } from 'react-router'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
+import { useActiveCompany } from '@/features/companies/hooks/useActiveCompany'
+import { getCompanyAccountingBlockMessage } from '@/features/companies/lib/companyAccounting'
 import { useJournalEntries } from '@/features/journal/hooks/useJournalEntries'
 import { JournalEntryCard } from '@/features/journal/components/JournalEntryCard'
 import { NewJournalEntryForm } from '@/features/journal/components/NewJournalEntryForm'
@@ -13,11 +14,27 @@ import { Skeleton } from '@/shared/ui/Skeleton'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 export function JournalPage() {
+  const navigate = useNavigate()
   const { accessToken, refreshToken } = useAuthStore()
-  const { activeCompanyId } = useActiveCompanyStore()
+  const {
+    activeCompanyId,
+    activeCompany,
+    canManageOpening,
+    canWriteCompany,
+    isLoading: companyLoading,
+  } = useActiveCompany()
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const isAccountingReady = activeCompany?.accounting_ready !== false
+  const isReadOnly = activeCompany?.is_read_only === true
 
-  const { data: entries, isLoading, isError, error } = useJournalEntries()
+  const {
+    data: entries,
+    isLoading,
+    isError,
+    error,
+  } = useJournalEntries({
+    enabled: activeCompanyId !== null && !companyLoading && isAccountingReady,
+  })
   const isAuthenticated = Boolean(accessToken ?? refreshToken)
   const loadErrorMessage = useMemo(
     () =>
@@ -26,8 +43,9 @@ export function JournalPage() {
         unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
         forbiddenMessage: 'No tenés permisos para ver estos asientos.',
         notFoundMessage: 'La empresa activa no existe o ya no está disponible.',
+        conflictMessage: getCompanyAccountingBlockMessage(activeCompany),
       }),
-    [error]
+    [activeCompany, error]
   )
 
   if (!isAuthenticated) {
@@ -52,8 +70,42 @@ export function JournalPage() {
         icon="journal"
         title="Asientos"
         subtitle="Registro cronologico de asientos de la empresa activa."
-        actions={<Button onClick={() => setIsFormOpen(true)}>+ Nuevo asiento</Button>}
+        actions={
+          <Button
+            disabled={activeCompanyId === null || !isAccountingReady || isReadOnly}
+            onClick={() => setIsFormOpen(true)}
+          >
+            + Nuevo asiento
+          </Button>
+        }
       />
+
+      {activeCompanyId !== null && activeCompany?.accounting_ready === false && (
+        <Alert tone="warning">
+          {getCompanyAccountingBlockMessage(activeCompany)}
+          {canManageOpening && canWriteCompany && (
+            <>
+              {' '}
+              Podés registrar la apertura desde{' '}
+              <button
+                type="button"
+                onClick={() => navigate(`/companies/${activeCompanyId}`)}
+                className="font-semibold underline"
+              >
+                plan de cuentas
+              </button>
+              .
+            </>
+          )}
+        </Alert>
+      )}
+
+      {activeCompanyId !== null && isReadOnly && (
+        <Alert tone="info">
+          Esta empresa está en modo solo lectura. Podés consultar los asientos, pero no crear ni
+          reversar operaciones.
+        </Alert>
+      )}
 
       {/* Content */}
       {isLoading && (
@@ -75,20 +127,45 @@ export function JournalPage() {
 
       {isError && <Alert tone="error">{loadErrorMessage}</Alert>}
 
-      {!isLoading && !isError && entries && entries.length === 0 && (
+      {activeCompanyId !== null && activeCompany?.accounting_ready === false && !isError && (
         <EmptyState
           icon="journal"
-          title="No hay asientos registrados"
-          description="Comenza registrando el primer asiento manual de esta empresa."
-          action={<Button onClick={() => setIsFormOpen(true)}>Crear primer asiento</Button>}
+          title="Pendiente de apertura contable"
+          description={getCompanyAccountingBlockMessage(activeCompany)}
+          action={
+            canManageOpening && canWriteCompany ? (
+              <Button onClick={() => navigate(`/companies/${activeCompanyId}`)}>
+                Registrar apertura
+              </Button>
+            ) : undefined
+          }
           className="py-20"
         />
       )}
 
-      {!isLoading && entries && entries.length > 0 && (
+      {!isLoading && !isError && isAccountingReady && entries && entries.length === 0 && (
+        <EmptyState
+          icon="journal"
+          title="No hay asientos registrados"
+          description="Comenza registrando el primer asiento manual de esta empresa."
+          action={
+            !isReadOnly ? (
+              <Button onClick={() => setIsFormOpen(true)}>Crear primer asiento</Button>
+            ) : undefined
+          }
+          className="py-20"
+        />
+      )}
+
+      {!isLoading && isAccountingReady && entries && entries.length > 0 && (
         <div className="space-y-3">
           {entries.map((entry) => (
-            <JournalEntryCard key={entry.id} entry={entry} companyId={activeCompanyId} />
+            <JournalEntryCard
+              key={entry.id}
+              entry={entry}
+              companyId={activeCompanyId}
+              isReadOnly={isReadOnly}
+            />
           ))}
         </div>
       )}
@@ -98,6 +175,7 @@ export function JournalPage() {
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         companyId={activeCompanyId}
+        company={activeCompany}
       />
     </div>
   )

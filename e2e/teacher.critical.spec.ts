@@ -11,7 +11,7 @@ test.describe('Teacher critical flows', () => {
 
     await loginAs(page, 'teacher')
     await openSupervisionMenu(page)
-    await page.getByRole('link', { name: 'Panel docente' }).click()
+    await page.locator('#menu-supervision').getByRole('link', { name: 'Panel docente' }).click()
 
     await expect(page).toHaveURL('/teacher/dashboard')
     await page.getByRole('button', { name: '+ Nuevo curso' }).click()
@@ -28,7 +28,7 @@ test.describe('Teacher critical flows', () => {
   test('enrolls a student and navigates to student detail', async ({ page }) => {
     await loginAs(page, 'teacher')
     await openSupervisionMenu(page)
-    await page.getByRole('link', { name: 'Panel docente' }).click()
+    await page.locator('#menu-supervision').getByRole('link', { name: 'Panel docente' }).click()
     await expect(page).toHaveURL('/teacher/dashboard')
 
     const coursePanel = page.locator('section', { hasText: 'Contabilidad I' }).first()

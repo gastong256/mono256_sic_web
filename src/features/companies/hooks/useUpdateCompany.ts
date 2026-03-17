@@ -12,7 +12,10 @@ export function useUpdateCompany() {
       companiesApi.update(id, payload),
     onSuccess: async (company) => {
       logger.info({ message: 'Empresa actualizada', companyId: company.id })
-      await queryClient.invalidateQueries({ queryKey: companyQueryKeys.root })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: companyQueryKeys.root }),
+        queryClient.invalidateQueries({ queryKey: ['me'] }),
+      ])
     },
     onError: (error) => {
       logger.error({ message: 'Error al actualizar empresa', error: String(error) })

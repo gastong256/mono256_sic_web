@@ -5,12 +5,12 @@ import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.
 export const journalEntriesQueryKey = (companyId: number | null) =>
   ['journal', 'entries', companyId] as const
 
-export function useJournalEntries() {
+export function useJournalEntries(options?: { enabled?: boolean }) {
   const { activeCompanyId } = useActiveCompanyStore()
 
   return useQuery({
     queryKey: journalEntriesQueryKey(activeCompanyId),
     queryFn: () => journalApi.list(activeCompanyId!),
-    enabled: activeCompanyId !== null,
+    enabled: (options?.enabled ?? true) && activeCompanyId !== null,
   })
 }

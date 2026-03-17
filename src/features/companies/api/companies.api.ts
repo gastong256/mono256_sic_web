@@ -2,9 +2,12 @@ import { httpClient } from '@/shared/lib/http'
 import type {
   Company,
   CreateCompanyPayload,
+  OpeningEntryPayload,
   UpdateCompanyPayload,
 } from '@/features/companies/types/company.types'
 import { fetchAllPages } from '@/shared/lib/fetchAllPages'
+import { normalizeJournalEntryDetailPayload } from '@/features/journal/adapters/journal.adapters'
+import type { JournalEntryDetail } from '@/features/journal/types/journal.types'
 
 export const companiesApi = {
   list: (): Promise<Company[]> =>
@@ -20,4 +23,12 @@ export const companiesApi = {
 
   remove: (id: number): Promise<void> =>
     httpClient.delete(`/companies/${id}/`).then(() => undefined),
+
+  createOpeningEntry: (
+    companyId: number,
+    payload: OpeningEntryPayload
+  ): Promise<JournalEntryDetail> =>
+    httpClient
+      .post<unknown>(`/companies/${companyId}/opening-entry/`, payload)
+      .then((r) => normalizeJournalEntryDetailPayload(r.data)),
 }

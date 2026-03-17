@@ -458,6 +458,15 @@ export const reportsHandlers = [
     if (!canAccessCompany(user, company)) {
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
     }
+    if (company.accounting_ready === false) {
+      return HttpResponse.json(
+        {
+          detail:
+            'La empresa necesita registrarse con inventario inicial o general antes de operar contablemente.',
+        },
+        { status: 409 }
+      )
+    }
 
     const { dateFrom, dateTo, validationError } = parseAndValidateReportRequest(request)
     if (validationError) {
@@ -481,6 +490,15 @@ export const reportsHandlers = [
       if (!canAccessCompany(user, company)) {
         return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
       }
+      if (company.accounting_ready === false) {
+        return HttpResponse.json(
+          {
+            detail:
+              'La empresa necesita registrarse con inventario inicial o general antes de operar contablemente.',
+          },
+          { status: 409 }
+        )
+      }
 
       const { validationError } = parseAndValidateReportRequest(request)
       if (validationError) {
@@ -502,6 +520,15 @@ export const reportsHandlers = [
     if (!company) return HttpResponse.json({ detail: 'Company not found' }, { status: 404 })
     if (!canAccessCompany(user, company)) {
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    }
+    if (company.accounting_ready === false) {
+      return HttpResponse.json(
+        {
+          detail:
+            'La empresa necesita registrarse con inventario inicial o general antes de operar contablemente.',
+        },
+        { status: 409 }
+      )
     }
 
     const { dateFrom, dateTo, accountId, validationError } = parseAndValidateReportRequest(request)
@@ -538,6 +565,15 @@ export const reportsHandlers = [
     if (!canAccessCompany(user, company)) {
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
     }
+    if (company.accounting_ready === false) {
+      return HttpResponse.json(
+        {
+          detail:
+            'La empresa necesita registrarse con inventario inicial o general antes de operar contablemente.',
+        },
+        { status: 409 }
+      )
+    }
 
     const { dateFrom, dateTo, accountId, validationError } = parseAndValidateReportRequest(request)
     if (validationError) {
@@ -564,6 +600,15 @@ export const reportsHandlers = [
     if (!canAccessCompany(user, company)) {
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
     }
+    if (company.accounting_ready === false) {
+      return HttpResponse.json(
+        {
+          detail:
+            'La empresa necesita registrarse con inventario inicial o general antes de operar contablemente.',
+        },
+        { status: 409 }
+      )
+    }
 
     const { dateFrom, dateTo, validationError } = parseAndValidateReportRequest(request)
     if (validationError) {
@@ -586,6 +631,15 @@ export const reportsHandlers = [
       if (!company) return HttpResponse.json({ detail: 'Company not found' }, { status: 404 })
       if (!canAccessCompany(user, company)) {
         return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+      }
+      if (company.accounting_ready === false) {
+        return HttpResponse.json(
+          {
+            detail:
+              'La empresa necesita registrarse con inventario inicial o general antes de operar contablemente.',
+          },
+          { status: 409 }
+        )
       }
 
       const { validationError } = parseAndValidateReportRequest(request)

@@ -4,6 +4,11 @@ export interface SelectorCompany {
   id: number
   name: string
   owner_username: string
+  is_demo?: boolean
+  is_read_only?: boolean
+  has_opening_entry?: boolean
+  accounting_ready?: boolean
+  opening_entry_id?: number | null
 }
 
 export interface UserCapabilities {

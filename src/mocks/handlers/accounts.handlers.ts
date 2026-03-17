@@ -69,11 +69,13 @@ const companyLevel3Accounts: Record<number, Account[]> = {
     makeAccount(302, '1.01.02', 'Banco Nación Cta. Cte.', 'AS', 2),
     makeAccount(303, '5.02.01', 'Sueldos y Jornales', 'EX', 2),
   ],
-  2: [
-    makeAccount(310, '1.01.01', 'Caja en Pesos', 'AS', 2),
-    makeAccount(311, '4.01.01', 'Ventas al Contado', 'IN', 2),
-  ],
+  2: [],
   3: [],
+  5: [makeAccount(320, '1.01.01', 'Caja Operativa', 'AS', 2)],
+  6: [
+    makeAccount(330, '1.01.01', 'Caja Demo', 'AS', 2),
+    makeAccount(331, '4.01.01', 'Ventas Demo', 'IN', 2),
+  ],
 }
 
 // Parent mapping: level3 account id → parent level2 id
@@ -81,8 +83,9 @@ const accountParents: Record<number, number> = {
   301: 11,
   302: 11,
   303: 52,
-  310: 11,
-  311: 41,
+  320: 11,
+  330: 11,
+  331: 41,
 }
 
 export function listCompanyMovementAccounts(companyId: number): Account[] {
@@ -137,11 +140,13 @@ export function resetAccountsMock() {
     makeAccount(302, '1.01.02', 'Banco Nación Cta. Cte.', 'AS', 2),
     makeAccount(303, '5.02.01', 'Sueldos y Jornales', 'EX', 2),
   ]
-  companyLevel3Accounts[2] = [
-    makeAccount(310, '1.01.01', 'Caja en Pesos', 'AS', 2),
-    makeAccount(311, '4.01.01', 'Ventas al Contado', 'IN', 2),
-  ]
+  companyLevel3Accounts[2] = []
   companyLevel3Accounts[3] = []
+  companyLevel3Accounts[5] = [makeAccount(320, '1.01.01', 'Caja Operativa', 'AS', 2)]
+  companyLevel3Accounts[6] = [
+    makeAccount(330, '1.01.01', 'Caja Demo', 'AS', 2),
+    makeAccount(331, '4.01.01', 'Ventas Demo', 'IN', 2),
+  ]
 }
 
 function isAuthorized(request: Request): boolean {
@@ -195,6 +200,10 @@ export const accountsHandlers = [
     const cId = Number(params.companyId)
     const accessError = ensureCompanyAccess(request, cId)
     if (accessError) return accessError
+    const company = getCompanyById(cId)
+    if (company?.is_read_only) {
+      return HttpResponse.json({ detail: 'La empresa está en modo solo lectura.' }, { status: 409 })
+    }
     const body = (await request.json()) as {
       name?: string
       code?: string
@@ -239,6 +248,10 @@ export const accountsHandlers = [
     const cId = Number(params.companyId)
     const accessError = ensureCompanyAccess(request, cId)
     if (accessError) return accessError
+    const company = getCompanyById(cId)
+    if (company?.is_read_only) {
+      return HttpResponse.json({ detail: 'La empresa está en modo solo lectura.' }, { status: 409 })
+    }
     const aId = Number(params.accountId)
     const list = companyLevel3Accounts[cId] ?? []
     const idx = list.findIndex((a) => a.id === aId)
@@ -266,6 +279,10 @@ export const accountsHandlers = [
     const cId = Number(params.companyId)
     const accessError = ensureCompanyAccess(request, cId)
     if (accessError) return accessError
+    const company = getCompanyById(cId)
+    if (company?.is_read_only) {
+      return HttpResponse.json({ detail: 'La empresa está en modo solo lectura.' }, { status: 409 })
+    }
     const aId = Number(params.accountId)
 
     // Simulate 409 for account with transactions

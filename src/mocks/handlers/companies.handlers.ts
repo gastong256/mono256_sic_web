@@ -2,6 +2,7 @@ import { http, HttpResponse, delay } from 'msw'
 import { env } from '@/shared/config/env'
 import {
   canAccessCompany,
+  createOpeningEntry,
   createCompany,
   deleteCompany,
   getCompanyById,
@@ -29,7 +30,12 @@ export const companiesHandlers = [
     const user = getRequestUser(request)
     if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
 
-    const body = (await request.json()) as { name?: string; tax_id?: string }
+    const body = (await request.json()) as {
+      name?: string
+      description?: string
+      tax_id?: string
+      opening_entry?: Parameters<typeof createOpeningEntry>[1]
+    }
     if (!body.name || body.name.trim().length === 0) {
       return HttpResponse.json({ name: ['Este campo es obligatorio.'] }, { status: 400 })
     }
@@ -37,7 +43,9 @@ export const companiesHandlers = [
     const ownerUsername = user.role === 'student' ? user.username : user.username
     const created = createCompany(ownerUsername, {
       name: body.name.trim(),
+      description: body.description?.trim() || undefined,
       tax_id: body.tax_id?.trim() || undefined,
+      opening_entry: body.opening_entry,
     })
 
     return HttpResponse.json(created, { status: 201 })
@@ -69,14 +77,18 @@ export const companiesHandlers = [
     if (!current) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
     if (!canAccessCompany(user, current))
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    if (current.is_read_only) {
+      return HttpResponse.json({ detail: 'La empresa está en modo solo lectura.' }, { status: 409 })
+    }
 
-    const body = (await request.json()) as { name?: string; tax_id?: string }
+    const body = (await request.json()) as { name?: string; description?: string; tax_id?: string }
     if (!body.name || body.name.trim().length === 0) {
       return HttpResponse.json({ name: ['Este campo es obligatorio.'] }, { status: 400 })
     }
 
     const updated = updateCompany(companyId, {
       name: body.name.trim(),
+      description: body.description?.trim() || null,
       tax_id: body.tax_id?.trim() || null,
     })
 
@@ -95,8 +107,33 @@ export const companiesHandlers = [
     if (!current) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
     if (!canAccessCompany(user, current))
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    if (current.is_read_only) {
+      return HttpResponse.json({ detail: 'La empresa está en modo solo lectura.' }, { status: 409 })
+    }
 
     deleteCompany(companyId)
     return new HttpResponse(null, { status: 204 })
+  }),
+
+  http.post(`${BASE}/companies/:id/opening-entry/`, async ({ request, params }) => {
+    await delay(220)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+
+    const companyId = Number(params.id)
+    const current = getCompanyById(companyId)
+    if (!current) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    if (!canAccessCompany(user, current)) {
+      return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    }
+
+    const body = (await request.json()) as Parameters<typeof createOpeningEntry>[1]
+    const created = createOpeningEntry(companyId, body, user.username)
+    if ('error' in created) {
+      return HttpResponse.json({ detail: created.error }, { status: created.status })
+    }
+
+    return HttpResponse.json(created, { status: 201 })
   }),
 ]

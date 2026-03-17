@@ -10,7 +10,10 @@ export function useDeleteCompany() {
     mutationFn: (id: number) => companiesApi.remove(id),
     onSuccess: async (_, id) => {
       logger.info({ message: 'Empresa eliminada', companyId: id })
-      await queryClient.invalidateQueries({ queryKey: companyQueryKeys.root })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: companyQueryKeys.root }),
+        queryClient.invalidateQueries({ queryKey: ['me'] }),
+      ])
     },
     onError: (error) => {
       logger.error({ message: 'Error al eliminar empresa', error: String(error) })

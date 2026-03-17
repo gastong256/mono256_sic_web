@@ -10,7 +10,10 @@ export function useCreateCompany() {
     mutationFn: companiesApi.create,
     onSuccess: async (company) => {
       logger.info({ message: 'Empresa creada', companyId: company.id, name: company.name })
-      await queryClient.invalidateQueries({ queryKey: companyQueryKeys.root })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: companyQueryKeys.root }),
+        queryClient.invalidateQueries({ queryKey: ['me'] }),
+      ])
     },
     onError: (error) => {
       logger.error({ message: 'Error al crear empresa', error: String(error) })

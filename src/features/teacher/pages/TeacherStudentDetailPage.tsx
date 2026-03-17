@@ -8,6 +8,7 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
+import { getCompanyStatusLabels } from '@/features/companies/lib/companyAccounting'
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
   style: 'currency',
@@ -169,7 +170,12 @@ export function TeacherStudentDetailPage() {
                       : 'border-[var(--border-soft)] text-[var(--text-strong)] hover:bg-[var(--bg-subtle)]',
                   ].join(' ')}
                 >
-                  {company.name}
+                  <span className="block font-semibold">{company.name}</span>
+                  {getCompanyStatusLabels(company).length > 0 && (
+                    <span className="muted-text mt-1 block text-xs">
+                      {getCompanyStatusLabels(company).join(' · ')}
+                    </span>
+                  )}
                 </button>
               </li>
             ))}
@@ -202,12 +208,20 @@ export function TeacherStudentDetailPage() {
         )}
 
         {selectedCompany && !journalLoading && !journalError && journalEntries.length === 0 && (
-          <EmptyState
-            icon="journal"
-            title="No hay asientos registrados"
-            description="Esta empresa todavia no tiene actividad contable."
-            className="border-none py-6"
-          />
+          <>
+            {selectedCompany.accounting_ready === false && (
+              <Alert tone="warning">
+                Esta empresa todavía no tiene apertura contable. Por eso aún no muestra actividad
+                operativa.
+              </Alert>
+            )}
+            <EmptyState
+              icon="journal"
+              title="No hay asientos registrados"
+              description="Esta empresa todavia no tiene actividad contable."
+              className="border-none py-6"
+            />
+          </>
         )}
 
         {selectedCompany && !journalLoading && !journalError && journalEntries.length > 0 && (

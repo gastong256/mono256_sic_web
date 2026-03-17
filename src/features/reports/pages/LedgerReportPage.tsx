@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
+import { useActiveCompany } from '@/features/companies/hooks/useActiveCompany'
+import { getCompanyAccountingBlockMessage } from '@/features/companies/lib/companyAccounting'
 import { useLedgerReport } from '@/features/reports/hooks/useLedgerReport'
 import { useDownloadLedgerReport } from '@/features/reports/hooks/useDownloadReports'
 import { getReportDownloadErrorMessage } from '@/features/reports/lib/downloadErrors'
@@ -27,8 +30,15 @@ function hasAmount(value: number | null) {
 }
 
 export function LedgerReportPage() {
+  const navigate = useNavigate()
   const { pushToast } = useToast()
   const { activeCompanyId } = useActiveCompanyStore()
+  const {
+    activeCompany,
+    canManageOpening,
+    canWriteCompany,
+    isLoading: companyLoading,
+  } = useActiveCompany()
   const [dateFromInput, setDateFromInput] = useState('')
   const [dateToInput, setDateToInput] = useState('')
   const [accountIdInput, setAccountIdInput] = useState('')
@@ -42,8 +52,11 @@ export function LedgerReportPage() {
     () => Boolean(dateFromInput && dateToInput && dateFromInput > dateToInput),
     [dateFromInput, dateToInput]
   )
+  const isAccountingReady = activeCompany?.accounting_ready !== false
 
-  const { data, isLoading, isError, error } = useLedgerReport(activeCompanyId, filters)
+  const { data, isLoading, isError, error } = useLedgerReport(activeCompanyId, filters, {
+    enabled: activeCompanyId !== null && !companyLoading && isAccountingReady,
+  })
   const accountOptions = useMemo(() => data?.account_options ?? [], [data])
   const downloadMutation = useDownloadLedgerReport()
   const fieldErrors = useMemo(() => extractFieldValidationErrors(error), [error])
@@ -57,8 +70,9 @@ export function LedgerReportPage() {
       unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
       forbiddenMessage: 'No tenés permisos para consultar este reporte.',
       notFoundMessage: 'La empresa no existe o ya no está disponible.',
+      conflictMessage: getCompanyAccountingBlockMessage(activeCompany),
     })
-  }, [error, fieldErrors.account_id])
+  }, [activeCompany, error, fieldErrors.account_id])
 
   const canSearch = !hasInvalidRange && activeCompanyId !== null
 
@@ -88,7 +102,7 @@ export function LedgerReportPage() {
             type="button"
             variant="secondary"
             className="border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-            disabled={activeCompanyId === null || hasInvalidRange}
+            disabled={activeCompanyId === null || hasInvalidRange || !isAccountingReady}
             isLoading={downloadMutation.isPending}
             onClick={() => {
               void handleDownload()
@@ -169,6 +183,22 @@ export function LedgerReportPage() {
 
       {activeCompanyId === null && (
         <Alert tone="warning">Selecciona una empresa para ver el Libro Mayor.</Alert>
+      )}
+
+      {activeCompanyId !== null && activeCompany?.accounting_ready === false && (
+        <EmptyState
+          icon="ledger"
+          title="Pendiente de apertura contable"
+          description={getCompanyAccountingBlockMessage(activeCompany)}
+          action={
+            canManageOpening && canWriteCompany ? (
+              <Button onClick={() => navigate(`/companies/${activeCompanyId}`)}>
+                Registrar apertura
+              </Button>
+            ) : undefined
+          }
+          className="py-12"
+        />
       )}
 
       {activeCompanyId !== null && isLoading && (

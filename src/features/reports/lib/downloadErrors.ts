@@ -8,6 +8,9 @@ export function getReportDownloadErrorMessage(error: unknown): string {
   if (status === 401) return 'Tu sesión expiró. Iniciá sesión nuevamente.'
   if (status === 403) return 'No tenés permisos para descargar este reporte.'
   if (status === 404) return 'La empresa no existe o no está disponible.'
+  if (status === 409) {
+    return 'La empresa necesita registrar la apertura contable antes de exportar reportes.'
+  }
   if (status === 503) return 'La exportación no está disponible temporalmente.'
 
   return 'No se pudo descargar el archivo Excel.'
