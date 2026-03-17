@@ -7,11 +7,18 @@ import {
   deleteCompany,
   getCompanyById,
   getRequestUser,
+  listJournalEntriesByCompany,
   listCompaniesForUser,
   updateCompany,
 } from '@/mocks/data/mockDb'
 
 const BASE = env.VITE_API_BASE_URL
+const PAGE_SIZE = 25
+
+function isAllParam(value: string | null): boolean {
+  if (!value) return false
+  return ['true', '1', 'yes', 'on'].includes(value.toLowerCase())
+}
 
 export const companiesHandlers = [
   http.get(`${BASE}/companies/`, async ({ request }) => {
@@ -20,8 +27,38 @@ export const companiesHandlers = [
     const user = getRequestUser(request)
     if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
 
-    const results = listCompaniesForUser(user)
-    return HttpResponse.json({ count: results.length, next: null, previous: null, results })
+    const url = new URL(request.url)
+    const all = isAllParam(url.searchParams.get('all'))
+    const summary = url.searchParams.get('summary')
+    const pageRaw = Number(url.searchParams.get('page') ?? '1')
+    const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1
+
+    const companies = listCompaniesForUser(user).map((company) =>
+      summary === 'selector'
+        ? {
+            id: company.id,
+            name: company.name,
+            owner_username: company.owner_username,
+          }
+        : company
+    )
+
+    if (all) {
+      return HttpResponse.json({
+        count: companies.length,
+        next: null,
+        previous: null,
+        results: companies,
+      })
+    }
+
+    const start = (page - 1) * PAGE_SIZE
+    const end = start + PAGE_SIZE
+    const results = companies.slice(start, end)
+    const next = end < companies.length ? `${BASE}/companies/?page=${page + 1}` : null
+    const previous = page > 1 ? `${BASE}/companies/?page=${page - 1}` : null
+
+    return HttpResponse.json({ count: companies.length, next, previous, results })
   }),
 
   http.post(`${BASE}/companies/`, async ({ request }) => {
@@ -109,6 +146,12 @@ export const companiesHandlers = [
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
     if (current.is_read_only) {
       return HttpResponse.json({ detail: 'La empresa está en modo solo lectura.' }, { status: 409 })
+    }
+    if (listJournalEntriesByCompany(companyId).length > 0) {
+      return HttpResponse.json(
+        { detail: 'La empresa tiene registros contables protegidos y no puede eliminarse.' },
+        { status: 409 }
+      )
     }
 
     deleteCompany(companyId)

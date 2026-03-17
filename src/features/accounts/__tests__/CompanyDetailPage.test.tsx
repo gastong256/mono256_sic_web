@@ -166,21 +166,72 @@ describe('CompanyDetailPage', () => {
 
     renderCompanyDetailPage()
 
-    await screen.findByText('Banco Nación Cta. Cte.')
-    await user.click(screen.getByRole('button', { name: /eliminar banco nación cta. cte./i }))
+    await screen.findByText('Caja y Bancos')
+    await user.click(screen.getAllByRole('button', { name: /\+ agregar cuenta/i })[0])
+    await user.type(screen.getByLabelText(/^nombre$/i), 'Cuenta temporal borrable')
+    await user.type(screen.getByLabelText(/^código$/i), '1.01.03')
+    await user.click(screen.getByRole('button', { name: /crear cuenta/i }))
+
+    expect(await screen.findByText('Cuenta temporal borrable')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /eliminar cuenta temporal borrable/i }))
     await user.click(screen.getByRole('button', { name: /^eliminar$/i }))
 
     await waitFor(() => {
-      expect(screen.queryByText('Banco Nación Cta. Cte.')).not.toBeInTheDocument()
+      expect(screen.queryByText('Cuenta temporal borrable')).not.toBeInTheDocument()
     })
   })
 
   it('shows read-only status and hides write actions for read-only companies', async () => {
     setAuthenticatedUser('student')
+    server.use(
+      http.get(`${env.VITE_API_BASE_URL}/auth/me/`, () =>
+        HttpResponse.json({
+          id: 3,
+          username: 'student1',
+          email: 'student@example.com',
+          first_name: 'Sofia',
+          last_name: 'Student',
+          is_staff: false,
+          role: 'student',
+          course_id: 1,
+          companies: [
+            {
+              id: 600,
+              name: 'Empresa solo lectura',
+              owner_username: 'student1',
+              is_demo: false,
+              is_read_only: true,
+              has_opening_entry: true,
+              accounting_ready: true,
+              opening_entry_id: null,
+            },
+          ],
+          capabilities: {
+            can_manage_courses: false,
+            can_manage_visibility: false,
+            can_view_registration_code: false,
+            can_manage_roles: false,
+          },
+        })
+      ),
+      http.get(`${env.VITE_API_BASE_URL}/accounts/company/600/`, () =>
+        HttpResponse.json([
+          {
+            id: 1,
+            code: '1',
+            name: 'Activo',
+            type: 'AS',
+            level: 0,
+            is_leaf: true,
+            children: [],
+          },
+        ])
+      )
+    )
 
-    renderCompanyDetailPage('/companies/6')
+    renderCompanyDetailPage('/companies/600')
 
-    expect(await screen.findByText(/Empresa demo en modo solo lectura/i)).toBeInTheDocument()
+    expect(await screen.findByText(/modo solo lectura/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /\+ agregar cuenta/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /editar/i })).not.toBeInTheDocument()
   })

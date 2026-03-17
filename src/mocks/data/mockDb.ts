@@ -357,6 +357,22 @@ let accountChartConfig: AccountLevelConfig[] = [
 
 const sessionsByRefreshToken = new Map<string, Session>()
 
+const initialUsers = structuredClone(users)
+const initialCourses = structuredClone(courses)
+const initialCompanies = structuredClone(companies)
+const initialJournalEntries = structuredClone(journalEntries)
+const initialJournalCompanyMap = structuredClone(journalCompanyMap)
+const initialSyntheticAccounts = structuredClone(syntheticAccounts)
+const initialAccountChartConfig = structuredClone(accountChartConfig)
+const initialRegistrationCodeState = structuredClone(registrationCodeState)
+const initialCounters = {
+  nextCourseId,
+  nextUserId,
+  nextCompanyId,
+  nextJournalId,
+  nextSyntheticAccountId,
+}
+
 function makeMockJwt(payload: Record<string, unknown>): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
     .replace(/\+/g, '-')
@@ -659,8 +675,14 @@ export function canAccessCompany(user: User, company: Company): boolean {
     : user.role === 'teacher' && isStudentAssignedToTeacher(company.owner_username, user.username)
 }
 
+function isVisibleCompanyInMock(company: Company): boolean {
+  return company.is_demo !== true
+}
+
 export function listCompaniesForUser(user: User): Company[] {
-  return companies.filter((company) => canAccessCompany(user, company))
+  return companies.filter(
+    (company) => canAccessCompany(user, company) && isVisibleCompanyInMock(company)
+  )
 }
 
 export function canReviewCompany(user: User, company: Company): boolean {
@@ -687,7 +709,9 @@ export function listCompaniesForStudentAsTeacher(
     return null
   }
 
-  return companies.filter((company) => company.owner_username === student.username)
+  return companies.filter(
+    (company) => company.owner_username === student.username && isVisibleCompanyInMock(company)
+  )
 }
 
 export function getStudentUsernameForTeacher(teacher: User, studentId: number): string | null {
@@ -953,22 +977,23 @@ export function createJournalEntry(
   companyId: number,
   payload: CreateJournalEntryPayload,
   createdBy: string
-): JournalEntryDetail | { error: string } {
+): JournalEntryDetail | { error: string; status: number } {
   const company = getCompanyById(companyId)
   if (!company) {
-    return { error: 'Company not found.' }
+    return { error: 'Company not found.', status: 404 }
   }
   if (company.is_read_only) {
-    return { error: 'La empresa está en modo solo lectura.' }
+    return { error: 'La empresa está en modo solo lectura.', status: 409 }
   }
   if (company.accounting_ready === false) {
     return {
       error:
         'La empresa necesita registrarse con inventario inicial o general antes de operar contablemente.',
+      status: 409,
     }
   }
   if (!payload.lines || payload.lines.length < 2) {
-    return { error: 'Se requieren al menos 2 líneas.' }
+    return { error: 'Se requieren al menos 2 líneas.', status: 400 }
   }
 
   const lines: JournalLine[] = payload.lines.map((line) => {
@@ -984,7 +1009,7 @@ export function createJournalEntry(
 
   const { totalDebit, totalCredit } = summarize(lines)
   if (Math.abs(totalDebit - totalCredit) > 0.001) {
-    return { error: 'El asiento debe estar balanceado.' }
+    return { error: 'El asiento debe estar balanceado.', status: 400 }
   }
 
   const maxEntryNumber = Math.max(
@@ -1013,6 +1038,34 @@ export function createJournalEntry(
   journalCompanyMap[entry.id] = companyId
 
   return entry
+}
+
+export function resetMockDb() {
+  users.splice(0, users.length, ...structuredClone(initialUsers))
+  courses.splice(0, courses.length, ...structuredClone(initialCourses))
+  companies.splice(0, companies.length, ...structuredClone(initialCompanies))
+  journalEntries.splice(0, journalEntries.length, ...structuredClone(initialJournalEntries))
+
+  Object.keys(journalCompanyMap).forEach((key) => {
+    delete journalCompanyMap[Number(key)]
+  })
+  Object.assign(journalCompanyMap, structuredClone(initialJournalCompanyMap))
+
+  Object.keys(syntheticAccounts).forEach((key) => {
+    delete syntheticAccounts[Number(key)]
+  })
+  Object.assign(syntheticAccounts, structuredClone(initialSyntheticAccounts))
+
+  accountChartConfig = structuredClone(initialAccountChartConfig)
+  registrationCodeState = structuredClone(initialRegistrationCodeState)
+  registerAttemptsTimestamps = []
+  sessionsByRefreshToken.clear()
+
+  nextCourseId = initialCounters.nextCourseId
+  nextUserId = initialCounters.nextUserId
+  nextCompanyId = initialCounters.nextCompanyId
+  nextJournalId = initialCounters.nextJournalId
+  nextSyntheticAccountId = initialCounters.nextSyntheticAccountId
 }
 
 export function reverseJournalEntry(
@@ -1155,7 +1208,8 @@ export function listTeacherCoursesOverview(user: User): Array<{
         .filter((student): student is MockUserRecord => student !== undefined)
         .map((student) => {
           const studentCompanies = companies.filter(
-            (company) => company.owner_username === student.username
+            (company) =>
+              company.owner_username === student.username && isVisibleCompanyInMock(company)
           )
           const studentCompanyIds = new Set(studentCompanies.map((company) => company.id))
           const studentEntries = journalEntries.filter((entry) =>
@@ -1368,7 +1422,10 @@ export function listTeacherCourseCompanies(
         student_username: student.username,
         student_full_name: `${student.first_name} ${student.last_name}`.trim(),
         companies: companies
-          .filter((company) => company.owner_username === student.username)
+          .filter(
+            (company) =>
+              company.owner_username === student.username && isVisibleCompanyInMock(company)
+          )
           .map((company) => ({
             id: company.id,
             name: company.name,
@@ -1542,7 +1599,9 @@ export function getTeacherStudentContext(
   if (!canAccessCourse(user, course)) return null
 
   const studentCompanies = companies
-    .filter((company) => company.owner_username === student.username)
+    .filter(
+      (company) => company.owner_username === student.username && isVisibleCompanyInMock(company)
+    )
     .map((company) => {
       const companyEntries = journalEntries
         .filter((entry) => journalCompanyMap[entry.id] === company.id)

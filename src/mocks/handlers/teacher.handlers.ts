@@ -61,6 +61,35 @@ function paginateFromRequest<T>(
   }
 }
 
+function isValidIsoDate(value: string | null): boolean {
+  if (!value) return true
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`))
+}
+
+function validateTeacherJournalDates(request: Request): Response | null {
+  const url = new URL(request.url)
+  const dateFrom = url.searchParams.get('date_from')
+  const dateTo = url.searchParams.get('date_to')
+
+  if (!isValidIsoDate(dateFrom)) {
+    return HttpResponse.json(
+      { date_from: ['Fecha inválida. Use formato YYYY-MM-DD.'] },
+      { status: 400 }
+    )
+  }
+  if (!isValidIsoDate(dateTo)) {
+    return HttpResponse.json(
+      { date_to: ['Fecha inválida. Use formato YYYY-MM-DD.'] },
+      { status: 400 }
+    )
+  }
+  if (dateFrom && dateTo && dateFrom > dateTo) {
+    return HttpResponse.json({ detail: 'date_from no puede ser mayor a date_to.' }, { status: 400 })
+  }
+
+  return null
+}
+
 export const teacherHandlers = [
   http.get(`${BASE}/teacher/registration-code/`, async ({ request }) => {
     await delay(100)
@@ -243,6 +272,8 @@ export const teacherHandlers = [
 
     const user = getRequestUser(request)
     if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+    const validationError = validateTeacherJournalDates(request)
+    if (validationError) return validationError
 
     const url = new URL(request.url)
     const studentIdParam = url.searchParams.get('student_id')
@@ -286,6 +317,8 @@ export const teacherHandlers = [
 
       const user = getRequestUser(request)
       if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+      const validationError = validateTeacherJournalDates(request)
+      if (validationError) return validationError
 
       const url = new URL(request.url)
       const studentIdParam = url.searchParams.get('student_id')

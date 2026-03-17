@@ -108,7 +108,7 @@ export const journalHandlers = [
 
     const created = createJournalEntry(companyId, body, user.username)
     if ('error' in created) {
-      return HttpResponse.json({ detail: created.error }, { status: 400 })
+      return HttpResponse.json({ detail: created.error }, { status: created.status })
     }
 
     return HttpResponse.json(created, { status: 201 })

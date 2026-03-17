@@ -5,6 +5,7 @@ import {
   canAccessCompany,
   getAccountChartConfig,
   getCompanyById,
+  listJournalEntryDetailsByCompany,
   getRequestUser,
 } from '@/mocks/data/mockDb'
 
@@ -89,7 +90,58 @@ const accountParents: Record<number, number> = {
 }
 
 export function listCompanyMovementAccounts(companyId: number): Account[] {
+  syncDerivedMovementAccounts(companyId)
   return [...(companyLevel3Accounts[companyId] ?? [])]
+}
+
+function resolveAccountTypeFromCode(code: string): string {
+  if (code.startsWith('1.')) return 'AS'
+  if (code.startsWith('2.')) return 'LI'
+  if (code.startsWith('3.')) return 'EQ'
+  if (code.startsWith('4.')) return 'IN'
+  if (code.startsWith('5.')) return 'EX'
+  return 'AS'
+}
+
+function resolveParentIdFromCode(code: string): number | null {
+  const parentCode = code.split('.').slice(0, -1).join('.')
+  if (!parentCode) return null
+
+  for (const root of globalChart) {
+    const parent = root.children?.find((child) => child.code === parentCode)
+    if (parent) return parent.id
+  }
+
+  return null
+}
+
+function syncDerivedMovementAccounts(companyId: number) {
+  const current = companyLevel3Accounts[companyId] ?? []
+  const seenIds = new Set(current.map((account) => account.id))
+  const derived = listJournalEntryDetailsByCompany(companyId)
+    .flatMap((entry) => entry.lines)
+    .filter((line) => line.account_code.split('.').length === 3)
+
+  derived.forEach((line) => {
+    if (seenIds.has(line.account_id)) return
+
+    const nextAccount = makeAccount(
+      line.account_id,
+      line.account_code,
+      line.account_name,
+      resolveAccountTypeFromCode(line.account_code),
+      2
+    )
+    current.push(nextAccount)
+    seenIds.add(line.account_id)
+
+    const parentId = resolveParentIdFromCode(line.account_code)
+    if (parentId) {
+      accountParents[line.account_id] = parentId
+    }
+  })
+
+  companyLevel3Accounts[companyId] = current
 }
 
 function buildCompanyTree(companyId: number): Account[] {
@@ -285,8 +337,12 @@ export const accountsHandlers = [
     }
     const aId = Number(params.accountId)
 
-    // Simulate 409 for account with transactions
-    if (aId === HAS_TRANSACTIONS_ID) {
+    const hasTransactions =
+      aId === HAS_TRANSACTIONS_ID ||
+      listJournalEntryDetailsByCompany(cId).some((entry) =>
+        entry.lines.some((line) => line.account_id === aId)
+      )
+    if (hasTransactions) {
       return HttpResponse.json(
         {
           detail: 'Esta cuenta tiene movimientos registrados y no puede eliminarse.',
