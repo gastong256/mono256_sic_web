@@ -24,7 +24,7 @@ export function Modal({ isOpen, onClose, title, children, className = '' }: Moda
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
       aria-modal="true"
       role="dialog"
       aria-labelledby="modal-title"
@@ -38,7 +38,7 @@ export function Modal({ isOpen, onClose, title, children, className = '' }: Moda
       {/* Panel */}
       <div
         className={[
-          'relative z-50 w-full max-w-lg rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-surface)] shadow-[var(--shadow-soft)]',
+          'relative z-50 flex max-h-[calc(100vh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-surface)] shadow-[var(--shadow-soft)]',
           className,
         ].join(' ')}
         onClick={(e) => e.stopPropagation()}
@@ -59,7 +59,7 @@ export function Modal({ isOpen, onClose, title, children, className = '' }: Moda
           </button>
         </div>
         {/* Body */}
-        <div className="px-6 py-5">{children}</div>
+        <div className="overflow-y-auto px-6 py-5">{children}</div>
       </div>
     </div>,
     document.body

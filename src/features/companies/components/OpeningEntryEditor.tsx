@@ -5,10 +5,13 @@ import type {
 } from '@/features/companies/types/company.types'
 import type { Account } from '@/features/accounts/types/account.types'
 import {
-  OPENING_ASSET_PARENT_OPTIONS,
   OPENING_INVENTORY_KIND_OPTIONS,
-  OPENING_LIABILITY_PARENT_OPTIONS,
+  getDefaultOpeningAssetParentCode,
+  getDefaultOpeningLiabilityParentCode,
+  getOpeningAssetParentOptions,
+  getOpeningLiabilityParentOptions,
 } from '@/features/companies/lib/companyAccounting'
+import { useAccountsChart } from '@/features/accounts/hooks/useAccountsChart'
 import { Button } from '@/shared/ui/Button'
 
 interface OpeningEntryEditorProps {
@@ -187,10 +190,13 @@ export function OpeningEntryEditor({
   disabled = false,
   onChange,
 }: OpeningEntryEditorProps) {
+  const { data: chart } = useAccountsChart()
   const suggestionsByParentCode = useMemo(
     () => collectMovementAccountNames(existingAccounts),
     [existingAccounts]
   )
+  const assetParentOptions = useMemo(() => getOpeningAssetParentOptions(chart), [chart])
+  const liabilityParentOptions = useMemo(() => getOpeningLiabilityParentOptions(chart), [chart])
   const totalAssets = useMemo(
     () => value.assets.reduce((sum, item) => sum + moneyToNumber(item.amount), 0),
     [value.assets]
@@ -277,12 +283,12 @@ export function OpeningEntryEditor({
         disabled={disabled}
         datalistPrefix="opening-assets"
         suggestionsByParentCode={suggestionsByParentCode}
-        parentOptions={OPENING_ASSET_PARENT_OPTIONS}
+        parentOptions={assetParentOptions}
         onChange={updateAsset}
         onAdd={() =>
           onChange({
             ...value,
-            assets: [...value.assets, buildDefaultItem(OPENING_ASSET_PARENT_OPTIONS[0].code)],
+            assets: [...value.assets, buildDefaultItem(getDefaultOpeningAssetParentCode(chart))],
           })
         }
         onRemove={(index) =>
@@ -300,14 +306,14 @@ export function OpeningEntryEditor({
         disabled={disabled}
         datalistPrefix="opening-liabilities"
         suggestionsByParentCode={suggestionsByParentCode}
-        parentOptions={OPENING_LIABILITY_PARENT_OPTIONS}
+        parentOptions={liabilityParentOptions}
         onChange={updateLiability}
         onAdd={() =>
           onChange({
             ...value,
             liabilities: [
               ...value.liabilities,
-              buildDefaultItem(OPENING_LIABILITY_PARENT_OPTIONS[0].code),
+              buildDefaultItem(getDefaultOpeningLiabilityParentCode(chart)),
             ],
           })
         }

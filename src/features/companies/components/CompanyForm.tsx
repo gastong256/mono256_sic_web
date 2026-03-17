@@ -43,13 +43,17 @@ export function CompanyForm({ isOpen, onClose, company }: CompanyFormProps) {
   const { mutate: updateCompany, isPending: isUpdating } = useUpdateCompany()
   const isPending = isCreating || isUpdating
   const [openingEnabled, setOpeningEnabled] = useState(false)
+  const [step, setStep] = useState<1 | 2>(1)
   const [openingEntry, setOpeningEntry] = useState<OpeningEntryPayload>(getDefaultOpeningEntry)
 
   const {
     register,
     handleSubmit,
     reset,
+    trigger,
     setError,
+    clearErrors,
+    getValues,
     formState: { errors },
   } = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
@@ -64,10 +68,12 @@ export function CompanyForm({ isOpen, onClose, company }: CompanyFormProps) {
         tax_id: company.tax_id ?? '',
       })
       setOpeningEnabled(false)
+      setStep(1)
       setOpeningEntry(getDefaultOpeningEntry())
     } else {
       reset({ name: '', description: '', tax_id: '' })
       setOpeningEnabled(false)
+      setStep(1)
       setOpeningEntry(getDefaultOpeningEntry())
     }
   }, [company, reset])
@@ -75,8 +81,21 @@ export function CompanyForm({ isOpen, onClose, company }: CompanyFormProps) {
   function handleClose() {
     reset({ name: '', description: '', tax_id: '' })
     setOpeningEnabled(false)
+    setStep(1)
     setOpeningEntry(getDefaultOpeningEntry())
     onClose()
+  }
+
+  async function handleNextStep() {
+    clearErrors('root')
+    const isValid = await trigger(['name', 'description', 'tax_id'])
+    if (!isValid) return
+    setStep(2)
+  }
+
+  function handleBackStep() {
+    clearErrors('root')
+    setStep(1)
   }
 
   function onSubmit(values: CompanyFormValues) {
@@ -136,82 +155,135 @@ export function CompanyForm({ isOpen, onClose, company }: CompanyFormProps) {
     }
   }
 
+  const isOpeningStep = !isEditMode && openingEnabled && step === 2
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
       title={isEditMode ? 'Editar empresa' : 'Nueva empresa'}
+      className={isOpeningStep ? 'max-w-5xl' : ''}
     >
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
         {errors.root?.message && <Alert tone="error">{errors.root.message}</Alert>}
 
-        <Input label="Nombre" autoFocus error={errors.name?.message} {...register('name')} />
+        {!isOpeningStep ? (
+          <>
+            <Input label="Nombre" autoFocus error={errors.name?.message} {...register('name')} />
 
-        <div>
-          <label className="mb-1 block text-sm font-semibold text-[var(--text-strong)]">
-            Descripción
-          </label>
-          <textarea
-            rows={3}
-            {...register('description')}
-            className="w-full rounded-xl border border-[var(--border-strong)] bg-white px-3 py-2 text-sm text-[var(--text-strong)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
-            placeholder="Opcional"
-          />
-          {errors.description && (
-            <p className="mt-1 text-xs text-[var(--danger-600)]">{errors.description.message}</p>
-          )}
-        </div>
-
-        <div>
-          <Input
-            label="CUIT"
-            placeholder="Opcional"
-            error={errors.tax_id?.message}
-            {...register('tax_id')}
-          />
-          <p className="muted-text mt-1 text-xs">Formato sugerido: 30-12345678-9.</p>
-        </div>
-
-        {!isEditMode && (
-          <div className="space-y-3 rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-4">
-            <label className="flex items-start gap-3">
-              <input
-                type="checkbox"
-                checked={openingEnabled}
-                onChange={(event) => setOpeningEnabled(event.target.checked)}
-                className="mt-1 size-4 rounded border-[var(--border-strong)] text-[var(--brand-600)] focus:ring-[var(--brand-500)]"
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-[var(--text-strong)]">
+                Descripción
+              </label>
+              <textarea
+                rows={3}
+                {...register('description')}
+                className="w-full rounded-xl border border-[var(--border-strong)] bg-white px-3 py-2 text-sm text-[var(--text-strong)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
+                placeholder="Opcional"
               />
-              <span>
-                <span className="block text-sm font-semibold text-[var(--text-strong)]">
-                  Registrar apertura ahora
-                </span>
-                <span className="muted-text mt-1 block text-xs">
-                  Si activás esta opción, la empresa se crea ya lista para usar journal y reportes.
-                </span>
-              </span>
-            </label>
+              {errors.description && (
+                <p className="mt-1 text-xs text-[var(--danger-600)]">
+                  {errors.description.message}
+                </p>
+              )}
+            </div>
 
-            {openingEnabled && (
-              <OpeningEntryEditor
-                value={openingEntry}
-                onChange={setOpeningEntry}
-                disabled={isPending}
+            <div>
+              <Input
+                label="CUIT"
+                placeholder="Opcional"
+                error={errors.tax_id?.message}
+                {...register('tax_id')}
               />
+              <p className="muted-text mt-1 text-xs">Formato sugerido: 30-12345678-9.</p>
+            </div>
+
+            {!isEditMode && (
+              <div className="space-y-3 rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-4">
+                <label className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={openingEnabled}
+                    onChange={(event) => {
+                      const enabled = event.target.checked
+                      setOpeningEnabled(enabled)
+                      if (!enabled) {
+                        setStep(1)
+                        clearErrors('root')
+                      }
+                    }}
+                    className="mt-1 size-4 rounded border-[var(--border-strong)] text-[var(--brand-600)] focus:ring-[var(--brand-500)]"
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-[var(--text-strong)]">
+                      Registrar apertura ahora
+                    </span>
+                    <span className="muted-text mt-1 block text-xs">
+                      Si activás esta opción, la empresa se crea ya lista para usar journal y
+                      reportes.
+                    </span>
+                  </span>
+                </label>
+              </div>
             )}
+          </>
+        ) : (
+          <div className="space-y-3 rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-[var(--text-strong)]">Paso 2 de 2</p>
+                <p className="muted-text mt-1 text-xs">
+                  Completá la apertura para dejar la empresa lista para operar.
+                </p>
+              </div>
+              <div className="rounded-xl border border-[var(--border-soft)] bg-white px-3 py-2 text-right">
+                <p className="text-xs font-semibold tracking-[0.08em] text-[var(--text-muted)] uppercase">
+                  Empresa
+                </p>
+                <p className="text-sm font-semibold text-[var(--text-strong)]">
+                  {getValues('name') || 'Nueva empresa'}
+                </p>
+              </div>
+            </div>
+
+            <OpeningEntryEditor
+              value={openingEntry}
+              onChange={setOpeningEntry}
+              disabled={isPending}
+            />
           </div>
         )}
 
-        <div className="flex justify-end gap-3 pt-1">
-          <Button type="button" variant="secondary" onClick={handleClose} disabled={isPending}>
-            Cancelar
-          </Button>
-          <Button type="submit" isLoading={isPending}>
-            {isEditMode
-              ? 'Guardar cambios'
-              : openingEnabled
-                ? 'Crear empresa y apertura'
-                : 'Crear empresa'}
-          </Button>
+        <div className={`flex gap-3 pt-1 ${isOpeningStep ? 'justify-between' : 'justify-end'}`}>
+          {isOpeningStep ? (
+            <Button type="button" variant="secondary" onClick={handleBackStep} disabled={isPending}>
+              Volver
+            </Button>
+          ) : null}
+
+          <div className="flex gap-3">
+            <Button type="button" variant="secondary" onClick={handleClose} disabled={isPending}>
+              Cancelar
+            </Button>
+
+            {isOpeningStep ? (
+              <Button type="submit" isLoading={isPending}>
+                Crear empresa y apertura
+              </Button>
+            ) : isEditMode ? (
+              <Button type="submit" isLoading={isPending}>
+                Guardar cambios
+              </Button>
+            ) : openingEnabled ? (
+              <Button type="button" onClick={() => void handleNextStep()} disabled={isPending}>
+                Continuar
+              </Button>
+            ) : (
+              <Button type="submit" isLoading={isPending}>
+                Crear empresa
+              </Button>
+            )}
+          </div>
         </div>
       </form>
     </Modal>

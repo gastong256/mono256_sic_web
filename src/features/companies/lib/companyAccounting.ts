@@ -2,6 +2,7 @@ import type {
   OpeningEntryPayload,
   OpeningInventoryKind,
 } from '@/features/companies/types/company.types'
+import type { Account } from '@/features/accounts/types/account.types'
 
 type CompanyStateLike = {
   is_demo?: boolean
@@ -10,7 +11,12 @@ type CompanyStateLike = {
   accounting_ready?: boolean
 }
 
-export const OPENING_ASSET_PARENT_OPTIONS = [
+export interface OpeningParentOption {
+  code: string
+  label: string
+}
+
+const OPENING_ASSET_PARENT_OPTIONS_FALLBACK = [
   { code: '1.01', label: 'Caja' },
   { code: '1.02', label: 'Valores a Depositar' },
   { code: '1.04', label: 'Bancos' },
@@ -25,11 +31,18 @@ export const OPENING_ASSET_PARENT_OPTIONS = [
   { code: '1.16', label: 'Equipos de Computacion' },
 ] as const
 
-export const OPENING_LIABILITY_PARENT_OPTIONS = [
+const OPENING_LIABILITY_PARENT_OPTIONS_FALLBACK = [
   { code: '2.01', label: 'Proveedores' },
   { code: '2.02', label: 'Acreedores Varios' },
   { code: '2.03', label: 'Documentos a Pagar' },
 ] as const
+
+const OPENING_ASSET_PARENT_CODES = OPENING_ASSET_PARENT_OPTIONS_FALLBACK.map(
+  (option) => option.code
+) as readonly string[]
+const OPENING_LIABILITY_PARENT_CODES = OPENING_LIABILITY_PARENT_OPTIONS_FALLBACK.map(
+  (option) => option.code
+) as readonly string[]
 
 export const OPENING_INVENTORY_KIND_OPTIONS: Array<{
   value: OpeningInventoryKind
@@ -39,6 +52,55 @@ export const OPENING_INVENTORY_KIND_OPTIONS: Array<{
   { value: 'GENERAL', label: 'Inventario general' },
 ]
 
+function collectLevelOneAccounts(chart: Account[] | undefined): Account[] {
+  if (!chart) return []
+
+  return chart.flatMap((root) => root.children?.filter((account) => account.level === 1) ?? [])
+}
+
+function mapOptionsFromChart(
+  chart: Account[] | undefined,
+  allowedCodes: readonly string[],
+  fallbackOptions: ReadonlyArray<OpeningParentOption>
+): OpeningParentOption[] {
+  const levelOneAccounts = collectLevelOneAccounts(chart)
+  const chartOptions = allowedCodes.flatMap((code) => {
+    const account = levelOneAccounts.find((item) => item.code === code)
+    return account ? [{ code: account.code, label: account.name }] : []
+  })
+
+  return chartOptions.length > 0 ? chartOptions : [...fallbackOptions]
+}
+
+export function getOpeningAssetParentOptions(chart?: Account[]): OpeningParentOption[] {
+  return mapOptionsFromChart(
+    chart,
+    OPENING_ASSET_PARENT_CODES,
+    OPENING_ASSET_PARENT_OPTIONS_FALLBACK
+  )
+}
+
+export function getOpeningLiabilityParentOptions(chart?: Account[]): OpeningParentOption[] {
+  return mapOptionsFromChart(
+    chart,
+    OPENING_LIABILITY_PARENT_CODES,
+    OPENING_LIABILITY_PARENT_OPTIONS_FALLBACK
+  )
+}
+
+export function getDefaultOpeningAssetParentCode(chart?: Account[]): string {
+  return (
+    getOpeningAssetParentOptions(chart)[0]?.code ?? OPENING_ASSET_PARENT_OPTIONS_FALLBACK[0].code
+  )
+}
+
+export function getDefaultOpeningLiabilityParentCode(chart?: Account[]): string {
+  return (
+    getOpeningLiabilityParentOptions(chart)[0]?.code ??
+    OPENING_LIABILITY_PARENT_OPTIONS_FALLBACK[0].code
+  )
+}
+
 export function getDefaultOpeningEntry(): OpeningEntryPayload {
   return {
     date: new Date().toISOString().slice(0, 10),
@@ -46,7 +108,7 @@ export function getDefaultOpeningEntry(): OpeningEntryPayload {
     source_ref: '',
     assets: [
       {
-        parent_code: OPENING_ASSET_PARENT_OPTIONS[0].code,
+        parent_code: getDefaultOpeningAssetParentCode(),
         name: '',
         amount: '0.00',
       },
