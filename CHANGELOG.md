@@ -1,3 +1,7 @@
+## <small>1.10.2 (2026-03-17)</small>
+
+* fix: expand msw coverage and hide demo company from visible flows ([b832125](https://github.com/gastong256/mono256_sic_web/commit/b832125))
+
 ## <small>1.10.1 (2026-03-17)</small>
 
 * fix: split opening entry setup into a second modal step ([baa2139](https://github.com/gastong256/mono256_sic_web/commit/baa2139))
