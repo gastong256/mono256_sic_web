@@ -14,6 +14,19 @@ describe('normalizeJournalBookReportPayload', () => {
       date_to: '2026-03-31',
       requested_date_from: '2026-02-01',
       requested_date_to: '2026-03-31',
+      requested_range: {
+        date_from: '2026-02-01',
+        date_to: '2026-03-31',
+      },
+      exercise_range: {
+        date_from: '2026-03-01',
+        date_to: null,
+        status: 'open',
+      },
+      visible_range: {
+        date_from: '2026-03-01',
+        date_to: '2026-03-31',
+      },
       active_exercise: {
         exercise_id: 'opening:10',
         exercise_index: 1,
@@ -55,6 +68,19 @@ describe('normalizeJournalBookReportPayload', () => {
 
     expect(result.company).toBe('Mi Empresa Demo')
     expect(result.requested_date_from).toBe('2026-02-01')
+    expect(result.requested_range).toEqual({
+      date_from: '2026-02-01',
+      date_to: '2026-03-31',
+    })
+    expect(result.exercise_range).toEqual({
+      date_from: '2026-03-01',
+      date_to: null,
+      status: 'open',
+    })
+    expect(result.visible_range).toEqual({
+      date_from: '2026-03-01',
+      date_to: '2026-03-31',
+    })
     expect(result.active_exercise?.exercise_id).toBe('opening:10')
     expect(result.entries).toHaveLength(1)
     expect(result.entries[0]).toMatchObject({
@@ -81,6 +107,19 @@ describe('normalizeLedgerReportPayload', () => {
       date_to: '2026-01-31',
       requested_date_from: '2025-12-01',
       requested_date_to: '2026-01-31',
+      requested_range: {
+        date_from: '2025-12-01',
+        date_to: '2026-01-31',
+      },
+      exercise_range: {
+        date_from: '2026-01-01',
+        date_to: null,
+        status: 'open',
+      },
+      visible_range: {
+        date_from: '2026-01-01',
+        date_to: '2026-01-31',
+      },
       active_exercise: {
         exercise_id: 'reopening:42',
         exercise_index: 2,
@@ -145,6 +184,9 @@ describe('normalizeLedgerReportPayload', () => {
     expect(result.company).toBe('Mi Empresa Demo')
     expect(result.active_exercise?.exercise_id).toBe('reopening:42')
     expect(result.previous_exercises).toHaveLength(1)
+    expect(result.requested_range?.date_from).toBe('2025-12-01')
+    expect(result.exercise_range?.date_from).toBe('2026-01-01')
+    expect(result.visible_range?.date_to).toBe('2026-01-31')
     expect(result.accounts).toHaveLength(1)
     expect(result.accounts[0]).toMatchObject({
       account_code: '1.01.01',
@@ -217,6 +259,19 @@ describe('normalizeTrialBalanceReportPayload', () => {
       date_to: '2026-03-31',
       requested_date_from: '2026-02-01',
       requested_date_to: '2026-03-31',
+      requested_range: {
+        date_from: '2026-02-01',
+        date_to: '2026-03-31',
+      },
+      exercise_range: {
+        date_from: '2026-03-01',
+        date_to: null,
+        status: 'open',
+      },
+      visible_range: {
+        date_from: '2026-03-01',
+        date_to: '2026-03-31',
+      },
       active_exercise: {
         exercise_id: 'opening:10',
         exercise_index: 1,
@@ -264,6 +319,9 @@ describe('normalizeTrialBalanceReportPayload', () => {
     expect(result.company).toBe('Mi Empresa Demo')
     expect(result.requested_date_to).toBe('2026-03-31')
     expect(result.active_exercise?.start_date).toBe('2026-03-01')
+    expect(result.requested_range?.date_to).toBe('2026-03-31')
+    expect(result.exercise_range?.status).toBe('open')
+    expect(result.visible_range?.date_from).toBe('2026-03-01')
     expect(result.groups).toHaveLength(1)
     expect(result.groups[0]).toMatchObject({
       account_code: '1.01',

@@ -22,12 +22,37 @@ import {
 function normalizeExerciseMetadata(payload: unknown) {
   const raw = isRecord(payload) ? payload : {}
   const previousExercises = Array.isArray(raw.previous_exercises) ? raw.previous_exercises : []
+  const requestedRange = isRecord(raw.requested_range) ? raw.requested_range : null
+  const exerciseRange = isRecord(raw.exercise_range) ? raw.exercise_range : null
+  const visibleRange = isRecord(raw.visible_range) ? raw.visible_range : null
+  const requestedDateFrom =
+    toStringValue(raw.requested_date_from) || toStringValue(requestedRange?.date_from) || null
+  const requestedDateTo =
+    toStringValue(raw.requested_date_to) || toStringValue(requestedRange?.date_to) || null
 
   return {
-    requested_date_from: isRecord(payload)
-      ? toStringValue(payload.requested_date_from) || null
+    requested_date_from: requestedDateFrom,
+    requested_date_to: requestedDateTo,
+    requested_range:
+      requestedDateFrom !== null || requestedDateTo !== null
+        ? {
+            date_from: requestedDateFrom,
+            date_to: requestedDateTo,
+          }
+        : null,
+    exercise_range: exerciseRange
+      ? {
+          date_from: toStringValue(exerciseRange.date_from) || null,
+          date_to: toStringValue(exerciseRange.date_to) || null,
+          status: exerciseRange.status === 'closed' ? ('closed' as const) : ('open' as const),
+        }
       : null,
-    requested_date_to: isRecord(payload) ? toStringValue(payload.requested_date_to) || null : null,
+    visible_range: visibleRange
+      ? {
+          date_from: toStringValue(visibleRange.date_from) || null,
+          date_to: toStringValue(visibleRange.date_to) || null,
+        }
+      : null,
     active_exercise:
       normalizeLogicalExercisesPayload({
         company_id: 0,

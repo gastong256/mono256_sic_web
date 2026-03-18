@@ -1,21 +1,36 @@
 import type { LogicalExercise } from '@/features/companies/types/logicalExercises.types'
 
+export interface RequestedReportRange {
+  date_from: string | null
+  date_to: string | null
+}
+
+export interface ExerciseReportRange {
+  date_from: string | null
+  date_to: string | null
+  status: 'open' | 'closed'
+}
+
+export interface VisibleReportRange {
+  date_from: string | null
+  date_to: string | null
+}
+
 export interface ReportExerciseMetadata {
   requested_date_from: string | null
   requested_date_to: string | null
+  requested_range: RequestedReportRange | null
+  exercise_range: ExerciseReportRange | null
+  visible_range: VisibleReportRange | null
   active_exercise: LogicalExercise | null
   previous_exercises: LogicalExercise[]
 }
 
-export interface JournalBookReportResponse {
+export interface JournalBookReportResponse extends ReportExerciseMetadata {
   company_id: number
   company: string
   date_from: string | null
   date_to: string | null
-  requested_date_from: string | null
-  requested_date_to: string | null
-  active_exercise: LogicalExercise | null
-  previous_exercises: LogicalExercise[]
   entries: JournalBookEntry[]
   grand_total_debit: number
   grand_total_credit: number
@@ -76,15 +91,11 @@ export interface LedgerAccountOption {
   name: string
 }
 
-export interface LedgerReportResponse {
+export interface LedgerReportResponse extends ReportExerciseMetadata {
   company_id: number
   company: string
   date_from: string | null
   date_to: string | null
-  requested_date_from: string | null
-  requested_date_to: string | null
-  active_exercise: LogicalExercise | null
-  previous_exercises: LogicalExercise[]
   account_id: number | null
   accounts: LedgerAccountCard[]
   account_options: LedgerAccountOption[]
@@ -122,15 +133,11 @@ export interface TrialBalanceTotals {
   total_credit_balance: number
 }
 
-export interface TrialBalanceReportResponse {
+export interface TrialBalanceReportResponse extends ReportExerciseMetadata {
   company_id: number
   company: string
   date_from: string | null
   date_to: string | null
-  requested_date_from: string | null
-  requested_date_to: string | null
-  active_exercise: LogicalExercise | null
-  previous_exercises: LogicalExercise[]
   groups: TrialBalanceGroupRow[]
   grand_total_debit: number
   grand_total_credit: number

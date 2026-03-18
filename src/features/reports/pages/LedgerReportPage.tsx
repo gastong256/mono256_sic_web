@@ -235,10 +235,9 @@ export function LedgerReportPage() {
       {activeCompanyId !== null && !isLoading && !isError && data && (
         <section className="space-y-4">
           <ReportExercisePanel
-            requestedDateFrom={data.requested_date_from}
-            requestedDateTo={data.requested_date_to}
-            visibleDateFrom={data.date_from}
-            visibleDateTo={data.date_to}
+            requestedRange={data.requested_range}
+            exerciseRange={data.exercise_range}
+            visibleRange={data.visible_range}
             activeExercise={data.active_exercise}
             previousExercises={data.previous_exercises}
             onSelectExercise={(exercise) =>

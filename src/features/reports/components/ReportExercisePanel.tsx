@@ -1,4 +1,9 @@
 import type { LogicalExercise } from '@/features/companies/types/logicalExercises.types'
+import type {
+  ExerciseReportRange,
+  RequestedReportRange,
+  VisibleReportRange,
+} from '@/features/reports/types/reports.types'
 import { Alert } from '@/shared/ui/Alert'
 import { Button } from '@/shared/ui/Button'
 
@@ -10,24 +15,26 @@ function formatExerciseLabel(exercise: LogicalExercise): string {
 }
 
 interface ReportExercisePanelProps {
-  requestedDateFrom: string | null
-  requestedDateTo: string | null
-  visibleDateFrom: string | null
-  visibleDateTo: string | null
+  requestedRange: RequestedReportRange | null
+  exerciseRange: ExerciseReportRange | null
+  visibleRange: VisibleReportRange | null
   activeExercise: LogicalExercise | null
   previousExercises: LogicalExercise[]
   onSelectExercise?: (exercise: LogicalExercise) => void
 }
 
 export function ReportExercisePanel({
-  requestedDateFrom,
-  requestedDateTo,
-  visibleDateFrom,
-  visibleDateTo,
+  requestedRange,
+  exerciseRange,
+  visibleRange,
   activeExercise,
   previousExercises,
   onSelectExercise,
 }: ReportExercisePanelProps) {
+  const requestedDateFrom = requestedRange?.date_from ?? null
+  const requestedDateTo = requestedRange?.date_to ?? null
+  const visibleDateFrom = visibleRange?.date_from ?? null
+  const visibleDateTo = visibleRange?.date_to ?? null
   const rangeWasAdjusted =
     requestedDateFrom !== null &&
     requestedDateTo !== null &&
@@ -43,6 +50,13 @@ export function ReportExercisePanel({
             {activeExercise && (
               <p>
                 El reporte corresponde a <strong>{formatExerciseLabel(activeExercise)}</strong>.
+              </p>
+            )}
+            {exerciseRange && (
+              <p>
+                Ejercicio resuelto: <strong>{exerciseRange.date_from ?? '—'}</strong> a{' '}
+                <strong>{exerciseRange.date_to ?? 'abierto'}</strong> ·{' '}
+                <strong>{exerciseRange.status === 'closed' ? 'Cerrado' : 'Abierto'}</strong>
               </p>
             )}
             {rangeWasAdjusted && (
