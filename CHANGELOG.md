@@ -1,3 +1,7 @@
+## <small>1.12.1 (2026-03-18)</small>
+
+* fix: support explicit requested and visible exercise ranges ([c3ff1b2](https://github.com/gastong256/mono256_sic_web/commit/c3ff1b2))
+
 ## 1.12.0 (2026-03-18)
 
 * feat: add logical exercises and confirmed snapshot support ([1f0fbe6](https://github.com/gastong256/mono256_sic_web/commit/1f0fbe6))
