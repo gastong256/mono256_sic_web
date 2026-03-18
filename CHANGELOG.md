@@ -1,3 +1,7 @@
+## 1.11.0 (2026-03-18)
+
+* feat: add simplified closing workflow and operational close state support ([485ab45](https://github.com/gastong256/mono256_sic_web/commit/485ab45))
+
 ## <small>1.10.2 (2026-03-17)</small>
 
 * fix: expand msw coverage and hide demo company from visible flows ([b832125](https://github.com/gastong256/mono256_sic_web/commit/b832125))
