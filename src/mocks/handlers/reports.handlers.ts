@@ -5,6 +5,7 @@ import {
   canAccessCompany,
   getAccountChartConfig,
   getCompanyById,
+  getLogicalExercises,
   getRequestUser,
   listJournalEntryDetailsByCompany,
 } from '@/mocks/data/mockDb'
@@ -131,6 +132,67 @@ function parseAndValidateReportRequest(request: Request): {
   return { dateFrom, dateTo, accountIdRaw, accountId, validationError: null }
 }
 
+function resolveExerciseWindow(
+  companyId: number,
+  requestedDateFrom: string | null,
+  requestedDateTo: string | null
+) {
+  const logical = getLogicalExercises(companyId)
+  const effectiveRequestedTo = requestedDateTo ?? todayAsIsoDate()
+
+  if (!logical || logical.exercises.length === 0) {
+    return {
+      requestedDateFrom,
+      requestedDateTo: effectiveRequestedTo,
+      activeExercise: null,
+      previousExercises: [],
+      visibleDateFrom: requestedDateFrom,
+      visibleDateTo: effectiveRequestedTo,
+      exerciseStartDate: requestedDateFrom,
+    }
+  }
+
+  const intersected = logical.exercises.filter((exercise) => {
+    const exerciseEnd = exercise.closing_date ?? effectiveRequestedTo
+    if (requestedDateFrom === null) return exercise.start_date <= effectiveRequestedTo
+    return exercise.start_date <= effectiveRequestedTo && exerciseEnd >= requestedDateFrom
+  })
+
+  const activeExercise =
+    intersected.at(-1) ??
+    logical.exercises.find((exercise) => exercise.exercise_id === logical.current_exercise_id) ??
+    logical.exercises.at(-1) ??
+    null
+
+  const previousExercises =
+    activeExercise === null
+      ? []
+      : logical.exercises.filter(
+          (exercise) => exercise.exercise_index < activeExercise.exercise_index
+        )
+
+  const visibleDateTo =
+    activeExercise?.closing_date && activeExercise.closing_date < effectiveRequestedTo
+      ? activeExercise.closing_date
+      : effectiveRequestedTo
+  const visibleDateFrom =
+    activeExercise === null
+      ? requestedDateFrom
+      : requestedDateFrom && requestedDateFrom > activeExercise.start_date
+        ? requestedDateFrom
+        : activeExercise.start_date
+
+  return {
+    requestedDateFrom,
+    requestedDateTo: effectiveRequestedTo,
+    activeExercise,
+    previousExercises,
+    visibleDateFrom,
+    visibleDateTo,
+    exerciseStartDate: activeExercise?.start_date ?? visibleDateFrom,
+  }
+}
+
 function buildLedgerPayload(
   companyId: number,
   companyName: string,
@@ -139,6 +201,7 @@ function buildLedgerPayload(
   accountId: number | null,
   includeAccountOptions: boolean
 ) {
+  const exerciseWindow = resolveExerciseWindow(companyId, rawDateFrom, rawDateTo)
   const movementAccounts = listCompanyMovementAccounts(companyId).sort((a, b) =>
     a.code.localeCompare(b.code)
   )
@@ -150,7 +213,7 @@ function buildLedgerPayload(
     }
   }
 
-  const effectiveDateTo = rawDateTo ?? todayAsIsoDate()
+  const effectiveDateTo = exerciseWindow.visibleDateTo ?? todayAsIsoDate()
   const selectedAccounts =
     accountId === null
       ? movementAccounts
@@ -158,7 +221,7 @@ function buildLedgerPayload(
 
   const entriesUntilDateTo = applyDateFilter(
     listJournalEntryDetailsByCompany(companyId),
-    null,
+    exerciseWindow.exerciseStartDate,
     effectiveDateTo
   ).sort((a, b) =>
     a.date === b.date ? a.entry_number - b.entry_number : a.date.localeCompare(b.date)
@@ -190,7 +253,7 @@ function buildLedgerPayload(
         const debit = line.type === 'DEBIT' ? Number(line.amount) : 0
         const credit = line.type === 'CREDIT' ? Number(line.amount) : 0
 
-        if (rawDateFrom && entry.date < rawDateFrom) {
+        if (exerciseWindow.visibleDateFrom && entry.date < exerciseWindow.visibleDateFrom) {
           openingBalance += signedAmount(debit, credit)
           return
         }
@@ -228,7 +291,7 @@ function buildLedgerPayload(
   })
 
   const effectiveDateFrom =
-    rawDateFrom ??
+    exerciseWindow.visibleDateFrom ??
     (() => {
       const selectedAccountIds = new Set(selectedAccounts.map((account) => account.id))
       const firstMovementDate = entriesUntilDateTo.find((entry) =>
@@ -242,6 +305,10 @@ function buildLedgerPayload(
     company: companyName,
     date_from: effectiveDateFrom,
     date_to: effectiveDateTo,
+    requested_date_from: rawDateFrom,
+    requested_date_to: exerciseWindow.requestedDateTo,
+    active_exercise: exerciseWindow.activeExercise,
+    previous_exercises: exerciseWindow.previousExercises,
     account_id: accountId,
     accounts,
     ...(includeAccountOptions
@@ -264,7 +331,12 @@ function buildJournalBookPayload(
   dateFrom: string | null,
   dateTo: string | null
 ) {
-  const entries = applyDateFilter(listJournalEntryDetailsByCompany(companyId), dateFrom, dateTo)
+  const exerciseWindow = resolveExerciseWindow(companyId, dateFrom, dateTo)
+  const entries = applyDateFilter(
+    listJournalEntryDetailsByCompany(companyId),
+    exerciseWindow.visibleDateFrom,
+    exerciseWindow.visibleDateTo
+  )
     .sort((a, b) =>
       a.date === b.date ? a.entry_number - b.entry_number : a.date.localeCompare(b.date)
     )
@@ -290,8 +362,12 @@ function buildJournalBookPayload(
   return {
     company_id: companyId,
     company: companyName,
-    date_from: dateFrom,
-    date_to: dateTo,
+    date_from: exerciseWindow.visibleDateFrom,
+    date_to: exerciseWindow.visibleDateTo,
+    requested_date_from: dateFrom,
+    requested_date_to: exerciseWindow.requestedDateTo,
+    active_exercise: exerciseWindow.activeExercise,
+    previous_exercises: exerciseWindow.previousExercises,
     entries,
     grand_total_debit: formatMoney(grandTotalDebit),
     grand_total_credit: formatMoney(grandTotalCredit),
@@ -308,7 +384,12 @@ function buildTrialBalancePayload(
   dateFrom: string | null,
   dateTo: string | null
 ) {
-  const entries = applyDateFilter(listJournalEntryDetailsByCompany(companyId), dateFrom, dateTo)
+  const exerciseWindow = resolveExerciseWindow(companyId, dateFrom, dateTo)
+  const entries = applyDateFilter(
+    listJournalEntryDetailsByCompany(companyId),
+    exerciseWindow.exerciseStartDate,
+    exerciseWindow.visibleDateTo
+  )
   const movementAccounts = new Map(
     listCompanyMovementAccounts(companyId).map((account) => [account.id, account])
   )
@@ -431,8 +512,12 @@ function buildTrialBalancePayload(
   return {
     company_id: companyId,
     company: companyName,
-    date_from: dateFrom,
-    date_to: dateTo,
+    date_from: exerciseWindow.exerciseStartDate,
+    date_to: exerciseWindow.visibleDateTo,
+    requested_date_from: dateFrom,
+    requested_date_to: exerciseWindow.requestedDateTo,
+    active_exercise: exerciseWindow.activeExercise,
+    previous_exercises: exerciseWindow.previousExercises,
     groups,
     grand_total_debit: formatMoney(grandTotalDebit),
     grand_total_credit: formatMoney(grandTotalCredit),

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { Alert } from '@/shared/ui/Alert'
 import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
@@ -8,11 +9,14 @@ import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 import { useExecuteClosing } from '@/features/companies/hooks/useExecuteClosing'
 import { usePreviewClosing } from '@/features/companies/hooks/usePreviewClosing'
 import type {
+  BalanceSheet,
   ClosingAdjustmentStatus,
   ClosingState,
+  IncomeStatement,
   SimplifiedClosingPreview,
   SimplifiedClosingRequest,
 } from '@/features/companies/types/closing.types'
+import type { LogicalExercise } from '@/features/companies/types/logicalExercises.types'
 import { getJournalSourceTypeLabel } from '@/features/journal/lib/sourceTypes'
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
@@ -33,10 +37,19 @@ function addDays(date: string, amount: number): string {
   return base.toISOString().slice(0, 10)
 }
 
+function getMinimumClosingDate(state?: ClosingState | null): string {
+  const candidates = [
+    state?.books_closed_until ? addDays(state.books_closed_until, 1) : '',
+    state?.current_exercise?.start_date ?? '',
+  ].filter(Boolean)
+
+  return candidates.sort().at(-1) ?? new Date().toISOString().slice(0, 10)
+}
+
 function buildDefaultRequest(state?: ClosingState | null): SimplifiedClosingRequest {
-  const baseDate = state?.books_closed_until
-    ? addDays(state.books_closed_until, 1)
-    : new Date().toISOString().slice(0, 10)
+  const minDate = getMinimumClosingDate(state)
+  const today = new Date().toISOString().slice(0, 10)
+  const baseDate = today > minDate ? today : minDate
   const reopeningDate = addDays(baseDate, 1)
 
   return {
@@ -92,6 +105,46 @@ function getPreviewEntries(preview: SimplifiedClosingPreview) {
   ]
 }
 
+function getExerciseLabel(exercise: LogicalExercise | null): string {
+  if (!exercise) return 'Sin ejercicio lógico activo'
+  return `Ejercicio ${exercise.exercise_index} · ${exercise.start_date}${
+    exercise.closing_date ? ` a ${exercise.closing_date}` : ''
+  }`
+}
+
+function renderStatementAccounts(accounts: IncomeStatement['positive_results']['accounts']) {
+  if (accounts.length === 0) {
+    return <p className="mt-2 text-sm text-[var(--text-muted)]">Sin cuentas detalladas.</p>
+  }
+
+  return (
+    <ul className="mt-2 space-y-1 text-sm">
+      {accounts.map((account, index) => (
+        <li key={`${account.account_code ?? account.account_name}-${index}`}>
+          {account.account_code ? `${account.account_code} · ` : ''}
+          {account.account_name}: {formatAmount(account.amount)}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function renderBalanceGroups(groups: BalanceSheet['assets']['groups']) {
+  if (groups.length === 0) {
+    return <p className="mt-2 text-sm text-[var(--text-muted)]">Sin grupos detallados.</p>
+  }
+
+  return (
+    <ul className="mt-2 space-y-1 text-sm">
+      {groups.map((group) => (
+        <li key={`${group.account_code}-${group.account_name}`}>
+          {group.account_code} · {group.account_name}: {formatAmount(group.amount)}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 interface ClosingWorkflowModalProps {
   isOpen: boolean
   onClose: () => void
@@ -105,6 +158,7 @@ export function ClosingWorkflowModal({
   companyId,
   state,
 }: ClosingWorkflowModalProps) {
+  const navigate = useNavigate()
   const { pushToast } = useToast()
   const previewMutation = usePreviewClosing(companyId)
   const executeMutation = useExecuteClosing(companyId)
@@ -120,10 +174,7 @@ export function ClosingWorkflowModal({
   }, [isOpen, state])
 
   const isPending = previewMutation.isPending || executeMutation.isPending
-  const minClosingDate = useMemo(
-    () => (state?.books_closed_until ? addDays(state.books_closed_until, 1) : undefined),
-    [state?.books_closed_until]
-  )
+  const minClosingDate = useMemo(() => getMinimumClosingDate(state) || undefined, [state])
   const minReopeningDate = useMemo(
     () => addDays(form.closing_date, 1) || undefined,
     [form.closing_date]
@@ -180,6 +231,9 @@ export function ClosingWorkflowModal({
         'success'
       )
       handleClose()
+      if (response.snapshot_id) {
+        void navigate(`/companies/${companyId}/closing/snapshots/${response.snapshot_id}`)
+      }
     } catch (error) {
       setSubmitError(
         getHttpErrorMessage(error, {
@@ -282,20 +336,21 @@ export function ClosingWorkflowModal({
                   <p>Cierre: {preview.closing_date}</p>
                   <p>Reapertura: {preview.reopening_date}</p>
                   <p>Libros cerrados hoy: {preview.books_closed_until ?? 'Sin cierres previos'}</p>
+                  <p>Ejercicio activo: {getExerciseLabel(preview.active_exercise)}</p>
                 </div>
               </article>
 
               <article className="surface-card p-4">
                 <p className="text-sm font-semibold text-[var(--text-strong)]">Resultado</p>
                 <div className="mt-3 space-y-2 text-sm">
-                  <p>Resultado negativo: {formatAmount(preview.result_summary.total_negative)}</p>
-                  <p>Resultado positivo: {formatAmount(preview.result_summary.total_positive)}</p>
+                  <p>Resultado negativo: {formatAmount(preview.result_summary.negative_total)}</p>
+                  <p>Resultado positivo: {formatAmount(preview.result_summary.positive_total)}</p>
                   <p>Resultado neto: {formatAmount(preview.result_summary.net_result)}</p>
                   <p>
                     Tipo:{' '}
-                    {preview.result_summary.net_kind === 'gain'
+                    {preview.result_summary.net_result_kind === 'gain'
                       ? 'Ganancia'
-                      : preview.result_summary.net_kind === 'loss'
+                      : preview.result_summary.net_result_kind === 'loss'
                         ? 'Pérdida'
                         : 'Neutro'}
                   </p>
@@ -331,6 +386,81 @@ export function ClosingWorkflowModal({
                 </div>
               </article>
             </div>
+
+            {preview.previous_exercises.length > 0 && (
+              <article className="surface-card p-4">
+                <p className="text-sm font-semibold text-[var(--text-strong)]">
+                  Ejercicios anteriores
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                  {preview.previous_exercises.map((exercise) => (
+                    <span key={exercise.exercise_id} className="metric-chip">
+                      Ejercicio {exercise.exercise_index} · {exercise.start_date}
+                      {exercise.closing_date ? ` a ${exercise.closing_date}` : ''}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            )}
+
+            {preview.income_statement && (
+              <article className="surface-card p-4">
+                <p className="text-sm font-semibold text-[var(--text-strong)]">
+                  Estado de resultados
+                </p>
+                <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                  <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3">
+                    <p className="font-semibold text-[var(--text-strong)]">Resultados positivos</p>
+                    <p className="mt-2 text-sm">
+                      Total: {formatAmount(preview.income_statement.positive_results.total)}
+                    </p>
+                    {renderStatementAccounts(preview.income_statement.positive_results.accounts)}
+                  </div>
+                  <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3">
+                    <p className="font-semibold text-[var(--text-strong)]">Resultados negativos</p>
+                    <p className="mt-2 text-sm">
+                      Total: {formatAmount(preview.income_statement.negative_results.total)}
+                    </p>
+                    {renderStatementAccounts(preview.income_statement.negative_results.accounts)}
+                  </div>
+                </div>
+              </article>
+            )}
+
+            {preview.balance_sheet && (
+              <article className="surface-card p-4">
+                <p className="text-sm font-semibold text-[var(--text-strong)]">
+                  Balance general ajustado
+                </p>
+                <div className="mt-3 grid gap-3 lg:grid-cols-3">
+                  <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3">
+                    <p className="font-semibold text-[var(--text-strong)]">Activo</p>
+                    <p className="mt-2 text-sm">
+                      Total: {formatAmount(preview.balance_sheet.assets.total)}
+                    </p>
+                    {renderBalanceGroups(preview.balance_sheet.assets.groups)}
+                  </div>
+                  <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3">
+                    <p className="font-semibold text-[var(--text-strong)]">Pasivo</p>
+                    <p className="mt-2 text-sm">
+                      Total: {formatAmount(preview.balance_sheet.liabilities.total)}
+                    </p>
+                    {renderBalanceGroups(preview.balance_sheet.liabilities.groups)}
+                  </div>
+                  <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3">
+                    <p className="font-semibold text-[var(--text-strong)]">Patrimonio neto</p>
+                    <p className="mt-2 text-sm">
+                      Total: {formatAmount(preview.balance_sheet.equity.total)}
+                    </p>
+                    <p className="mt-2 text-sm">
+                      Resultado del ejercicio:{' '}
+                      {formatAmount(preview.balance_sheet.equity.derived_result?.amount ?? null)}
+                    </p>
+                    {renderBalanceGroups(preview.balance_sheet.equity.groups)}
+                  </div>
+                </div>
+              </article>
+            )}
 
             <section className="space-y-3">
               <div>

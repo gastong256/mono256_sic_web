@@ -5,6 +5,7 @@ import { useActiveCompany } from '@/features/companies/hooks/useActiveCompany'
 import { getCompanyAccountingBlockMessage } from '@/features/companies/lib/companyAccounting'
 import { useJournalBookReport } from '@/features/reports/hooks/useJournalBookReport'
 import { useDownloadJournalBookReport } from '@/features/reports/hooks/useDownloadReports'
+import { ReportExercisePanel } from '@/features/reports/components/ReportExercisePanel'
 import { getReportDownloadErrorMessage } from '@/features/reports/lib/downloadErrors'
 import { Spinner } from '@/shared/ui/Spinner'
 import { PageHeader } from '@/shared/ui/PageHeader'
@@ -83,6 +84,16 @@ export function JournalBookReportPage() {
     } catch (downloadError) {
       pushToast(getReportDownloadErrorMessage(downloadError), 'error')
     }
+  }
+
+  function applyExerciseRange(startDate: string, closingDate: string | null) {
+    const nextFilters = {
+      dateFrom: startDate,
+      dateTo: closingDate ?? data?.date_to ?? undefined,
+    }
+    setDateFromInput(nextFilters.dateFrom)
+    setDateToInput(nextFilters.dateTo ?? '')
+    setFilters(nextFilters)
   }
 
   return (
@@ -196,6 +207,18 @@ export function JournalBookReportPage() {
 
       {activeCompanyId !== null && !isLoading && !isError && data && (
         <section className="space-y-4">
+          <ReportExercisePanel
+            requestedDateFrom={data.requested_date_from}
+            requestedDateTo={data.requested_date_to}
+            visibleDateFrom={data.date_from}
+            visibleDateTo={data.date_to}
+            activeExercise={data.active_exercise}
+            previousExercises={data.previous_exercises}
+            onSelectExercise={(exercise) =>
+              applyExerciseRange(exercise.start_date, exercise.closing_date)
+            }
+          />
+
           <div className="glass-panel rounded-xl p-3 text-sm">
             <p className="font-semibold text-[var(--text-strong)]">
               {data.company || 'Resumen del periodo'}
@@ -203,6 +226,11 @@ export function JournalBookReportPage() {
             <div className="mt-2 flex flex-wrap gap-2">
               <span className="metric-chip">Desde: {data.date_from ?? '—'}</span>
               <span className="metric-chip">Hasta: {data.date_to ?? '—'}</span>
+              {data.active_exercise && (
+                <span className="metric-chip">
+                  Ejercicio: #{data.active_exercise.exercise_index}
+                </span>
+              )}
               <span className="metric-chip">Asientos: {data.entries.length}</span>
               <span className="metric-chip">Debe: {formatAmount(data.grand_total_debit)}</span>
               <span className="metric-chip">Haber: {formatAmount(data.grand_total_credit)}</span>

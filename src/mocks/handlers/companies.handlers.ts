@@ -6,8 +6,11 @@ import {
   createCompany,
   deleteCompany,
   executeClosing,
+  getClosingSnapshotById,
   getClosingState,
   getCompanyById,
+  getLatestClosingSnapshot,
+  getLogicalExercises,
   getRequestUser,
   listJournalEntriesByCompany,
   listCompaniesForUser,
@@ -201,6 +204,24 @@ export const companiesHandlers = [
     return HttpResponse.json(state)
   }),
 
+  http.get(`${BASE}/companies/:id/logical-exercises/`, async ({ request, params }) => {
+    await delay(140)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+
+    const companyId = Number(params.id)
+    const company = getCompanyById(companyId)
+    if (!company) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    if (!canAccessCompany(user, company)) {
+      return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    }
+
+    const logicalExercises = getLogicalExercises(companyId)
+    if (!logicalExercises) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    return HttpResponse.json(logicalExercises)
+  }),
+
   http.post(`${BASE}/companies/:id/closing/preview/`, async ({ request, params }) => {
     await delay(220)
 
@@ -243,5 +264,42 @@ export const companiesHandlers = [
     }
 
     return HttpResponse.json(response)
+  }),
+
+  http.get(`${BASE}/companies/:id/closing/latest-snapshot/`, async ({ request, params }) => {
+    await delay(160)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+
+    const companyId = Number(params.id)
+    const company = getCompanyById(companyId)
+    if (!company) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    if (!canAccessCompany(user, company)) {
+      return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    }
+
+    const snapshot = getLatestClosingSnapshot(companyId)
+    if (!snapshot) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    return HttpResponse.json(snapshot)
+  }),
+
+  http.get(`${BASE}/companies/:id/closing/snapshots/:snapshotId/`, async ({ request, params }) => {
+    await delay(160)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+
+    const companyId = Number(params.id)
+    const snapshotId = Number(params.snapshotId)
+    const company = getCompanyById(companyId)
+    if (!company) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    if (!canAccessCompany(user, company)) {
+      return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    }
+
+    const snapshot = getClosingSnapshotById(companyId, snapshotId)
+    if (!snapshot) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    return HttpResponse.json(snapshot)
   }),
 ]

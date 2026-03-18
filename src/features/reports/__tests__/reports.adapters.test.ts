@@ -12,6 +12,20 @@ describe('normalizeJournalBookReportPayload', () => {
       company: 'Mi Empresa Demo',
       date_from: '2026-03-01',
       date_to: '2026-03-31',
+      requested_date_from: '2026-02-01',
+      requested_date_to: '2026-03-31',
+      active_exercise: {
+        exercise_id: 'opening:10',
+        exercise_index: 1,
+        opening_entry_id: 10,
+        opening_source_type: 'OPENING',
+        start_date: '2026-03-01',
+        closing_entry_id: null,
+        closing_date: null,
+        snapshot_id: null,
+        status: 'open',
+      },
+      previous_exercises: [],
       entries: [
         {
           entry_number: 4,
@@ -40,6 +54,8 @@ describe('normalizeJournalBookReportPayload', () => {
     const result = normalizeJournalBookReportPayload(payload, 12, {})
 
     expect(result.company).toBe('Mi Empresa Demo')
+    expect(result.requested_date_from).toBe('2026-02-01')
+    expect(result.active_exercise?.exercise_id).toBe('opening:10')
     expect(result.entries).toHaveLength(1)
     expect(result.entries[0]).toMatchObject({
       entry_number: 4,
@@ -63,6 +79,32 @@ describe('normalizeLedgerReportPayload', () => {
       company: 'Mi Empresa Demo',
       date_from: '2026-01-01',
       date_to: '2026-01-31',
+      requested_date_from: '2025-12-01',
+      requested_date_to: '2026-01-31',
+      active_exercise: {
+        exercise_id: 'reopening:42',
+        exercise_index: 2,
+        opening_entry_id: 42,
+        opening_source_type: 'REOPENING',
+        start_date: '2026-01-01',
+        closing_entry_id: null,
+        closing_date: null,
+        snapshot_id: null,
+        status: 'open',
+      },
+      previous_exercises: [
+        {
+          exercise_id: 'opening:11',
+          exercise_index: 1,
+          opening_entry_id: 11,
+          opening_source_type: 'OPENING',
+          start_date: '2025-01-01',
+          closing_entry_id: 41,
+          closing_date: '2025-12-31',
+          snapshot_id: 7,
+          status: 'closed',
+        },
+      ],
       account_id: null,
       accounts: [
         {
@@ -101,6 +143,8 @@ describe('normalizeLedgerReportPayload', () => {
     const result = normalizeLedgerReportPayload(payload, 12, {})
 
     expect(result.company).toBe('Mi Empresa Demo')
+    expect(result.active_exercise?.exercise_id).toBe('reopening:42')
+    expect(result.previous_exercises).toHaveLength(1)
     expect(result.accounts).toHaveLength(1)
     expect(result.accounts[0]).toMatchObject({
       account_code: '1.01.01',
@@ -171,6 +215,20 @@ describe('normalizeTrialBalanceReportPayload', () => {
       company: 'Mi Empresa Demo',
       date_from: '2026-03-01',
       date_to: '2026-03-31',
+      requested_date_from: '2026-02-01',
+      requested_date_to: '2026-03-31',
+      active_exercise: {
+        exercise_id: 'opening:10',
+        exercise_index: 1,
+        opening_entry_id: 10,
+        opening_source_type: 'OPENING',
+        start_date: '2026-03-01',
+        closing_entry_id: null,
+        closing_date: null,
+        snapshot_id: null,
+        status: 'open',
+      },
+      previous_exercises: [],
       groups: [
         {
           account_code: '1.01',
@@ -204,6 +262,8 @@ describe('normalizeTrialBalanceReportPayload', () => {
     const result = normalizeTrialBalanceReportPayload(payload, 12, {})
 
     expect(result.company).toBe('Mi Empresa Demo')
+    expect(result.requested_date_to).toBe('2026-03-31')
+    expect(result.active_exercise?.start_date).toBe('2026-03-01')
     expect(result.groups).toHaveLength(1)
     expect(result.groups[0]).toMatchObject({
       account_code: '1.01',

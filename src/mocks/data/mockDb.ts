@@ -1,11 +1,16 @@
 import type { Company, OpeningEntryPayload } from '@/features/companies/types/company.types'
 import type {
+  ClosingSnapshot,
   ClosingDraftEntry,
   ClosingState,
   SimplifiedClosingExecuteResponse,
   SimplifiedClosingPreview,
   SimplifiedClosingRequest,
 } from '@/features/companies/types/closing.types'
+import type {
+  LogicalExercise,
+  LogicalExerciseListResponse,
+} from '@/features/companies/types/logicalExercises.types'
 import type {
   CreateJournalEntryPayload,
   JournalEntry,
@@ -333,6 +338,7 @@ const journalCompanyMap: Record<number, number> = {
 }
 
 let nextSyntheticAccountId = 900
+let nextClosingSnapshotId = 1
 const syntheticAccounts: Record<number, { code: string; name: string }> = {
   301: { code: '1.01.01', name: 'Caja en Pesos' },
   302: { code: '1.01.02', name: 'Banco Nación Cta. Cte.' },
@@ -340,6 +346,8 @@ const syntheticAccounts: Record<number, { code: string; name: string }> = {
   310: { code: '1.01.01', name: 'Caja en Pesos' },
   311: { code: '4.01.01', name: 'Ventas al Contado' },
 }
+
+const closingSnapshots: ClosingSnapshot[] = []
 
 let accountChartConfig: AccountLevelConfig[] = [
   { account_id: 1, level: 0, code: '1', name: 'Activo', visible: true },
@@ -371,6 +379,7 @@ const initialCompanies = structuredClone(companies)
 const initialJournalEntries = structuredClone(journalEntries)
 const initialJournalCompanyMap = structuredClone(journalCompanyMap)
 const initialSyntheticAccounts = structuredClone(syntheticAccounts)
+const initialClosingSnapshots = structuredClone(closingSnapshots)
 const initialAccountChartConfig = structuredClone(accountChartConfig)
 const initialRegistrationCodeState = structuredClone(registrationCodeState)
 const initialCounters = {
@@ -379,6 +388,7 @@ const initialCounters = {
   nextCompanyId,
   nextJournalId,
   nextSyntheticAccountId,
+  nextClosingSnapshotId,
 }
 
 function makeMockJwt(payload: Record<string, unknown>): string {
@@ -976,6 +986,216 @@ function getLastEntryBySourceType(
   )
 }
 
+function inferLogicalExercises(companyId: number): LogicalExercise[] {
+  const entries = listJournalEntryDetailsByCompany(companyId).sort((a, b) =>
+    a.date === b.date ? a.entry_number - b.entry_number : a.date.localeCompare(b.date)
+  )
+
+  const exercises: LogicalExercise[] = []
+  let current: LogicalExercise | null = null
+
+  entries.forEach((entry) => {
+    if (entry.source_type === 'OPENING' || entry.source_type === 'REOPENING') {
+      current = {
+        exercise_id: `${entry.source_type === 'OPENING' ? 'opening' : 'reopening'}:${entry.id}`,
+        exercise_index: exercises.length + 1,
+        opening_entry_id: entry.id,
+        opening_source_type: entry.source_type,
+        start_date: entry.date,
+        closing_entry_id: null,
+        closing_date: null,
+        snapshot_id: null,
+        status: 'open',
+      }
+      exercises.push(current)
+      return
+    }
+
+    if (
+      entry.source_type === 'PATRIMONIAL_CLOSING' &&
+      current &&
+      current.closing_entry_id === null
+    ) {
+      current.closing_entry_id = entry.id
+      current.closing_date = entry.date
+      current.status = 'closed'
+    }
+  })
+
+  exercises.forEach((exercise) => {
+    if (exercise.closing_entry_id === null) return
+    const snapshot = closingSnapshots.find(
+      (item) =>
+        item.company_id === companyId &&
+        item.patrimonial_closing_entry_id === exercise.closing_entry_id
+    )
+    exercise.snapshot_id = snapshot?.id ?? null
+  })
+
+  return exercises
+}
+
+export function getLogicalExercises(companyId: number): LogicalExerciseListResponse | null {
+  const company = getCompanyById(companyId)
+  if (!company) return null
+
+  const exercises = inferLogicalExercises(companyId)
+  const currentExercise =
+    [...exercises].reverse().find((exercise) => exercise.status === 'open') ?? null
+
+  return {
+    company_id: company.id,
+    company: company.name,
+    current_exercise_id: currentExercise?.exercise_id ?? exercises.at(-1)?.exercise_id ?? null,
+    exercises,
+  }
+}
+
+function getExercisesForPreview(companyId: number): {
+  activeExercise: LogicalExercise | null
+  previousExercises: LogicalExercise[]
+} {
+  const logical = getLogicalExercises(companyId)
+  if (!logical) return { activeExercise: null, previousExercises: [] }
+
+  const activeExercise =
+    logical.exercises.find((exercise) => exercise.exercise_id === logical.current_exercise_id) ??
+    logical.exercises.at(-1) ??
+    null
+
+  return {
+    activeExercise,
+    previousExercises: logical.exercises.filter(
+      (exercise) => activeExercise === null || exercise.exercise_id !== activeExercise.exercise_id
+    ),
+  }
+}
+
+function buildIncomeStatement(companyId: number, closingDate: string) {
+  const summary = buildResultSummary(companyId, closingDate)
+  return {
+    date: closingDate,
+    positive_results: {
+      accounts: [],
+      total: summary.positive_total,
+    },
+    negative_results: {
+      accounts: [],
+      total: summary.negative_total,
+    },
+    net_result: {
+      amount: summary.net_result,
+      kind: summary.net_result_kind,
+    },
+  }
+}
+
+function buildBalanceSheet(companyId: number, closingDate: string) {
+  const totalAssets = Math.abs(sumEntryLinesByPrefix(companyId, '1', closingDate))
+  const totalLiabilities = Math.abs(sumEntryLinesByPrefix(companyId, '2', closingDate))
+  const equityTotal = Math.max(totalAssets - totalLiabilities, 0)
+  const resultSummary = buildResultSummary(companyId, closingDate)
+
+  return {
+    date: closingDate,
+    assets: {
+      groups: [],
+      total: toDecimal(totalAssets),
+    },
+    liabilities: {
+      groups: [],
+      total: toDecimal(totalLiabilities),
+    },
+    equity: {
+      groups: [],
+      derived_result: {
+        name: 'Resultado del Ejercicio',
+        amount: resultSummary.net_result,
+      },
+      total: toDecimal(equityTotal),
+    },
+    equation: {
+      total_assets: toDecimal(totalAssets),
+      total_liabilities_plus_equity: toDecimal(totalAssets),
+      is_balanced: true,
+    },
+  }
+}
+
+function buildClosingSnapshotLines(
+  companyId: number,
+  closingDate: string
+): ClosingSnapshot['lines'] {
+  const balances = new Map<
+    number,
+    {
+      account_id: number
+      account_code: string
+      account_name: string
+      debit_balance: number
+      credit_balance: number
+    }
+  >()
+
+  listJournalEntryDetailsByCompany(companyId)
+    .filter((entry) => entry.date <= closingDate)
+    .forEach((entry) => {
+      entry.lines.forEach((line) => {
+        if (!['1', '2', '3'].includes(line.account_code.split('.')[0] ?? '')) return
+        const current = balances.get(line.account_id) ?? {
+          account_id: line.account_id,
+          account_code: line.account_code,
+          account_name: line.account_name,
+          debit_balance: 0,
+          credit_balance: 0,
+        }
+        if (line.type === 'DEBIT') current.debit_balance += Number(line.amount)
+        if (line.type === 'CREDIT') current.credit_balance += Number(line.amount)
+        balances.set(line.account_id, current)
+      })
+    })
+
+  return Array.from(balances.values())
+    .sort((a, b) => a.account_code.localeCompare(b.account_code))
+    .map((line) => ({
+      account_id: line.account_id,
+      account_code: line.account_code,
+      account_name: line.account_name,
+      account_type: line.account_code.startsWith('1')
+        ? 'AS'
+        : line.account_code.startsWith('2')
+          ? 'LI'
+          : 'EQ',
+      root_code: line.account_code.split('.')[0] ?? '',
+      parent_code:
+        line.account_code.split('.').length >= 2
+          ? line.account_code.split('.').slice(0, 2).join('.')
+          : null,
+      debit_balance: toDecimal(line.debit_balance),
+      credit_balance: toDecimal(line.credit_balance),
+    }))
+}
+
+export function getLatestClosingSnapshot(companyId: number): ClosingSnapshot | null {
+  return (
+    closingSnapshots
+      .filter((snapshot) => snapshot.company_id === companyId)
+      .sort((a, b) => a.id - b.id)
+      .at(-1) ?? null
+  )
+}
+
+export function getClosingSnapshotById(
+  companyId: number,
+  snapshotId: number
+): ClosingSnapshot | null {
+  return (
+    closingSnapshots.find(
+      (snapshot) => snapshot.company_id === companyId && snapshot.id === snapshotId
+    ) ?? null
+  )
+}
+
 function createPreviewDraftEntry(
   base: Omit<ClosingDraftEntry, 'lines'> & { lines?: ClosingDraftEntry['lines'] }
 ): ClosingDraftEntry {
@@ -1086,10 +1306,10 @@ function buildResultSummary(companyId: number, closingDate: string) {
   const netResult = totals.totalPositive - totals.totalNegative
 
   return {
-    total_negative: toDecimal(Math.max(totals.totalNegative, 0)),
-    total_positive: toDecimal(Math.max(totals.totalPositive, 0)),
+    negative_total: toDecimal(Math.max(totals.totalNegative, 0)),
+    positive_total: toDecimal(Math.max(totals.totalPositive, 0)),
     net_result: toDecimal(Math.abs(netResult)),
-    net_kind:
+    net_result_kind:
       netResult > 0 ? ('gain' as const) : netResult < 0 ? ('loss' as const) : ('neutral' as const),
   }
 }
@@ -1154,6 +1374,9 @@ export function buildClosingPreviewResponse(
     payload.closing_date
   )
   const resultSummary = buildResultSummary(companyId, payload.closing_date)
+  const exercisesPreview = getExercisesForPreview(companyId)
+  const incomeStatement = buildIncomeStatement(companyId, payload.closing_date)
+  const balanceSheet = buildBalanceSheet(companyId, payload.closing_date)
   const patrimonialAmount = Math.max(
     0,
     Math.abs(sumEntryLinesByPrefix(companyId, '1', payload.closing_date)) +
@@ -1162,27 +1385,27 @@ export function buildClosingPreviewResponse(
   )
 
   const resultClosingEntries: ClosingDraftEntry[] = []
-  if (Number(resultSummary.total_negative) > 0) {
+  if (Number(resultSummary.negative_total) > 0) {
     resultClosingEntries.push(
       createPreviewDraftEntry({
         date: payload.closing_date,
         description: 'Por cierre de cuentas de Resultado Negativo (Pérdidas)',
         source_type: 'RESULT_CLOSING',
         source_ref: 'CLOSING-RN',
-        total_debit: resultSummary.total_negative,
-        total_credit: resultSummary.total_negative,
+        total_debit: resultSummary.negative_total,
+        total_credit: resultSummary.negative_total,
       })
     )
   }
-  if (Number(resultSummary.total_positive) > 0) {
+  if (Number(resultSummary.positive_total) > 0) {
     resultClosingEntries.push(
       createPreviewDraftEntry({
         date: payload.closing_date,
         description: 'Por cierre de cuentas de Resultado Positivo (Ganancias)',
         source_type: 'RESULT_CLOSING',
         source_ref: 'CLOSING-RP',
-        total_debit: resultSummary.total_positive,
-        total_credit: resultSummary.total_positive,
+        total_debit: resultSummary.positive_total,
+        total_credit: resultSummary.positive_total,
       })
     )
   }
@@ -1193,11 +1416,15 @@ export function buildClosingPreviewResponse(
     closing_date: payload.closing_date,
     reopening_date: payload.reopening_date,
     books_closed_until: company.books_closed_until ?? null,
+    active_exercise: exercisesPreview.activeExercise,
+    previous_exercises: exercisesPreview.previousExercises,
     adjustments: {
       cash: cashAdjustment,
       inventory: inventoryAdjustment,
     },
     result_summary: resultSummary,
+    income_statement: incomeStatement,
+    balance_sheet: balanceSheet,
     entries: {
       adjustments: [cashAdjustment.entry, inventoryAdjustment.entry].filter(
         (entry): entry is ClosingDraftEntry => entry !== null
@@ -1274,6 +1501,11 @@ export function getClosingState(companyId: number): ClosingState | null {
 
   const lastPatrimonialClosing = getLastEntryBySourceType(companyId, 'PATRIMONIAL_CLOSING')
   const lastReopening = getLastEntryBySourceType(companyId, 'REOPENING')
+  const logicalExercises = getLogicalExercises(companyId)
+  const currentExercise =
+    logicalExercises?.exercises.find(
+      (exercise) => exercise.exercise_id === logicalExercises.current_exercise_id
+    ) ?? null
 
   return {
     company_id: company.id,
@@ -1283,6 +1515,7 @@ export function getClosingState(companyId: number): ClosingState | null {
     last_patrimonial_closing_date: lastPatrimonialClosing?.date ?? null,
     last_reopening_entry_id: lastReopening?.id ?? null,
     last_reopening_date: lastReopening?.date ?? null,
+    current_exercise: currentExercise,
     can_close: company.has_opening_entry === true && company.is_read_only !== true,
   }
 }
@@ -1305,7 +1538,24 @@ export function executeClosing(
     ...(preview.entries.reopening ? [preview.entries.reopening] : []),
   ]
 
+  const previewLines = buildClosingSnapshotLines(companyId, payload.closing_date)
   const createdEntries = drafts.map((draft) => createSpecialEntry(companyId, createdBy, draft))
+  const patrimonialClosingEntry =
+    createdEntries.find((entry) => entry.source_type === 'PATRIMONIAL_CLOSING') ?? null
+  const reopeningEntry = createdEntries.find((entry) => entry.source_type === 'REOPENING') ?? null
+  const snapshotId = nextClosingSnapshotId++
+  closingSnapshots.push({
+    id: snapshotId,
+    company_id: company.id,
+    company: company.name,
+    patrimonial_closing_entry_id: patrimonialClosingEntry?.id ?? null,
+    reopening_entry_id: reopeningEntry?.id ?? null,
+    closing_date: payload.closing_date,
+    reopening_date: payload.reopening_date,
+    balance_sheet: preview.balance_sheet,
+    income_statement: preview.income_statement,
+    lines: previewLines,
+  })
   company.books_closed_until = payload.closing_date
   company.updated_at = new Date().toISOString()
 
@@ -1315,6 +1565,7 @@ export function executeClosing(
     closing_date: payload.closing_date,
     reopening_date: payload.reopening_date,
     books_closed_until: company.books_closed_until,
+    snapshot_id: snapshotId,
     created_entries: createdEntries.map((entry) => ({
       id: entry.id,
       entry_number: entry.entry_number,
@@ -1451,6 +1702,7 @@ export function resetMockDb() {
     delete syntheticAccounts[Number(key)]
   })
   Object.assign(syntheticAccounts, structuredClone(initialSyntheticAccounts))
+  closingSnapshots.splice(0, closingSnapshots.length, ...structuredClone(initialClosingSnapshots))
 
   accountChartConfig = structuredClone(initialAccountChartConfig)
   registrationCodeState = structuredClone(initialRegistrationCodeState)
@@ -1462,6 +1714,7 @@ export function resetMockDb() {
   nextCompanyId = initialCounters.nextCompanyId
   nextJournalId = initialCounters.nextJournalId
   nextSyntheticAccountId = initialCounters.nextSyntheticAccountId
+  nextClosingSnapshotId = initialCounters.nextClosingSnapshotId
 }
 
 export function reverseJournalEntry(

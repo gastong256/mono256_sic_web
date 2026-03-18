@@ -1,3 +1,4 @@
+import { normalizeLogicalExercisesPayload } from '@/features/companies/adapters/closing.adapters'
 import type {
   JournalBookEntry,
   JournalBookReportParams,
@@ -17,6 +18,31 @@ import {
   toStringValue,
   type UnknownRecord,
 } from '@/shared/lib/valueParsers'
+
+function normalizeExerciseMetadata(payload: unknown) {
+  const raw = isRecord(payload) ? payload : {}
+  const previousExercises = Array.isArray(raw.previous_exercises) ? raw.previous_exercises : []
+
+  return {
+    requested_date_from: isRecord(payload)
+      ? toStringValue(payload.requested_date_from) || null
+      : null,
+    requested_date_to: isRecord(payload) ? toStringValue(payload.requested_date_to) || null : null,
+    active_exercise:
+      normalizeLogicalExercisesPayload({
+        company_id: 0,
+        company: '',
+        current_exercise_id: isRecord(raw.active_exercise) ? raw.active_exercise.exercise_id : null,
+        exercises: raw.active_exercise ? [raw.active_exercise] : [],
+      }).exercises[0] ?? null,
+    previous_exercises: normalizeLogicalExercisesPayload({
+      company_id: 0,
+      company: '',
+      current_exercise_id: null,
+      exercises: previousExercises,
+    }).exercises,
+  }
+}
 
 function normalizeJournalBookLines(payload: unknown): JournalBookEntry['lines'] {
   return extractListPayload<unknown>(payload)
@@ -79,6 +105,7 @@ export function normalizeJournalBookReportPayload(
     date_to: isRecord(payload)
       ? toStringValue(payload.date_to) || params.dateTo || null
       : (params.dateTo ?? null),
+    ...normalizeExerciseMetadata(payload),
     entries,
     grand_total_debit: Number.isFinite(totalDebit) ? totalDebit : 0,
     grand_total_credit: Number.isFinite(totalCredit) ? totalCredit : 0,
@@ -158,6 +185,7 @@ export function normalizeLedgerReportPayload(
     date_to: isRecord(payload)
       ? toStringValue(payload.date_to) || params.dateTo || null
       : (params.dateTo ?? null),
+    ...normalizeExerciseMetadata(payload),
     account_id: isRecord(payload)
       ? toNumberValue(payload.account_id, params.accountId ?? 0) || null
       : (params.accountId ?? null),
@@ -236,6 +264,7 @@ export function normalizeTrialBalanceReportPayload(
     date_to: isRecord(payload)
       ? toStringValue(payload.date_to) || params.dateTo || null
       : (params.dateTo ?? null),
+    ...normalizeExerciseMetadata(payload),
     groups: normalizedGroups,
     grand_total_debit: Number.isFinite(grandTotalDebit) ? grandTotalDebit : 0,
     grand_total_credit: Number.isFinite(grandTotalCredit) ? grandTotalCredit : 0,

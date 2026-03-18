@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { http, HttpResponse } from 'msw'
 import { CompanyDetailPage } from '@/features/accounts/pages/CompanyDetailPage'
+import { ClosingSnapshotPage } from '@/features/companies/pages/ClosingSnapshotPage'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { registerTokenProvider } from '@/shared/lib/http'
 import { env } from '@/shared/config/env'
@@ -68,6 +69,14 @@ function renderCompanyDetailPage(path = '/companies/1') {
         <ToastProvider>
           <Routes>
             <Route path="/companies/:companyId" element={<CompanyDetailPage />} />
+            <Route
+              path="/companies/:companyId/closing/snapshots/:snapshotId"
+              element={<ClosingSnapshotPage />}
+            />
+            <Route
+              path="/companies/:companyId/closing/latest-snapshot"
+              element={<ClosingSnapshotPage />}
+            />
           </Routes>
         </ToastProvider>
       </QueryClientProvider>
@@ -256,11 +265,10 @@ describe('CompanyDetailPage', () => {
 
     await user.click(screen.getByRole('button', { name: /ejecutar cierre/i }))
 
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    })
-    expect(await screen.findByText(/libros están cerrados hasta/i)).toHaveTextContent(
-      expectedClosingDate
-    )
+    expect(
+      await screen.findByRole('heading', { name: /snapshot confirmado del cierre/i })
+    ).toBeInTheDocument()
+    expect(await screen.findByText(/documento contable de solo lectura/i)).toBeInTheDocument()
+    expect(await screen.findByText(expectedClosingDate)).toBeInTheDocument()
   })
 })

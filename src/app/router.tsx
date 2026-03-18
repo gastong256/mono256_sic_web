@@ -32,6 +32,11 @@ const CompanyDetailPage = lazy(() =>
     default: m.CompanyDetailPage,
   }))
 )
+const ClosingSnapshotPage = lazy(() =>
+  import('@/features/companies/pages/ClosingSnapshotPage').then((m) => ({
+    default: m.ClosingSnapshotPage,
+  }))
+)
 const TeacherDashboardPage = lazy(() =>
   import('@/features/teacher/pages/TeacherDashboardPage').then((m) => ({
     default: m.TeacherDashboardPage,
@@ -108,6 +113,14 @@ export const router = createBrowserRouter([
           {
             path: 'companies/:companyId',
             element: page(<CompanyDetailPage />),
+          },
+          {
+            path: 'companies/:companyId/closing/latest-snapshot',
+            element: page(<ClosingSnapshotPage />),
+          },
+          {
+            path: 'companies/:companyId/closing/snapshots/:snapshotId',
+            element: page(<ClosingSnapshotPage />),
           },
           {
             path: 'profile',

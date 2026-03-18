@@ -1,8 +1,21 @@
+import type { LogicalExercise } from '@/features/companies/types/logicalExercises.types'
+
+export interface ReportExerciseMetadata {
+  requested_date_from: string | null
+  requested_date_to: string | null
+  active_exercise: LogicalExercise | null
+  previous_exercises: LogicalExercise[]
+}
+
 export interface JournalBookReportResponse {
   company_id: number
   company: string
   date_from: string | null
   date_to: string | null
+  requested_date_from: string | null
+  requested_date_to: string | null
+  active_exercise: LogicalExercise | null
+  previous_exercises: LogicalExercise[]
   entries: JournalBookEntry[]
   grand_total_debit: number
   grand_total_credit: number
@@ -68,6 +81,10 @@ export interface LedgerReportResponse {
   company: string
   date_from: string | null
   date_to: string | null
+  requested_date_from: string | null
+  requested_date_to: string | null
+  active_exercise: LogicalExercise | null
+  previous_exercises: LogicalExercise[]
   account_id: number | null
   accounts: LedgerAccountCard[]
   account_options: LedgerAccountOption[]
@@ -110,6 +127,10 @@ export interface TrialBalanceReportResponse {
   company: string
   date_from: string | null
   date_to: string | null
+  requested_date_from: string | null
+  requested_date_to: string | null
+  active_exercise: LogicalExercise | null
+  previous_exercises: LogicalExercise[]
   groups: TrialBalanceGroupRow[]
   grand_total_debit: number
   grand_total_credit: number

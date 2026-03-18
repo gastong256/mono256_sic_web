@@ -5,6 +5,7 @@ import { useActiveCompany } from '@/features/companies/hooks/useActiveCompany'
 import { getCompanyAccountingBlockMessage } from '@/features/companies/lib/companyAccounting'
 import { useLedgerReport } from '@/features/reports/hooks/useLedgerReport'
 import { useDownloadLedgerReport } from '@/features/reports/hooks/useDownloadReports'
+import { ReportExercisePanel } from '@/features/reports/components/ReportExercisePanel'
 import { getReportDownloadErrorMessage } from '@/features/reports/lib/downloadErrors'
 import { Spinner } from '@/shared/ui/Spinner'
 import { PageHeader } from '@/shared/ui/PageHeader'
@@ -92,6 +93,17 @@ export function LedgerReportPage() {
     } catch (downloadError) {
       pushToast(getReportDownloadErrorMessage(downloadError), 'error')
     }
+  }
+
+  function applyExerciseRange(startDate: string, closingDate: string | null) {
+    const nextFilters = {
+      dateFrom: startDate,
+      dateTo: closingDate ?? data?.date_to ?? undefined,
+      accountId: accountIdInput ? Number(accountIdInput) : undefined,
+    }
+    setDateFromInput(nextFilters.dateFrom)
+    setDateToInput(nextFilters.dateTo ?? '')
+    setFilters(nextFilters)
   }
 
   return (
@@ -222,6 +234,18 @@ export function LedgerReportPage() {
 
       {activeCompanyId !== null && !isLoading && !isError && data && (
         <section className="space-y-4">
+          <ReportExercisePanel
+            requestedDateFrom={data.requested_date_from}
+            requestedDateTo={data.requested_date_to}
+            visibleDateFrom={data.date_from}
+            visibleDateTo={data.date_to}
+            activeExercise={data.active_exercise}
+            previousExercises={data.previous_exercises}
+            onSelectExercise={(exercise) =>
+              applyExerciseRange(exercise.start_date, exercise.closing_date)
+            }
+          />
+
           <div className="glass-panel rounded-xl p-3 text-sm">
             <p className="font-semibold text-[var(--text-strong)]">
               {data.company || 'Empresa seleccionada'}
@@ -229,6 +253,11 @@ export function LedgerReportPage() {
             <div className="mt-2 flex flex-wrap gap-2">
               <span className="metric-chip">Desde: {data.date_from ?? '—'}</span>
               <span className="metric-chip">Hasta: {data.date_to ?? '—'}</span>
+              {data.active_exercise && (
+                <span className="metric-chip">
+                  Ejercicio: #{data.active_exercise.exercise_index}
+                </span>
+              )}
               <span className="metric-chip">
                 Cuenta:{' '}
                 {data.account_id === null ? 'Todas las cuentas de movimiento' : data.account_id}

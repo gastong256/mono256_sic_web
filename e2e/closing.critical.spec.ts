@@ -32,7 +32,11 @@ test.describe('Closing critical flow', () => {
     await page.getByRole('button', { name: 'Ejecutar cierre' }).click()
 
     await expect(page.getByText(/cierre ejecutado correctamente/i)).toBeVisible()
-    await expect(page.getByText(/libros están cerrados hasta/i)).toContainText(closingDate)
+    await expect(
+      page.getByRole('heading', { name: /snapshot confirmado del cierre/i })
+    ).toBeVisible()
+    await expect(page.getByText(/documento contable de solo lectura/i)).toBeVisible()
+    await expect(page.getByText(closingDate)).toBeVisible()
 
     await selectActiveCompany(page, 'Ferretería Los Andes')
     await page.getByRole('button', { name: 'Asientos' }).click()

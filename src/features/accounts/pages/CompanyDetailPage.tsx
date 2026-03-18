@@ -8,6 +8,7 @@ import { OpeningEntryModal } from '@/features/companies/components/OpeningEntryM
 import { ClosingWorkflowModal } from '@/features/companies/components/ClosingWorkflowModal'
 import { useActiveCompany } from '@/features/companies/hooks/useActiveCompany'
 import { useCompanyClosingState } from '@/features/companies/hooks/useCompanyClosingState'
+import { useLogicalExercises } from '@/features/companies/hooks/useLogicalExercises'
 import {
   getCompanyStatusLabels,
   getCompanyWriteBlockMessage,
@@ -30,6 +31,7 @@ export function CompanyDetailPage() {
   } = useActiveCompany(id)
 
   const { data: accounts = [], isLoading, error } = useCompanyAccounts(id)
+  const { data: logicalExercises } = useLogicalExercises(id, { enabled: id > 0 })
   const {
     data: closingState,
     isLoading: closingStateLoading,
@@ -175,6 +177,14 @@ export function CompanyDetailPage() {
                 {closingState?.can_close ? 'Puede cerrar' : 'No disponible'}
               </p>
             </article>
+            <article className="summary-stat-card">
+              <p className="summary-stat-label">Ejercicio actual</p>
+              <p className="summary-stat-value text-[0.95rem]">
+                {closingState?.current_exercise
+                  ? `#${closingState.current_exercise.exercise_index} · ${closingState.current_exercise.start_date}`
+                  : 'Sin ejercicio'}
+              </p>
+            </article>
           </div>
         )}
 
@@ -185,6 +195,69 @@ export function CompanyDetailPage() {
               Solo el propietario o un administrador pueden ejecutar el cierre contable.
             </p>
           )}
+
+        {logicalExercises && logicalExercises.exercises.length > 0 && (
+          <div className="space-y-3">
+            <div>
+              <p className="font-semibold text-[var(--text-strong)]">Ejercicios lógicos</p>
+              <p className="muted-text mt-1 text-sm">
+                Secuencia inferida de apertura, cierres patrimoniales y reaperturas.
+              </p>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              {logicalExercises.exercises.map((exercise) => (
+                <article
+                  key={exercise.exercise_id}
+                  className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-4"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-semibold text-[var(--text-strong)]">
+                      Ejercicio {exercise.exercise_index}
+                    </p>
+                    <span className="metric-chip">
+                      {exercise.exercise_id === logicalExercises.current_exercise_id
+                        ? 'Actual'
+                        : exercise.status === 'closed'
+                          ? 'Cerrado'
+                          : 'Abierto'}
+                    </span>
+                  </div>
+                  <div className="mt-3 space-y-1 text-sm text-[var(--text-muted)]">
+                    <p>Inicio: {exercise.start_date}</p>
+                    <p>Cierre: {exercise.closing_date ?? 'Pendiente'}</p>
+                    <p>Origen: {exercise.opening_source_type}</p>
+                  </div>
+                  {exercise.snapshot_id !== null && (
+                    <div className="mt-3">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() =>
+                          navigate(`/companies/${id}/closing/snapshots/${exercise.snapshot_id}`)
+                        }
+                      >
+                        Ver snapshot confirmado
+                      </Button>
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+
+            {logicalExercises.exercises.some((exercise) => exercise.snapshot_id !== null) && (
+              <div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => navigate(`/companies/${id}/closing/latest-snapshot`)}
+                >
+                  Ver último snapshot confirmado
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {company?.accounting_ready === false && canManageOpening && (

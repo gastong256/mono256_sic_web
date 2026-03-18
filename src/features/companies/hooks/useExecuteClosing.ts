@@ -15,6 +15,8 @@ export function useExecuteClosing(companyId: number) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: companyQueryKeys.root }),
         queryClient.invalidateQueries({ queryKey: companyQueryKeys.closingState(companyId) }),
+        queryClient.invalidateQueries({ queryKey: companyQueryKeys.logicalExercises(companyId) }),
+        queryClient.invalidateQueries({ queryKey: companyQueryKeys.latestSnapshot(companyId) }),
         queryClient.invalidateQueries({ queryKey: ['me'] }),
         queryClient.invalidateQueries({ queryKey: ['reports'] }),
         queryClient.invalidateQueries({ queryKey: journalEntriesQueryKey(companyId) }),
