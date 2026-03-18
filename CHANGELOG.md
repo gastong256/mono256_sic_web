@@ -1,3 +1,7 @@
+## 1.12.0 (2026-03-18)
+
+* feat: add logical exercises and confirmed snapshot support ([1f0fbe6](https://github.com/gastong256/mono256_sic_web/commit/1f0fbe6))
+
 ## 1.11.0 (2026-03-18)
 
 * feat: add simplified closing workflow and operational close state support ([485ab45](https://github.com/gastong256/mono256_sic_web/commit/485ab45))
