@@ -14,6 +14,7 @@ import { EmptyState } from '@/shared/ui/EmptyState'
 import { buildDefaultXlsxFilename, saveBlobAsFile } from '@/shared/lib/fileDownload'
 import { useToast } from '@/shared/ui/ToastProvider'
 import { extractFieldValidationErrors, getHttpErrorMessage } from '@/shared/lib/httpErrors'
+import { getJournalSourceTypeLabel } from '@/features/journal/lib/sourceTypes'
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
   style: 'currency',
@@ -60,7 +61,10 @@ export function JournalBookReportPage() {
       unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
       forbiddenMessage: 'No tenés permisos para consultar este reporte.',
       notFoundMessage: 'La empresa no existe o ya no está disponible.',
-      conflictMessage: getCompanyAccountingBlockMessage(activeCompany),
+      conflictMessage:
+        activeCompany?.accounting_ready === false || activeCompany?.is_read_only
+          ? getCompanyAccountingBlockMessage(activeCompany)
+          : undefined,
     })
   }, [activeCompany, error, fieldErrors.date_from, fieldErrors.date_to])
 
@@ -174,6 +178,12 @@ export function JournalBookReportPage() {
         />
       )}
 
+      {activeCompanyId !== null && activeCompany?.books_closed_until && (
+        <Alert tone="info">
+          Los libros están cerrados hasta <strong>{activeCompany.books_closed_until}</strong>.
+        </Alert>
+      )}
+
       {activeCompanyId !== null && isLoading && (
         <div className="flex justify-center py-12">
           <Spinner className="size-8 text-[var(--brand-500)]" label="Cargando libro diario..." />
@@ -219,7 +229,8 @@ export function JournalBookReportPage() {
                         Asiento #{entry.entry_number} · {entry.date} · {entry.description}
                       </span>
                       <p className="muted-text mt-1 text-xs">
-                        Origen {entry.source_type || '—'} · Ref. {entry.source_ref || '—'}
+                        Origen {getJournalSourceTypeLabel(entry.source_type)} · Ref.{' '}
+                        {entry.source_ref || '—'}
                       </p>
                     </div>
                     <span className="font-medium text-[var(--text-muted)]">

@@ -5,11 +5,14 @@ import {
   createOpeningEntry,
   createCompany,
   deleteCompany,
+  executeClosing,
+  getClosingState,
   getCompanyById,
   getRequestUser,
   listJournalEntriesByCompany,
   listCompaniesForUser,
   updateCompany,
+  buildClosingPreviewResponse,
 } from '@/mocks/data/mockDb'
 
 const BASE = env.VITE_API_BASE_URL
@@ -178,5 +181,67 @@ export const companiesHandlers = [
     }
 
     return HttpResponse.json(created, { status: 201 })
+  }),
+
+  http.get(`${BASE}/companies/:id/closing/state/`, async ({ request, params }) => {
+    await delay(140)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+
+    const companyId = Number(params.id)
+    const company = getCompanyById(companyId)
+    if (!company) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    if (!canAccessCompany(user, company)) {
+      return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    }
+
+    const state = getClosingState(companyId)
+    if (!state) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    return HttpResponse.json(state)
+  }),
+
+  http.post(`${BASE}/companies/:id/closing/preview/`, async ({ request, params }) => {
+    await delay(220)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+
+    const companyId = Number(params.id)
+    const company = getCompanyById(companyId)
+    if (!company) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    if (!(user.role === 'admin' || company.owner_username === user.username)) {
+      return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    }
+
+    const body = (await request.json()) as Parameters<typeof buildClosingPreviewResponse>[1]
+    const preview = buildClosingPreviewResponse(companyId, body)
+    if ('error' in preview) {
+      return HttpResponse.json({ detail: preview.error }, { status: preview.status })
+    }
+
+    return HttpResponse.json(preview)
+  }),
+
+  http.post(`${BASE}/companies/:id/closing/execute/`, async ({ request, params }) => {
+    await delay(260)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+
+    const companyId = Number(params.id)
+    const company = getCompanyById(companyId)
+    if (!company) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    if (!(user.role === 'admin' || company.owner_username === user.username)) {
+      return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    }
+
+    const body = (await request.json()) as Parameters<typeof executeClosing>[1]
+    const response = executeClosing(companyId, body, user.username)
+    if ('error' in response) {
+      return HttpResponse.json({ detail: response.error }, { status: response.status })
+    }
+
+    return HttpResponse.json(response)
   }),
 ]

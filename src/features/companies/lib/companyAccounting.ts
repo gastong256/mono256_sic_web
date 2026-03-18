@@ -9,6 +9,7 @@ type CompanyStateLike = {
   is_read_only?: boolean
   has_opening_entry?: boolean
   accounting_ready?: boolean
+  books_closed_until?: string | null
 }
 
 export interface OpeningParentOption {
@@ -188,6 +189,7 @@ export function getCompanyStatusLabels(company: CompanyStateLike | null | undefi
   if (company.is_demo) labels.push('Demo')
   if (company.is_read_only) labels.push('Solo lectura')
   if (company.accounting_ready === false) labels.push('Pendiente de apertura')
+  if (company.books_closed_until) labels.push('Libros cerrados')
 
   return labels
 }

@@ -1,5 +1,12 @@
 import type { Company, OpeningEntryPayload } from '@/features/companies/types/company.types'
 import type {
+  ClosingDraftEntry,
+  ClosingState,
+  SimplifiedClosingExecuteResponse,
+  SimplifiedClosingPreview,
+  SimplifiedClosingRequest,
+} from '@/features/companies/types/closing.types'
+import type {
   CreateJournalEntryPayload,
   JournalEntry,
   JournalEntryDetail,
@@ -8,6 +15,7 @@ import type {
   ReverseJournalEntryPayload,
 } from '@/features/journal/types/journal.types'
 import type { AccountLevelConfig, Role, User } from '@/shared/types'
+import { isNonReversibleJournalSourceType } from '@/features/journal/lib/sourceTypes'
 
 type MockUserRecord = User & { password: string }
 
@@ -486,6 +494,7 @@ export function buildAuthMeResponse(
             id: company.id,
             name: company.name,
             owner_username: company.owner_username,
+            books_closed_until: company.books_closed_until ?? null,
             is_demo: company.is_demo ?? false,
             is_read_only: company.is_read_only ?? false,
             has_opening_entry: company.has_opening_entry ?? false,
@@ -936,6 +945,387 @@ function resolveAccountName(accountId: number): { code: string; name: string } {
   return syntheticAccounts[accountId] ?? { code: String(accountId), name: `Cuenta ${accountId}` }
 }
 
+function toDecimal(amount: number): string {
+  return amount.toFixed(2)
+}
+
+function sumEntryLinesByPrefix(companyId: number, prefix: string, dateTo?: string): number {
+  return listJournalEntryDetailsByCompany(companyId)
+    .filter((entry) => (dateTo ? entry.date <= dateTo : true))
+    .filter((entry) => !entry.reversal_of_id)
+    .reduce((sum, entry) => {
+      const delta = entry.lines.reduce((entrySum, line) => {
+        if (!line.account_code.startsWith(`${prefix}.`) && line.account_code !== prefix)
+          return entrySum
+        const amount = Number(line.amount)
+        return entrySum + (line.type === 'DEBIT' ? amount : -amount)
+      }, 0)
+      return sum + delta
+    }, 0)
+}
+
+function getLastEntryBySourceType(
+  companyId: number,
+  sourceType: string
+): JournalEntryDetail | null {
+  return (
+    listJournalEntryDetailsByCompany(companyId)
+      .filter((entry) => entry.source_type === sourceType)
+      .sort((a, b) => a.date.localeCompare(b.date) || b.entry_number - a.entry_number)
+      .at(-1) ?? null
+  )
+}
+
+function createPreviewDraftEntry(
+  base: Omit<ClosingDraftEntry, 'lines'> & { lines?: ClosingDraftEntry['lines'] }
+): ClosingDraftEntry {
+  return {
+    ...base,
+    lines: base.lines ?? [],
+  }
+}
+
+function buildAdjustmentPreview(
+  label: 'cash' | 'inventory',
+  requestValue: string | undefined,
+  bookBalance: number,
+  closingDate: string
+) {
+  if (!requestValue || requestValue.trim().length === 0) {
+    return {
+      book_balance: null,
+      actual_balance: null,
+      difference: null,
+      status: 'not_requested' as const,
+      entry: null,
+    }
+  }
+
+  const actualBalance = Number(requestValue)
+  const difference = Number.isFinite(actualBalance) ? actualBalance - bookBalance : 0
+  const roundedDifference = Math.round(difference * 100) / 100
+
+  if (Math.abs(roundedDifference) < 0.001) {
+    return {
+      book_balance: toDecimal(bookBalance),
+      actual_balance: toDecimal(actualBalance),
+      difference: '0.00',
+      status: 'balanced' as const,
+      entry: null,
+    }
+  }
+
+  const isCash = label === 'cash'
+  const shortage = roundedDifference < 0
+  const amount = Math.abs(roundedDifference)
+  const description = isCash ? 's/ Arqueo realizado a la fecha' : 's/ Inventario de Mercaderías'
+  const sourceRef = isCash ? 'CLOSING-CASH' : 'CLOSING-INVENTORY'
+  const counterpartName = isCash
+    ? shortage
+      ? 'Faltante de Caja'
+      : 'Sobrante de Caja'
+    : shortage
+      ? 'Faltante de Mercaderías'
+      : 'Sobrante de Mercaderías'
+
+  return {
+    book_balance: toDecimal(bookBalance),
+    actual_balance: toDecimal(actualBalance),
+    difference: toDecimal(roundedDifference),
+    status: shortage ? ('shortage' as const) : ('surplus' as const),
+    entry: createPreviewDraftEntry({
+      date: closingDate,
+      description,
+      source_type: 'ADJUSTMENT',
+      source_ref: sourceRef,
+      total_debit: toDecimal(amount),
+      total_credit: toDecimal(amount),
+      lines: [
+        {
+          account_id: null,
+          account_code: null,
+          account_name: counterpartName,
+          parent_code: isCash ? '4.12' : '4.13',
+          type: shortage ? 'DEBIT' : 'CREDIT',
+          amount: toDecimal(amount),
+        },
+        {
+          account_id: null,
+          account_code: null,
+          account_name: isCash ? 'Caja' : 'Mercaderías',
+          parent_code: isCash ? '1.01' : '1.09',
+          type: shortage ? 'CREDIT' : 'DEBIT',
+          amount: toDecimal(amount),
+        },
+      ],
+    }),
+  }
+}
+
+function buildResultSummary(companyId: number, closingDate: string) {
+  const entries = listJournalEntryDetailsByCompany(companyId).filter(
+    (entry) => entry.date <= closingDate
+  )
+
+  const totals = entries.reduce(
+    (acc, entry) => {
+      entry.lines.forEach((line) => {
+        const amount = Number(line.amount)
+        if (line.account_code.startsWith('5.')) {
+          acc.totalNegative += line.type === 'DEBIT' ? amount : -amount
+        }
+        if (line.account_code.startsWith('4.')) {
+          acc.totalPositive += line.type === 'CREDIT' ? amount : -amount
+        }
+      })
+      return acc
+    },
+    { totalNegative: 0, totalPositive: 0 }
+  )
+
+  const netResult = totals.totalPositive - totals.totalNegative
+
+  return {
+    total_negative: toDecimal(Math.max(totals.totalNegative, 0)),
+    total_positive: toDecimal(Math.max(totals.totalPositive, 0)),
+    net_result: toDecimal(Math.abs(netResult)),
+    net_kind:
+      netResult > 0 ? ('gain' as const) : netResult < 0 ? ('loss' as const) : ('neutral' as const),
+  }
+}
+
+export function buildClosingPreviewResponse(
+  companyId: number,
+  payload: SimplifiedClosingRequest
+): SimplifiedClosingPreview | { error: string; status: number } {
+  const company = getCompanyById(companyId)
+  if (!company) return { error: 'Company not found.', status: 404 }
+  if (company.accounting_ready === false || !company.has_opening_entry) {
+    return {
+      error: 'La empresa debe tener apertura contable antes de ejecutar un cierre.',
+      status: 409,
+    }
+  }
+  if (company.is_read_only) {
+    return { error: 'La empresa está en modo solo lectura.', status: 409 }
+  }
+  if (!payload.closing_date || !payload.reopening_date) {
+    return { error: 'Las fechas de cierre y reapertura son obligatorias.', status: 400 }
+  }
+  if (payload.reopening_date <= payload.closing_date) {
+    return { error: 'La fecha de reapertura debe ser posterior a la fecha de cierre.', status: 400 }
+  }
+  if (company.books_closed_until && payload.closing_date <= company.books_closed_until) {
+    return { error: 'Los libros ya están cerrados hasta la fecha indicada.', status: 409 }
+  }
+
+  const companyEntries = listJournalEntryDetailsByCompany(companyId)
+  if (companyEntries.some((entry) => entry.date > payload.closing_date)) {
+    return {
+      error: 'No se puede cerrar porque existen asientos posteriores a la fecha de cierre.',
+      status: 409,
+    }
+  }
+  if (
+    companyEntries.some(
+      (entry) => entry.source_type === 'PATRIMONIAL_CLOSING' && entry.date === payload.closing_date
+    )
+  ) {
+    return { error: 'Ya existe un cierre para esa fecha.', status: 409 }
+  }
+  if (
+    companyEntries.some(
+      (entry) => entry.source_type === 'REOPENING' && entry.date === payload.reopening_date
+    )
+  ) {
+    return { error: 'Ya existe una reapertura para esa fecha.', status: 409 }
+  }
+
+  const cashAdjustment = buildAdjustmentPreview(
+    'cash',
+    payload.cash_actual,
+    sumEntryLinesByPrefix(companyId, '1.01', payload.closing_date),
+    payload.closing_date
+  )
+  const inventoryAdjustment = buildAdjustmentPreview(
+    'inventory',
+    payload.inventory_actual,
+    sumEntryLinesByPrefix(companyId, '1.09', payload.closing_date),
+    payload.closing_date
+  )
+  const resultSummary = buildResultSummary(companyId, payload.closing_date)
+  const patrimonialAmount = Math.max(
+    0,
+    Math.abs(sumEntryLinesByPrefix(companyId, '1', payload.closing_date)) +
+      Math.abs(sumEntryLinesByPrefix(companyId, '2', payload.closing_date)) +
+      Math.abs(sumEntryLinesByPrefix(companyId, '3', payload.closing_date))
+  )
+
+  const resultClosingEntries: ClosingDraftEntry[] = []
+  if (Number(resultSummary.total_negative) > 0) {
+    resultClosingEntries.push(
+      createPreviewDraftEntry({
+        date: payload.closing_date,
+        description: 'Por cierre de cuentas de Resultado Negativo (Pérdidas)',
+        source_type: 'RESULT_CLOSING',
+        source_ref: 'CLOSING-RN',
+        total_debit: resultSummary.total_negative,
+        total_credit: resultSummary.total_negative,
+      })
+    )
+  }
+  if (Number(resultSummary.total_positive) > 0) {
+    resultClosingEntries.push(
+      createPreviewDraftEntry({
+        date: payload.closing_date,
+        description: 'Por cierre de cuentas de Resultado Positivo (Ganancias)',
+        source_type: 'RESULT_CLOSING',
+        source_ref: 'CLOSING-RP',
+        total_debit: resultSummary.total_positive,
+        total_credit: resultSummary.total_positive,
+      })
+    )
+  }
+
+  return {
+    company_id: companyId,
+    company: company.name,
+    closing_date: payload.closing_date,
+    reopening_date: payload.reopening_date,
+    books_closed_until: company.books_closed_until ?? null,
+    adjustments: {
+      cash: cashAdjustment,
+      inventory: inventoryAdjustment,
+    },
+    result_summary: resultSummary,
+    entries: {
+      adjustments: [cashAdjustment.entry, inventoryAdjustment.entry].filter(
+        (entry): entry is ClosingDraftEntry => entry !== null
+      ),
+      result_closing: resultClosingEntries,
+      patrimonial_closing: createPreviewDraftEntry({
+        date: payload.closing_date,
+        description: 'Por cierre de Cuentas Patrimoniales',
+        source_type: 'PATRIMONIAL_CLOSING',
+        source_ref: 'CLOSING-PATRIMONIAL',
+        total_debit: toDecimal(patrimonialAmount),
+        total_credit: toDecimal(patrimonialAmount),
+      }),
+      reopening: createPreviewDraftEntry({
+        date: payload.reopening_date,
+        description: 'Por apertura de Cuentas Patrimoniales',
+        source_type: 'REOPENING',
+        source_ref: 'REOPENING-PATRIMONIAL',
+        total_debit: toDecimal(patrimonialAmount),
+        total_credit: toDecimal(patrimonialAmount),
+      }),
+    },
+  }
+}
+
+function createSpecialEntry(
+  companyId: number,
+  createdBy: string,
+  draft: ClosingDraftEntry
+): JournalEntryDetail {
+  const maxEntryNumber = Math.max(
+    0,
+    ...journalEntries
+      .filter((entry) => journalCompanyMap[entry.id] === companyId)
+      .map((entry) => entry.entry_number)
+  )
+
+  const lines: JournalLine[] = draft.lines.map((line) => {
+    const parentCode = line.parent_code ?? '3.02'
+    const account = registerSyntheticAccount(parentCode, line.account_name)
+    return {
+      account_id: account.id,
+      account_code: account.code,
+      account_name: account.name,
+      type: line.type,
+      amount: line.amount,
+    }
+  })
+
+  const created: JournalEntryDetail = {
+    id: nextJournalId++,
+    entry_number: maxEntryNumber + 1,
+    date: draft.date,
+    description: draft.description,
+    source_type: draft.source_type,
+    source_ref: draft.source_ref,
+    created_by: createdBy,
+    reversal_of_id: null,
+    reversed_by_id: null,
+    total_debit: Number(draft.total_debit),
+    total_credit: Number(draft.total_credit),
+    lines,
+  }
+
+  journalEntries.push(created)
+  journalCompanyMap[created.id] = companyId
+
+  return created
+}
+
+export function getClosingState(companyId: number): ClosingState | null {
+  const company = getCompanyById(companyId)
+  if (!company) return null
+
+  const lastPatrimonialClosing = getLastEntryBySourceType(companyId, 'PATRIMONIAL_CLOSING')
+  const lastReopening = getLastEntryBySourceType(companyId, 'REOPENING')
+
+  return {
+    company_id: company.id,
+    company: company.name,
+    books_closed_until: company.books_closed_until ?? null,
+    last_patrimonial_closing_entry_id: lastPatrimonialClosing?.id ?? null,
+    last_patrimonial_closing_date: lastPatrimonialClosing?.date ?? null,
+    last_reopening_entry_id: lastReopening?.id ?? null,
+    last_reopening_date: lastReopening?.date ?? null,
+    can_close: company.has_opening_entry === true && company.is_read_only !== true,
+  }
+}
+
+export function executeClosing(
+  companyId: number,
+  payload: SimplifiedClosingRequest,
+  createdBy: string
+): SimplifiedClosingExecuteResponse | { error: string; status: number } {
+  const preview = buildClosingPreviewResponse(companyId, payload)
+  if ('error' in preview) return preview
+
+  const company = getCompanyById(companyId)
+  if (!company) return { error: 'Company not found.', status: 404 }
+
+  const drafts = [
+    ...preview.entries.adjustments,
+    ...preview.entries.result_closing,
+    ...(preview.entries.patrimonial_closing ? [preview.entries.patrimonial_closing] : []),
+    ...(preview.entries.reopening ? [preview.entries.reopening] : []),
+  ]
+
+  const createdEntries = drafts.map((draft) => createSpecialEntry(companyId, createdBy, draft))
+  company.books_closed_until = payload.closing_date
+  company.updated_at = new Date().toISOString()
+
+  return {
+    company_id: company.id,
+    company: company.name,
+    closing_date: payload.closing_date,
+    reopening_date: payload.reopening_date,
+    books_closed_until: company.books_closed_until,
+    created_entries: createdEntries.map((entry) => ({
+      id: entry.id,
+      entry_number: entry.entry_number,
+      date: entry.date,
+      description: entry.description,
+      source_type: entry.source_type,
+      source_ref: entry.source_ref,
+    })),
+  }
+}
+
 function summarize(lines: JournalLine[]): { totalDebit: number; totalCredit: number } {
   return lines.reduce(
     (acc, line) => {
@@ -989,6 +1379,12 @@ export function createJournalEntry(
     return {
       error:
         'La empresa necesita registrarse con inventario inicial o general antes de operar contablemente.',
+      status: 409,
+    }
+  }
+  if (company.books_closed_until && payload.date <= company.books_closed_until) {
+    return {
+      error: 'Los libros ya están cerrados hasta la fecha indicada.',
       status: 409,
     }
   }
@@ -1088,11 +1484,21 @@ export function reverseJournalEntry(
   }
   const original = getJournalEntry(companyId, entryId)
   if (!original) return { error: 'Not found.', status: 404 }
-  if (original.source_type === 'OPENING') {
-    return { error: 'El asiento de apertura no puede reversarse.', status: 409 }
+  if (isNonReversibleJournalSourceType(original.source_type)) {
+    return {
+      error: 'Este asiento fue generado por un proceso de cierre y no puede revertirse.',
+      status: 409,
+    }
   }
   if (original.reversed_by_id) {
     return { error: 'El asiento ya fue reversado.', status: 409 }
+  }
+  const reverseDate = payload.date ?? new Date().toISOString().slice(0, 10)
+  if (company.books_closed_until && reverseDate <= company.books_closed_until) {
+    return {
+      error: 'Los libros ya están cerrados hasta la fecha indicada.',
+      status: 409,
+    }
   }
 
   const maxEntryNumber = Math.max(
@@ -1110,7 +1516,7 @@ export function reverseJournalEntry(
   const reversed: JournalEntryDetail = {
     id: nextJournalId++,
     entry_number: maxEntryNumber + 1,
-    date: payload.date ?? new Date().toISOString().slice(0, 10),
+    date: reverseDate,
     description: payload.description ?? `Reversa: ${original.description}`,
     source_type: 'REVERSAL',
     source_ref: String(original.id),

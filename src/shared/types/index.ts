@@ -4,6 +4,7 @@ export interface SelectorCompany {
   id: number
   name: string
   owner_username: string
+  books_closed_until?: string | null
   is_demo?: boolean
   is_read_only?: boolean
   has_opening_entry?: boolean

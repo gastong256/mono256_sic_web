@@ -7,6 +7,10 @@ import { Alert } from '@/shared/ui/Alert'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { useToast } from '@/shared/ui/ToastProvider'
+import {
+  getJournalSourceTypeLabel,
+  isNonReversibleJournalSourceType,
+} from '@/features/journal/lib/sourceTypes'
 
 const arsFormat = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' })
 
@@ -46,7 +50,10 @@ export function JournalEntryCard({ entry, companyId, isReadOnly = false }: Journ
   const totalHaber = entry.total_credit
   const reverseMutation = useReverseJournalEntry(companyId)
   const canReverse =
-    !isReadOnly && entry.source_type !== 'OPENING' && !entry.reversal_of_id && !entry.reversed_by_id
+    !isReadOnly &&
+    !isNonReversibleJournalSourceType(entry.source_type) &&
+    !entry.reversal_of_id &&
+    !entry.reversed_by_id
 
   async function handleReverseEntry() {
     try {
@@ -61,10 +68,9 @@ export function JournalEntryCard({ entry, companyId, isReadOnly = false }: Journ
           badRequestMessage: 'No se puede reversar este asiento en el estado actual.',
           forbiddenMessage: 'No tenés permisos para reversar este asiento.',
           notFoundMessage: 'El asiento ya no existe.',
-          conflictMessage:
-            entry.source_type === 'OPENING'
-              ? 'El asiento de apertura no puede reversarse desde este flujo.'
-              : 'El asiento ya fue reversado previamente.',
+          conflictMessage: isNonReversibleJournalSourceType(entry.source_type)
+            ? `El asiento de ${getJournalSourceTypeLabel(entry.source_type).toLowerCase()} fue generado por un proceso del sistema y no puede reversarse.`
+            : 'El asiento ya fue reversado previamente.',
         }),
         'error'
       )
@@ -79,8 +85,15 @@ export function JournalEntryCard({ entry, companyId, isReadOnly = false }: Journ
         className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-[var(--bg-subtle)]"
       >
         <div className="flex items-center gap-4">
-          <span className="muted-text text-sm font-medium tabular-nums">{entry.date}</span>
-          <span className="font-medium text-[var(--text-strong)]">{entry.description}</span>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="muted-text text-sm font-medium tabular-nums">{entry.date}</span>
+              <span className="font-medium text-[var(--text-strong)]">{entry.description}</span>
+            </div>
+            <p className="muted-text mt-1 text-xs">
+              {getJournalSourceTypeLabel(entry.source_type)} · Ref. {entry.source_ref || '—'}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="summary-stat-card hidden min-w-[9rem] text-right sm:block">
@@ -131,8 +144,8 @@ export function JournalEntryCard({ entry, companyId, isReadOnly = false }: Journ
               title={
                 isReadOnly
                   ? 'Empresa en modo solo lectura'
-                  : entry.source_type === 'OPENING'
-                    ? 'La apertura contable no se reversa desde este flujo'
+                  : isNonReversibleJournalSourceType(entry.source_type)
+                    ? `Los asientos de ${getJournalSourceTypeLabel(entry.source_type).toLowerCase()} no se reversan desde este flujo`
                     : undefined
               }
             >

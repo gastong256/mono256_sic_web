@@ -36,6 +36,12 @@ export function useActiveCompany(companyIdOverride?: number | null) {
     return user.role === 'admin' || activeCompany.owner_username === user.username
   }, [activeCompany, user])
 
+  const canManageClosing = useMemo(() => {
+    if (!activeCompany || !user) return false
+    if (activeCompany.is_read_only) return false
+    return user.role === 'admin' || activeCompany.owner_username === user.username
+  }, [activeCompany, user])
+
   const canWriteCompany = useMemo(() => {
     if (!activeCompany) return false
     return activeCompany.is_read_only !== true
@@ -45,6 +51,7 @@ export function useActiveCompany(companyIdOverride?: number | null) {
     activeCompanyId: resolvedCompanyId,
     activeCompany,
     canManageOpening,
+    canManageClosing,
     canWriteCompany,
     isLoading: bootstrapLoading || companiesLoading,
   }

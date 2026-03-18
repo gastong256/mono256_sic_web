@@ -15,6 +15,7 @@ export function useCreateOpeningEntry(companyId: number) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: companyQueryKeys.root }),
         queryClient.invalidateQueries({ queryKey: ['me'] }),
+        queryClient.invalidateQueries({ queryKey: companyQueryKeys.closingState(companyId) }),
         queryClient.invalidateQueries({ queryKey: ['accounts', 'company', companyId] }),
         queryClient.invalidateQueries({ queryKey: journalEntriesQueryKey(companyId) }),
         queryClient.invalidateQueries({ queryKey: ['reports'] }),

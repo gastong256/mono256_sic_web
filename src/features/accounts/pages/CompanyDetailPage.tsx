@@ -5,7 +5,9 @@ import { AccountTree } from '@/features/accounts/components/AccountTree'
 import { AccountForm } from '@/features/accounts/components/AccountForm'
 import { DeleteAccountDialog } from '@/features/accounts/components/DeleteAccountDialog'
 import { OpeningEntryModal } from '@/features/companies/components/OpeningEntryModal'
+import { ClosingWorkflowModal } from '@/features/companies/components/ClosingWorkflowModal'
 import { useActiveCompany } from '@/features/companies/hooks/useActiveCompany'
+import { useCompanyClosingState } from '@/features/companies/hooks/useCompanyClosingState'
 import {
   getCompanyStatusLabels,
   getCompanyWriteBlockMessage,
@@ -20,9 +22,19 @@ export function CompanyDetailPage() {
   const { companyId } = useParams<{ companyId: string }>()
   const navigate = useNavigate()
   const id = Number(companyId)
-  const { activeCompany: company, canManageOpening, canWriteCompany } = useActiveCompany(id)
+  const {
+    activeCompany: company,
+    canManageOpening,
+    canManageClosing,
+    canWriteCompany,
+  } = useActiveCompany(id)
 
   const { data: accounts = [], isLoading, error } = useCompanyAccounts(id)
+  const {
+    data: closingState,
+    isLoading: closingStateLoading,
+    error: closingStateError,
+  } = useCompanyClosingState(id, { enabled: id > 0 })
   const loadErrorMessage = useMemo(
     () =>
       getHttpErrorMessage(error, {
@@ -33,14 +45,30 @@ export function CompanyDetailPage() {
       }),
     [error]
   )
+  const closingStateErrorMessage = useMemo(
+    () =>
+      getHttpErrorMessage(closingStateError, {
+        defaultMessage: 'No se pudo cargar el estado de cierre de la empresa.',
+        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
+        forbiddenMessage: 'No tenés permisos para consultar el estado de cierre.',
+        notFoundMessage: 'La empresa ya no existe o no está disponible.',
+      }),
+    [closingStateError]
+  )
 
   const [accountFormOpen, setAccountFormOpen] = useState(false)
   const [selectedParent, setSelectedParent] = useState<Account | null>(null)
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)
   const [deletingAccount, setDeletingAccount] = useState<Account | null>(null)
   const [openingModalOpen, setOpeningModalOpen] = useState(false)
+  const [closingModalOpen, setClosingModalOpen] = useState(false)
   const companyStatusLabels = useMemo(() => getCompanyStatusLabels(company), [company])
   const companyWriteBlockMessage = useMemo(() => getCompanyWriteBlockMessage(company), [company])
+  const canStartClosing =
+    canManageClosing &&
+    company?.accounting_ready !== false &&
+    company?.is_read_only !== true &&
+    (closingState?.can_close ?? true)
 
   function openCreate(parent: Account) {
     if (!canWriteCompany) return
@@ -91,6 +119,73 @@ export function CompanyDetailPage() {
       </div>
 
       {companyWriteBlockMessage && <Alert tone="warning">{companyWriteBlockMessage}</Alert>}
+
+      <div className="surface-card flex flex-col gap-4 p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="font-semibold text-[var(--text-strong)]">Estado de cierre</p>
+            <p className="muted-text mt-1 text-sm">
+              Seguimiento del último cierre patrimonial y de la reapertura de libros.
+            </p>
+          </div>
+          {canStartClosing && (
+            <Button type="button" onClick={() => setClosingModalOpen(true)}>
+              Preparar cierre
+            </Button>
+          )}
+        </div>
+
+        {company?.books_closed_until && (
+          <Alert tone="info">
+            Los libros están cerrados hasta <strong>{company.books_closed_until}</strong>.
+          </Alert>
+        )}
+
+        {closingStateLoading && (
+          <Spinner className="size-5 text-[var(--brand-500)]" label="Cargando estado de cierre…" />
+        )}
+
+        {closingStateError && !closingStateLoading && (
+          <Alert tone="error">{closingStateErrorMessage}</Alert>
+        )}
+
+        {!closingStateLoading && !closingStateError && (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <article className="summary-stat-card">
+              <p className="summary-stat-label">Libros cerrados hasta</p>
+              <p className="summary-stat-value text-[0.95rem]">
+                {closingState?.books_closed_until ?? company?.books_closed_until ?? 'Sin cierre'}
+              </p>
+            </article>
+            <article className="summary-stat-card">
+              <p className="summary-stat-label">Último cierre patrimonial</p>
+              <p className="summary-stat-value text-[0.95rem]">
+                {closingState?.last_patrimonial_closing_date ?? 'Sin registrar'}
+              </p>
+            </article>
+            <article className="summary-stat-card">
+              <p className="summary-stat-label">Última reapertura</p>
+              <p className="summary-stat-value text-[0.95rem]">
+                {closingState?.last_reopening_date ?? 'Sin registrar'}
+              </p>
+            </article>
+            <article className="summary-stat-card">
+              <p className="summary-stat-label">Elegibilidad</p>
+              <p className="summary-stat-value text-[0.95rem]">
+                {closingState?.can_close ? 'Puede cerrar' : 'No disponible'}
+              </p>
+            </article>
+          </div>
+        )}
+
+        {!canManageClosing &&
+          company?.accounting_ready !== false &&
+          company?.is_read_only !== true && (
+            <p className="muted-text text-sm">
+              Solo el propietario o un administrador pueden ejecutar el cierre contable.
+            </p>
+          )}
+      </div>
 
       {company?.accounting_ready === false && canManageOpening && (
         <div className="surface-card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -156,6 +251,12 @@ export function CompanyDetailPage() {
         onClose={() => setOpeningModalOpen(false)}
         companyId={id}
         existingAccounts={accounts}
+      />
+      <ClosingWorkflowModal
+        isOpen={closingModalOpen}
+        onClose={() => setClosingModalOpen(false)}
+        companyId={id}
+        state={closingState}
       />
     </div>
   )

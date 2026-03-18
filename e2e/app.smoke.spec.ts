@@ -30,20 +30,20 @@ test.describe('App baseline smoke', () => {
     await loginAs(page, 'admin')
 
     await openBooksMenu(page)
-    await page.locator('#menu-libros').getByRole('link', { name: 'Libro Diario' }).click()
+    await expect(page.getByRole('link', { name: 'Libro Diario' })).toBeVisible()
+    await page.getByRole('link', { name: 'Libro Diario' }).click()
     await expect(page).toHaveURL('/reports/journal-book')
     await expect(page.getByRole('heading', { name: 'Libro Diario' })).toBeVisible()
 
     await openBooksMenu(page)
-    await page.locator('#menu-libros').getByRole('link', { name: 'Libro Mayor' }).click()
+    await expect(page.getByRole('link', { name: 'Libro Mayor' })).toBeVisible()
+    await page.getByRole('link', { name: 'Libro Mayor' }).click()
     await expect(page).toHaveURL('/reports/ledger')
     await expect(page.getByRole('heading', { name: 'Libro Mayor' })).toBeVisible()
 
     await openBooksMenu(page)
-    await page
-      .locator('#menu-libros')
-      .getByRole('link', { name: 'Balance de comprobacion' })
-      .click()
+    await expect(page.getByRole('link', { name: 'Balance de comprobacion' })).toBeVisible()
+    await page.getByRole('link', { name: 'Balance de comprobacion' }).click()
     await expect(page).toHaveURL('/reports/trial-balance')
     await expect(page.getByRole('heading', { name: 'Balance de Comprobacion' })).toBeVisible()
   })

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router'
@@ -234,5 +234,33 @@ describe('CompanyDetailPage', () => {
     expect(await screen.findByText(/modo solo lectura/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /\+ agregar cuenta/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /editar/i })).not.toBeInTheDocument()
+  })
+
+  it('previews and executes a simplified closing from company detail', async () => {
+    const user = userEvent.setup()
+    setAuthenticatedUser('student')
+    const expectedClosingDate = new Date().toISOString().slice(0, 10)
+
+    renderCompanyDetailPage('/companies/1')
+
+    expect(await screen.findByText(/estado de cierre/i)).toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: /preparar cierre/i }))
+
+    const prepareDialog = await screen.findByRole('dialog', { name: /preparar cierre contable/i })
+    await user.click(within(prepareDialog).getByRole('button', { name: /ver preview/i }))
+
+    expect(
+      await screen.findByRole('dialog', { name: /confirmar cierre contable/i })
+    ).toBeInTheDocument()
+    expect(screen.getByText(/por cierre de cuentas patrimoniales/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /ejecutar cierre/i }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+    expect(await screen.findByText(/libros están cerrados hasta/i)).toHaveTextContent(
+      expectedClosingDate
+    )
   })
 })

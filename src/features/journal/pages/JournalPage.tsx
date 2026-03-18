@@ -43,7 +43,10 @@ export function JournalPage() {
         unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
         forbiddenMessage: 'No tenés permisos para ver estos asientos.',
         notFoundMessage: 'La empresa activa no existe o ya no está disponible.',
-        conflictMessage: getCompanyAccountingBlockMessage(activeCompany),
+        conflictMessage:
+          activeCompany?.accounting_ready === false || activeCompany?.is_read_only
+            ? getCompanyAccountingBlockMessage(activeCompany)
+            : undefined,
       }),
     [activeCompany, error]
   )
@@ -104,6 +107,13 @@ export function JournalPage() {
         <Alert tone="info">
           Esta empresa está en modo solo lectura. Podés consultar los asientos, pero no crear ni
           reversar operaciones.
+        </Alert>
+      )}
+
+      {activeCompanyId !== null && activeCompany?.books_closed_until && (
+        <Alert tone="info">
+          Los libros están cerrados hasta <strong>{activeCompany.books_closed_until}</strong>. Los
+          nuevos asientos deben registrarse con fecha posterior.
         </Alert>
       )}
 

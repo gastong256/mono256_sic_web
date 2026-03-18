@@ -70,7 +70,10 @@ export function LedgerReportPage() {
       unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
       forbiddenMessage: 'No tenés permisos para consultar este reporte.',
       notFoundMessage: 'La empresa no existe o ya no está disponible.',
-      conflictMessage: getCompanyAccountingBlockMessage(activeCompany),
+      conflictMessage:
+        activeCompany?.accounting_ready === false || activeCompany?.is_read_only
+          ? getCompanyAccountingBlockMessage(activeCompany)
+          : undefined,
     })
   }, [activeCompany, error, fieldErrors.account_id])
 
@@ -199,6 +202,12 @@ export function LedgerReportPage() {
           }
           className="py-12"
         />
+      )}
+
+      {activeCompanyId !== null && activeCompany?.books_closed_until && (
+        <Alert tone="info">
+          Los libros están cerrados hasta <strong>{activeCompany.books_closed_until}</strong>.
+        </Alert>
       )}
 
       {activeCompanyId !== null && isLoading && (

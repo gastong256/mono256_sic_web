@@ -72,6 +72,11 @@ export function NewJournalEntryForm({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const isReadOnly = company?.is_read_only === true
   const isAccountingReady = company?.accounting_ready !== false
+  const minJournalDate = company?.books_closed_until
+    ? new Date(new Date(`${company.books_closed_until}T00:00:00`).getTime() + 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10)
+    : undefined
 
   const {
     register,
@@ -146,7 +151,10 @@ export function NewJournalEntryForm({
         unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
         forbiddenMessage: 'No tenés permisos para registrar asientos en esta empresa.',
         notFoundMessage: 'La empresa ya no existe o no está disponible.',
-        conflictMessage: getCompanyAccountingBlockMessage(company),
+        conflictMessage:
+          company?.accounting_ready === false || company?.is_read_only
+            ? getCompanyAccountingBlockMessage(company)
+            : undefined,
       })
       pushToast(message, 'error')
       setSubmitError(message)
@@ -173,13 +181,20 @@ export function NewJournalEntryForm({
           </Alert>
         )}
 
+        {company?.books_closed_until && (
+          <Alert tone="info">
+            Los libros están cerrados hasta <strong>{company.books_closed_until}</strong>. La fecha
+            del nuevo asiento debe ser posterior.
+          </Alert>
+        )}
+
         {/* Date + Description */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-semibold text-[var(--text-strong)]">
               Fecha
             </label>
-            <Input type="date" {...register('date')} />
+            <Input type="date" min={minJournalDate} {...register('date')} />
             {errors.date && (
               <p className="mt-1 text-xs text-[var(--danger-600)]">{errors.date.message}</p>
             )}

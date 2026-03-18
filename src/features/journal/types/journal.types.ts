@@ -1,4 +1,16 @@
 export type JournalLineType = 'DEBIT' | 'CREDIT'
+export type KnownJournalSourceType =
+  | 'MANUAL'
+  | 'OPENING'
+  | 'REVERSAL'
+  | 'ADJUSTMENT'
+  | 'RESULT_CLOSING'
+  | 'PATRIMONIAL_CLOSING'
+  | 'REOPENING'
+  | 'INVOICE'
+  | 'RECEIPT'
+  | 'OTHER'
+export type JournalSourceType = KnownJournalSourceType | (string & {})
 
 export interface JournalLine {
   account_id: number
@@ -13,7 +25,7 @@ export interface JournalEntry {
   entry_number: number
   date: string // "YYYY-MM-DD"
   description: string
-  source_type: string
+  source_type: JournalSourceType
   source_ref: string
   created_by: string
   reversal_of_id?: number | null
