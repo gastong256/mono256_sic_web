@@ -250,7 +250,7 @@ describe('CompanyDetailPage', () => {
     setAuthenticatedUser('student')
     const expectedClosingDate = new Date().toISOString().slice(0, 10)
 
-    renderCompanyDetailPage('/companies/1')
+    renderCompanyDetailPage('/companies/9')
 
     expect(await screen.findByText(/estado de cierre/i)).toBeInTheDocument()
     await user.click(await screen.findByRole('button', { name: /preparar cierre/i }))

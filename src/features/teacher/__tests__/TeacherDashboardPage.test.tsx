@@ -73,9 +73,10 @@ describe('TeacherDashboardPage', () => {
     renderTeacherDashboardPage()
 
     expect(await screen.findByText('Contabilidad I')).toBeInTheDocument()
+    expect(await screen.findByText('Contabilidad II')).toBeInTheDocument()
     expect(await screen.findByText(/sofía student/i)).toBeInTheDocument()
-    expect(await screen.findByText(/3 empresa\(s\) · 2 asiento\(s\)/i)).toBeInTheDocument()
     expect(await screen.findByText(/pedro student/i)).toBeInTheDocument()
-    expect(await screen.findByText(/4 empresa\(s\) · 3 asiento\(s\)/i)).toBeInTheDocument()
+    expect(await screen.findByText(/lucia student/i)).toBeInTheDocument()
+    expect(await screen.findByText(/micaela pérez/i)).toBeInTheDocument()
   })
 })

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { act, render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router'
@@ -83,18 +83,35 @@ describe('CompaniesPage', () => {
 
     await user.click(within(demoRow).getByRole('button', { name: /publicar demo/i }))
 
-    await waitFor(() => {
-      const updatedRow = screen.getByRole('row', { name: /empresa demo guiada/i })
-      expect(within(updatedRow).getByText('Publicada')).toBeInTheDocument()
-      expect(within(updatedRow).getByRole('button', { name: /ocultar demo/i })).toBeInTheDocument()
-    })
+    const updatedRowAfterPublish = screen.getByRole('row', { name: /empresa demo guiada/i })
+    await within(updatedRowAfterPublish).findByText('Publicada')
+    expect(
+      within(updatedRowAfterPublish).getByRole('button', { name: /ocultar demo/i })
+    ).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /ocultar demo/i }))
+    await user.click(
+      within(screen.getByRole('row', { name: /empresa demo guiada/i })).getByRole('button', {
+        name: /ocultar demo/i,
+      })
+    )
 
-    await waitFor(() => {
-      const updatedRow = screen.getByRole('row', { name: /empresa demo guiada/i })
-      expect(within(updatedRow).getByText('Oculta')).toBeInTheDocument()
-      expect(within(updatedRow).getByRole('button', { name: /publicar demo/i })).toBeInTheDocument()
-    })
+    const updatedRowAfterHide = screen.getByRole('row', { name: /empresa demo guiada/i })
+    await within(updatedRowAfterHide).findByText('Oculta')
+    expect(
+      within(updatedRowAfterHide).getByRole('button', { name: /publicar demo/i })
+    ).toBeInTheDocument()
+  })
+
+  it('shows published demo companies in student visible flows', async () => {
+    setAuthenticatedUser('student')
+
+    renderCompaniesPage()
+
+    const demoRow = await screen.findByRole('row', { name: /demo comercial publicada/i })
+    expect(within(demoRow).getByText('Publicada')).toBeInTheDocument()
+    expect(within(demoRow).getByText(/solo lectura/i)).toBeInTheDocument()
+    expect(
+      within(demoRow).queryByRole('button', { name: /publicar demo/i })
+    ).not.toBeInTheDocument()
   })
 })

@@ -54,4 +54,15 @@ test.describe('Companies critical flow', () => {
     await expect(demoRow.getByText('Oculta')).toBeVisible()
     await expect(demoRow.getByRole('button', { name: 'Publicar demo' })).toBeVisible()
   })
+
+  test('students can see published read-only demo companies in visible listings', async ({
+    page,
+  }) => {
+    await loginAs(page, 'student')
+    await openCompaniesPage(page)
+
+    const demoRow = await companyRow(page, 'Demo Comercial Publicada')
+    await expect(demoRow.getByText('Publicada', { exact: true })).toBeVisible()
+    await expect(demoRow.getByText('Solo lectura')).toBeVisible()
+  })
 })

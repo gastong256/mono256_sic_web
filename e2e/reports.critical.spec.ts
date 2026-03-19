@@ -1,5 +1,12 @@
-import { expect, test } from '@playwright/test'
-import { clearSession, loginAs, openBooksMenu, selectActiveCompany } from './support/session'
+import { expect, test, type Page } from '@playwright/test'
+import { clearSession, loginAs, selectActiveCompany } from './support/session'
+
+async function openReport(page: Page, href: string) {
+  await page.getByRole('button', { name: /^Libros$/ }).click()
+  const link = page.locator(`#menu-libros a[href="${href}"]`).first()
+  await expect(link).toBeVisible()
+  await link.dispatchEvent('click')
+}
 
 test.describe('Reports critical flows', () => {
   test.beforeEach(async ({ page }) => {
@@ -10,13 +17,13 @@ test.describe('Reports critical flows', () => {
     await loginAs(page, 'student')
     await selectActiveCompany(page, 'Ferretería Los Andes')
 
-    await openBooksMenu(page)
-    await page.getByRole('link', { name: 'Libro Diario' }).click()
+    await openReport(page, '/reports/journal-book')
     await expect(page.getByRole('heading', { name: 'Libro Diario' })).toBeVisible()
-    await expect(page.getByText(/Inventario Inicial/i)).toBeVisible()
+    await expect(page.getByText(/Cobranza de mostrador/i)).toBeVisible()
+    await expect(page.getByText(/Ejercicios anteriores/i)).toBeVisible()
+    await expect(page.getByRole('button', { name: /Ver snapshot/i }).first()).toBeVisible()
 
-    await openBooksMenu(page)
-    await page.getByRole('link', { name: 'Libro Mayor' }).click()
+    await openReport(page, '/reports/ledger')
     await expect(page.getByRole('heading', { name: 'Libro Mayor' })).toBeVisible()
     await expect(
       page
@@ -24,10 +31,9 @@ test.describe('Reports critical flows', () => {
         .filter({ hasText: /1\.01\.01 · Caja en Pesos/i })
         .first()
     ).toBeVisible()
-    await expect(page.getByRole('cell', { name: 'Pago de sueldos' }).first()).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Cobranza de mostrador' }).first()).toBeVisible()
 
-    await openBooksMenu(page)
-    await page.getByRole('link', { name: 'Balance de comprobacion' }).click()
+    await openReport(page, '/reports/trial-balance')
     await expect(page.getByRole('heading', { name: 'Balance de Comprobacion' })).toBeVisible()
     await expect(page.getByText(/1\.01 · Caja y Bancos/i)).toBeVisible()
   })
@@ -36,12 +42,10 @@ test.describe('Reports critical flows', () => {
     await loginAs(page, 'student')
     await selectActiveCompany(page, 'Consultora Delta')
 
-    await openBooksMenu(page)
-    await page.getByRole('link', { name: 'Libro Diario' }).click()
+    await openReport(page, '/reports/journal-book')
     await expect(page.getByText('Sin resultados en el periodo')).toBeVisible()
 
-    await openBooksMenu(page)
-    await page.getByRole('link', { name: 'Libro Mayor' }).click()
+    await openReport(page, '/reports/ledger')
     await expect(page.getByText('Sin movimientos en el periodo consultado').first()).toBeVisible()
   })
 
@@ -49,8 +53,7 @@ test.describe('Reports critical flows', () => {
     await loginAs(page, 'student')
     await selectActiveCompany(page, 'Librería del Centro')
 
-    await openBooksMenu(page)
-    await page.getByRole('link', { name: 'Libro Diario' }).click()
+    await openReport(page, '/reports/journal-book')
     await expect(page.getByText(/Pendiente de apertura contable/i)).toBeVisible()
     await expect(
       page.getByText(/La empresa necesita registrarse con inventario inicial o general/i).first()

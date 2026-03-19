@@ -1,5 +1,12 @@
-import { expect, test } from '@playwright/test'
-import { clearSession, loginAs, openSupervisionMenu, uniqueName } from './support/session'
+import { expect, test, type Page } from '@playwright/test'
+import { clearSession, loginAs, uniqueName } from './support/session'
+
+async function openTeacherDashboard(page: Page) {
+  await page.getByRole('button', { name: 'Supervision' }).click()
+  const link = page.locator('#menu-supervision a[href="/teacher/dashboard"]').first()
+  await expect(link).toBeVisible()
+  await link.dispatchEvent('click')
+}
 
 test.describe('Teacher critical flows', () => {
   test.beforeEach(async ({ page }) => {
@@ -10,10 +17,10 @@ test.describe('Teacher critical flows', () => {
     const courseName = uniqueName('Curso E2E')
 
     await loginAs(page, 'teacher')
-    await openSupervisionMenu(page)
-    await page.locator('#menu-supervision').getByRole('link', { name: 'Panel docente' }).click()
+    await openTeacherDashboard(page)
 
     await expect(page).toHaveURL('/teacher/dashboard')
+    await expect(page.getByRole('heading', { name: 'Panel docente' })).toBeVisible()
     await page.getByRole('button', { name: '+ Nuevo curso' }).click()
 
     const dialog = page.getByRole('dialog', { name: /crear nuevo curso/i })
@@ -27,9 +34,9 @@ test.describe('Teacher critical flows', () => {
 
   test('enrolls a student and navigates to student detail', async ({ page }) => {
     await loginAs(page, 'teacher')
-    await openSupervisionMenu(page)
-    await page.locator('#menu-supervision').getByRole('link', { name: 'Panel docente' }).click()
+    await openTeacherDashboard(page)
     await expect(page).toHaveURL('/teacher/dashboard')
+    await expect(page.getByRole('heading', { name: 'Panel docente' })).toBeVisible()
 
     const coursePanel = page.locator('section', { hasText: 'Contabilidad I' }).first()
     await expect(coursePanel).toBeVisible()
@@ -37,13 +44,17 @@ test.describe('Teacher critical flows', () => {
     await coursePanel.getByRole('button', { name: 'Enrolar alumno' }).click()
 
     const enrollDialog = page.getByRole('dialog', { name: /enrolar alumno en Contabilidad I/i })
-    await enrollDialog.getByLabel('Buscar alumno').fill('Lucia')
-    await enrollDialog.getByRole('button', { name: 'Inscribir' }).click()
+    await enrollDialog.getByLabel('Buscar alumno').fill('Alumno 01')
+    const availableRow = enrollDialog
+      .getByRole('listitem')
+      .filter({ hasText: '@student11' })
+      .first()
+    await availableRow.getByRole('button', { name: 'Inscribir' }).click()
 
     await expect(page.getByText('Alumno enrolado correctamente.')).toBeVisible()
     await enrollDialog.getByRole('button', { name: 'Cerrar' }).click()
 
-    await expect(coursePanel.getByText(/lucia student/i)).toBeVisible()
+    await expect(coursePanel.getByText(/@student11/i)).toBeVisible()
 
     const sofiaRow = coursePanel.locator('li', { hasText: '@student1' }).first()
     await sofiaRow.getByRole('link', { name: 'Ver detalle' }).click()

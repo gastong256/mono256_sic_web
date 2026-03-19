@@ -28,7 +28,7 @@ export async function clearSession(page: Page) {
     sessionStorage.clear()
   })
   await page.goto('/login')
-  await expect(page.getByRole('heading', { name: 'Bienvenido' })).toBeVisible()
+  await expect(page.getByLabel('Usuario')).toBeVisible()
 }
 
 export async function loginAs(page: Page, role: TestUserRole = 'admin') {
