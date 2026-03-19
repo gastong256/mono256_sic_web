@@ -49,7 +49,7 @@ export function ClosingSnapshotPage() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="page-shell">
       <PageHeader
         icon="balance"
         title="Snapshot confirmado del cierre"
@@ -99,7 +99,7 @@ export function ClosingSnapshotPage() {
           </div>
 
           {data.income_statement && (
-            <section className="surface-card p-4">
+            <section className="page-section">
               <p className="font-semibold text-[var(--text-strong)]">Estado de resultados</p>
               <div className="mt-3 grid gap-3 md:grid-cols-3">
                 <article className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 text-sm">
@@ -123,7 +123,7 @@ export function ClosingSnapshotPage() {
           )}
 
           {data.balance_sheet && (
-            <section className="surface-card p-4">
+            <section className="page-section">
               <p className="font-semibold text-[var(--text-strong)]">Balance general confirmado</p>
               <div className="mt-3 grid gap-3 md:grid-cols-3">
                 <article className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 text-sm">
@@ -146,7 +146,7 @@ export function ClosingSnapshotPage() {
             </section>
           )}
 
-          <section className="surface-card p-4">
+          <section className="page-section">
             <p className="font-semibold text-[var(--text-strong)]">Líneas patrimoniales</p>
             {data.lines.length === 0 ? (
               <p className="muted-text mt-3 text-sm">No hay líneas patrimoniales registradas.</p>

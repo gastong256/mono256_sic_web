@@ -49,12 +49,23 @@ export async function logout(page: Page) {
 }
 
 export async function openBooksMenu(page: Page) {
-  const button = page.getByRole('button', { name: 'Libros' })
+  const mobileMenuButton = page.getByRole('button', { name: /toggle navigation menu|menu/i })
+  if (await mobileMenuButton.isVisible().catch(() => false)) {
+    const diaryLink = page.getByRole('link', { name: 'Libro Diario' })
+    if (!(await diaryLink.isVisible().catch(() => false))) {
+      await mobileMenuButton.click()
+    }
+  }
+
+  const button = page.getByRole('button', { name: /^Libros$/ })
   const link = page.getByRole('link', { name: 'Libro Diario' })
 
-  await button.click()
-  if (!(await link.isVisible())) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
     await button.click()
+    await page.waitForTimeout(120)
+    if (await link.isVisible().catch(() => false)) {
+      break
+    }
   }
   await expect(link).toBeVisible()
 }

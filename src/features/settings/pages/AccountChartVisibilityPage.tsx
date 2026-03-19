@@ -91,7 +91,7 @@ export function AccountChartVisibilityPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="page-shell">
       <PageHeader
         icon="settings"
         title="Visibilidad del plan de cuentas"
@@ -103,7 +103,7 @@ export function AccountChartVisibilityPage() {
       />
 
       {isAdmin && (
-        <section className="surface-card p-4">
+        <section className="filter-panel p-4">
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
             <label className="text-sm font-semibold text-[var(--text-strong)]">
               Docente
@@ -144,6 +144,28 @@ export function AccountChartVisibilityPage() {
           {!bootstrapLoading && !bootstrapError && teachers.length > 0 && !canLoadConfig && (
             <Alert tone="warning">Seleccioná un docente para cargar la configuración.</Alert>
           )}
+        </section>
+      )}
+
+      {!bootstrapLoading && !bootstrapError && data.length > 0 && (
+        <section className="grid gap-3 md:grid-cols-3">
+          <article className="summary-stat-card">
+            <p className="summary-stat-label">Niveles raíz</p>
+            <p className="summary-stat-value">{buildTree(draft).length}</p>
+          </article>
+          <article className="summary-stat-card">
+            <p className="summary-stat-label">Nodos configurables</p>
+            <p className="summary-stat-value">{draft.length}</p>
+          </article>
+          <article className="summary-stat-card">
+            <p className="summary-stat-label">Docente actual</p>
+            <p className="summary-stat-value text-[0.95rem]">
+              {isAdmin
+                ? teachers.find((teacher) => teacher.id === selectedTeacherId)?.full_name ||
+                  'Sin seleccionar'
+                : 'Tu configuración'}
+            </p>
+          </article>
         </section>
       )}
 

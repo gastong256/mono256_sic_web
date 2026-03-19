@@ -24,11 +24,10 @@ export function LoginPage() {
   if (isAuthenticated) return null
 
   return (
-    <div className="flex min-h-[70vh] items-center justify-center px-4">
+    <div className="flex min-h-[74vh] items-center justify-center px-4">
       <div className="w-full max-w-md">
-        {/* Card */}
-        <div className="surface-card p-8">
-          {/* Header */}
+        <div className="surface-card relative overflow-hidden p-8">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,rgba(0,104,234,0.14),transparent_72%)]" />
           <div className="mb-8 flex flex-col items-center text-center">
             <div className="mb-3">
               <BrandMark
@@ -39,7 +38,9 @@ export function LoginPage() {
             <h1 className="text-2xl font-bold tracking-tight text-[var(--text-strong)]">
               Bienvenido
             </h1>
-            <p className="muted-text mt-1 text-sm">Iniciá sesión en tu cuenta</p>
+            <p className="muted-text mt-1 text-sm">
+              Iniciá sesión para continuar con tu empresa activa y tus reportes.
+            </p>
           </div>
 
           <LoginForm />

@@ -18,6 +18,7 @@ import type { Account } from '@/features/accounts/types/account.types'
 import { Alert } from '@/shared/ui/Alert'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 import { Button } from '@/shared/ui/Button'
+import { PageHeader } from '@/shared/ui/PageHeader'
 
 export function CompanyDetailPage() {
   const { companyId } = useParams<{ companyId: string }>()
@@ -91,28 +92,46 @@ export function CompanyDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Back link */}
-      <button
-        onClick={() => void navigate('/companies')}
-        className="text-sm text-gray-500 transition-colors hover:text-gray-800"
-      >
-        ← Volver a Empresas
-      </button>
+    <div className="page-shell">
+      <PageHeader
+        icon="companies"
+        title="Plan de cuentas"
+        subtitle="Administrá las cuentas de movimiento, el seguimiento del cierre contable y la apertura de esta empresa."
+        actions={
+          <>
+            <Button type="button" variant="secondary" onClick={() => void navigate('/companies')}>
+              Volver a empresas
+            </Button>
+            {company?.accounting_ready === false && canManageOpening && (
+              <Button
+                type="button"
+                disabled={!canWriteCompany}
+                onClick={() => setOpeningModalOpen(true)}
+              >
+                Registrar apertura
+              </Button>
+            )}
+            {canStartClosing && (
+              <Button type="button" onClick={() => setClosingModalOpen(true)}>
+                Preparar cierre
+              </Button>
+            )}
+          </>
+        }
+      />
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Plan de cuentas</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Administrá las cuentas de movimiento de esta empresa.
+      <section className="page-section-muted">
+        <p className="text-sm font-semibold text-[var(--text-strong)]">
+          {company?.name ?? 'Empresa seleccionada'}
+        </p>
+        <p className="muted-text mt-1 text-sm">
+          {company?.description ||
+            'Revisá el estado contable y la estructura operativa de la empresa.'}
         </p>
         {companyStatusLabels.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="page-meta-row mt-3">
             {companyStatusLabels.map((label) => (
-              <span
-                key={label}
-                className="rounded-full border border-[var(--border-soft)] bg-[var(--bg-subtle)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)]"
-              >
+              <span key={label} className="status-badge">
                 {label}
               </span>
             ))}
@@ -121,11 +140,11 @@ export function CompanyDetailPage() {
         {company?.is_demo && company.demo_slug && (
           <p className="muted-text mt-2 text-xs">Slug demo: {company.demo_slug}</p>
         )}
-      </div>
+      </section>
 
       {companyWriteBlockMessage && <Alert tone="warning">{companyWriteBlockMessage}</Alert>}
 
-      <div className="surface-card flex flex-col gap-4 p-4">
+      <section className="page-section flex flex-col gap-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="font-semibold text-[var(--text-strong)]">Estado de cierre</p>
@@ -133,11 +152,6 @@ export function CompanyDetailPage() {
               Seguimiento del último cierre patrimonial y de la reapertura de libros.
             </p>
           </div>
-          {canStartClosing && (
-            <Button type="button" onClick={() => setClosingModalOpen(true)}>
-              Preparar cierre
-            </Button>
-          )}
         </div>
 
         {company?.books_closed_until && (
@@ -261,10 +275,10 @@ export function CompanyDetailPage() {
             )}
           </div>
         )}
-      </div>
+      </section>
 
       {company?.accounting_ready === false && canManageOpening && (
-        <div className="surface-card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <section className="page-section flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="font-semibold text-[var(--text-strong)]">Registrá la apertura contable</p>
             <p className="muted-text mt-1 text-sm">
@@ -279,27 +293,23 @@ export function CompanyDetailPage() {
           >
             Registrar apertura
           </Button>
-        </div>
+        </section>
       )}
 
-      {/* Loading */}
       {isLoading && (
         <div className="flex justify-center py-16">
           <Spinner className="size-8 text-blue-600" label="Cargando plan de cuentas…" />
         </div>
       )}
 
-      {/* Error */}
       {error && !isLoading && <Alert tone="error">{loadErrorMessage}</Alert>}
 
-      {/* Empty */}
       {!isLoading && !error && accounts.length === 0 && (
-        <div className="rounded-xl border-2 border-dashed border-gray-200 py-16 text-center">
+        <div className="page-section rounded-xl border-2 border-dashed border-gray-200 py-16 text-center">
           <p className="text-sm font-medium text-gray-500">No hay cuentas registradas.</p>
         </div>
       )}
 
-      {/* Tree */}
       {!isLoading && !error && accounts.length > 0 && (
         <AccountTree
           accounts={accounts}
@@ -309,7 +319,6 @@ export function CompanyDetailPage() {
         />
       )}
 
-      {/* Modals */}
       <AccountForm
         isOpen={accountFormOpen}
         onClose={closeForm}

@@ -86,20 +86,39 @@ export function CompaniesPage() {
 
   const showOwner = user?.role === 'admin'
   const canManageDemoPublication = user?.role === 'admin'
+  const demoCompaniesCount = companies.filter((company) => company.is_demo).length
+  const blockedCompaniesCount = companies.filter(
+    (company) => company.accounting_ready === false || company.is_read_only === true
+  ).length
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="page-shell">
       <PageHeader
         title="Empresas"
-        subtitle="Sus empresas registradas."
+        subtitle="Administrá las empresas disponibles, su estado operativo y, si sos admin, la publicación de demos."
         icon="companies"
         actions={<Button onClick={openCreate}>Nueva empresa</Button>}
       />
 
-      {/* Loading */}
+      {!isLoading && !error && companies.length > 0 && (
+        <section className="grid gap-3 md:grid-cols-3">
+          <article className="summary-stat-card">
+            <p className="summary-stat-label">Empresas visibles</p>
+            <p className="summary-stat-value">{companies.length}</p>
+          </article>
+          <article className="summary-stat-card">
+            <p className="summary-stat-label">Empresas demo</p>
+            <p className="summary-stat-value">{demoCompaniesCount}</p>
+          </article>
+          <article className="summary-stat-card">
+            <p className="summary-stat-label">Con restricciones</p>
+            <p className="summary-stat-value">{blockedCompaniesCount}</p>
+          </article>
+        </section>
+      )}
+
       {isLoading && (
-        <div className="surface-card overflow-hidden p-4">
+        <div className="page-section overflow-hidden">
           <div className="mb-3 grid grid-cols-5 gap-3">
             <Skeleton className="h-3 w-16" />
             <Skeleton className="h-3 w-12" />
@@ -121,10 +140,8 @@ export function CompaniesPage() {
         </div>
       )}
 
-      {/* Error */}
       {error && !isLoading && <Alert tone="error">{loadErrorMessage}</Alert>}
 
-      {/* Empty */}
       {!isLoading && !error && companies.length === 0 && (
         <EmptyState
           icon="companies"
@@ -134,7 +151,6 @@ export function CompaniesPage() {
         />
       )}
 
-      {/* Table */}
       {!isLoading && !error && companies.length > 0 && (
         <CompanyTable
           companies={companies}
@@ -148,7 +164,6 @@ export function CompaniesPage() {
         />
       )}
 
-      {/* Modals */}
       <CompanyForm isOpen={formOpen} onClose={closeForm} company={editingCompany ?? undefined} />
       <DeleteCompanyDialog company={deletingCompany} onClose={() => setDeletingCompany(null)} />
     </div>

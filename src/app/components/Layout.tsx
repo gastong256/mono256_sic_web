@@ -395,7 +395,7 @@ export function Layout() {
         )}
       </nav>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-8 md:py-10">
         {showBreadcrumbs && <AppBreadcrumbs />}
         <Outlet />
       </main>

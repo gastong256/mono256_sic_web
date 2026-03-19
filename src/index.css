@@ -165,6 +165,48 @@ textarea {
     color: var(--text-muted);
   }
 
+  .page-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .page-section {
+    border: 1px solid var(--border-soft);
+    border-radius: 1rem;
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 96%), rgb(248 251 255 / 96%)), var(--bg-surface);
+    box-shadow: var(--shadow-soft);
+    padding: 1rem;
+  }
+
+  .page-section-muted {
+    border: 1px solid var(--border-soft);
+    border-radius: 1rem;
+    background: linear-gradient(180deg, #fafdff, #f1f6ff);
+    box-shadow: 0 12px 26px -20px rgb(10 29 64 / 28%);
+    padding: 1rem;
+  }
+
+  .page-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--border-soft);
+    border-radius: 9999px;
+    background: color-mix(in oklab, var(--bg-subtle) 82%, white 18%);
+    padding: 0.28rem 0.7rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    color: var(--text-muted);
+  }
+
   .filter-panel {
     border: 1px solid var(--border-soft);
     border-radius: 1rem;

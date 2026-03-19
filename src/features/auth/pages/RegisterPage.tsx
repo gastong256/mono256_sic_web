@@ -130,9 +130,10 @@ export function RegisterPage() {
   if (isAuthenticated) return null
 
   return (
-    <div className="flex min-h-[70vh] items-center justify-center px-4">
+    <div className="flex min-h-[74vh] items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <div className="surface-card p-8">
+        <div className="surface-card relative overflow-hidden p-8">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,rgba(0,104,234,0.14),transparent_72%)]" />
           <div className="mb-6 flex flex-col items-center text-center">
             <div className="mb-3">
               <BrandMark
@@ -143,7 +144,9 @@ export function RegisterPage() {
             <h1 className="text-2xl font-bold tracking-tight text-[var(--text-strong)]">
               Crear cuenta
             </h1>
-            <p className="muted-text mt-1 text-sm">Registro de estudiante</p>
+            <p className="muted-text mt-1 text-sm">
+              Registrate como estudiante para empezar a operar con tus empresas.
+            </p>
           </div>
 
           {success && (

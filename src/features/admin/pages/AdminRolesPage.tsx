@@ -54,14 +54,14 @@ export function AdminRolesPage() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="page-shell">
       <PageHeader
         icon="admin"
         title="Asignacion de roles"
-        subtitle="Promove o revierte usuarios al rol docente."
+        subtitle="Administrá cambios de rol con búsqueda, filtros y paginación sobre los usuarios del sistema."
       />
 
-      <section className="surface-card space-y-3 p-4">
+      <section className="filter-panel space-y-3 p-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <Input
             label="Buscar usuario"
@@ -126,6 +126,23 @@ export function AdminRolesPage() {
           </div>
         </div>
       </section>
+
+      {!isLoading && !error && users.length > 0 && (
+        <section className="grid gap-3 md:grid-cols-3">
+          <article className="summary-stat-card">
+            <p className="summary-stat-label">Resultados en página</p>
+            <p className="summary-stat-value">{users.length}</p>
+          </article>
+          <article className="summary-stat-card">
+            <p className="summary-stat-label">Total consultado</p>
+            <p className="summary-stat-value">{usersPage?.count ?? 0}</p>
+          </article>
+          <article className="summary-stat-card">
+            <p className="summary-stat-label">Filtros activos</p>
+            <p className="summary-stat-value">{hasActiveFilters ? 'Sí' : 'No'}</p>
+          </article>
+        </section>
+      )}
 
       {isLoading && (
         <div className="flex justify-center py-16">

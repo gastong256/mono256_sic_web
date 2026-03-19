@@ -42,13 +42,16 @@ export function TeacherDashboardPage() {
     setSearch,
     totalAvailablePages,
   } = useTeacherDashboardPageState()
+  const totalStudents = courses.reduce((sum, course) => sum + course.student_count, 0)
+  const totalCompanies = courses.reduce((sum, course) => sum + course.totals.company_count, 0)
+  const totalEntries = courses.reduce((sum, course) => sum + course.totals.journal_entry_count, 0)
 
   return (
-    <div className="space-y-6">
+    <div className="page-shell">
       <PageHeader
         icon="teacher"
         title="Panel docente"
-        subtitle="Resumen de cursos y alumnos asignados."
+        subtitle="Seguí cursos, alumnos y actividad contable desde una vista compacta y operativa."
         actions={
           canCreateCourse && (
             <Button type="button" onClick={openCreateCourseModal}>
@@ -57,6 +60,27 @@ export function TeacherDashboardPage() {
           )
         }
       />
+
+      {!isLoading && !error && courses.length > 0 && (
+        <section className="grid gap-3 md:grid-cols-4">
+          <article className="summary-stat-card">
+            <p className="summary-stat-label">Cursos</p>
+            <p className="summary-stat-value">{courses.length}</p>
+          </article>
+          <article className="summary-stat-card">
+            <p className="summary-stat-label">Alumnos</p>
+            <p className="summary-stat-value">{totalStudents}</p>
+          </article>
+          <article className="summary-stat-card">
+            <p className="summary-stat-label">Empresas</p>
+            <p className="summary-stat-value">{totalCompanies}</p>
+          </article>
+          <article className="summary-stat-card">
+            <p className="summary-stat-label">Asientos</p>
+            <p className="summary-stat-value">{totalEntries}</p>
+          </article>
+        </section>
+      )}
 
       {isLoading && (
         <div className="space-y-4 py-2">

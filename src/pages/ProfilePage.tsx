@@ -91,11 +91,11 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="page-shell">
       <PageHeader
         icon="profile"
         title="Perfil"
-        subtitle="Tu informacion de cuenta."
+        subtitle="Gestioná tus datos de acceso y revisá la información operativa de tu cuenta."
         actions={
           !isEditing ? (
             <Button type="button" variant="secondary" onClick={() => setIsEditing(true)}>
@@ -105,9 +105,26 @@ export function ProfilePage() {
         }
       />
 
-      {/* Profile card */}
+      <section className="grid gap-3 md:grid-cols-4">
+        <article className="summary-stat-card">
+          <p className="summary-stat-label">Usuario</p>
+          <p className="summary-stat-value text-[0.95rem]">@{user.username}</p>
+        </article>
+        <article className="summary-stat-card">
+          <p className="summary-stat-label">Rol</p>
+          <p className="summary-stat-value text-[0.95rem]">{user.role || 'Sin rol'}</p>
+        </article>
+        <article className="summary-stat-card">
+          <p className="summary-stat-label">Email</p>
+          <p className="summary-stat-value text-[0.95rem]">{user.email || 'Sin email'}</p>
+        </article>
+        <article className="summary-stat-card">
+          <p className="summary-stat-label">Sesión</p>
+          <p className="summary-stat-value text-[0.95rem]">ID #{user.id}</p>
+        </article>
+      </section>
+
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        {/* Avatar header */}
         <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-8">
           <div className="flex items-center gap-4">
             <div className="flex size-16 items-center justify-center rounded-full bg-white/20 text-2xl font-bold text-white">
@@ -176,7 +193,6 @@ export function ProfilePage() {
           </div>
         )}
 
-        {/* Details */}
         <div className="divide-y divide-gray-100">
           <ProfileField label="Usuario" value={user.username} />
           <ProfileField label="Nombre completo" value={displayName} />

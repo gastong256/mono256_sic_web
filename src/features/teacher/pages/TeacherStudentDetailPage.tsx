@@ -129,7 +129,7 @@ export function TeacherStudentDetailPage() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="page-shell">
       <PageHeader
         icon="student"
         title="Detalle de alumno"
@@ -140,259 +140,282 @@ export function TeacherStudentDetailPage() {
         }
       />
 
-      <section className="surface-card p-4">
-        <h2 className="mb-3 text-lg font-semibold text-[var(--text-strong)]">
-          Empresas del alumno
-        </h2>
+      {!isLoading && !error && companies.length > 0 && (
+        <section className="grid gap-3 md:grid-cols-3">
+          <article className="summary-stat-card">
+            <p className="summary-stat-label">Empresas</p>
+            <p className="summary-stat-value">{companies.length}</p>
+          </article>
+          <article className="summary-stat-card">
+            <p className="summary-stat-label">Empresa seleccionada</p>
+            <p className="summary-stat-value text-[0.95rem]">
+              {selectedCompany?.name || 'Ninguna'}
+            </p>
+          </article>
+          <article className="summary-stat-card">
+            <p className="summary-stat-label">Asientos visibles</p>
+            <p className="summary-stat-value">{journalEntries.length}</p>
+          </article>
+        </section>
+      )}
 
-        {isLoading && <Spinner className="size-6 text-blue-600" label="Cargando empresas…" />}
+      <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+        <section className="page-section h-fit">
+          <h2 className="mb-3 text-lg font-semibold text-[var(--text-strong)]">
+            Empresas del alumno
+          </h2>
 
-        {error && !isLoading && <Alert tone="error">{companiesErrorMessage}</Alert>}
+          {isLoading && <Spinner className="size-6 text-blue-600" label="Cargando empresas…" />}
 
-        {!isLoading && !error && companies.length === 0 && (
-          <EmptyState
-            icon="companies"
-            title="Este alumno aun no tiene empresas"
-            className="border-none py-6"
-          />
-        )}
+          {error && !isLoading && <Alert tone="error">{companiesErrorMessage}</Alert>}
 
-        {!isLoading && !error && companies.length > 0 && (
-          <ul className="space-y-2">
-            {companies.map((company) => (
-              <li key={company.id}>
-                <button
-                  onClick={() => setSelectedCompanyId(company.id)}
-                  className={[
-                    'w-full rounded-xl border px-3 py-2.5 text-left text-sm transition-colors',
-                    selectedCompanyId === company.id
-                      ? 'border-[var(--brand-500)] bg-[var(--bg-subtle)] text-[var(--brand-700)]'
-                      : 'border-[var(--border-soft)] text-[var(--text-strong)] hover:bg-[var(--bg-subtle)]',
-                  ].join(' ')}
-                >
-                  <span className="block font-semibold">{company.name}</span>
-                  {company.is_demo && company.demo_slug && (
-                    <span className="muted-text mt-1 block text-xs">Demo: {company.demo_slug}</span>
-                  )}
-                  {getCompanyStatusLabels(company).length > 0 && (
-                    <span className="muted-text mt-1 block text-xs">
-                      {getCompanyStatusLabels(company).join(' · ')}
-                    </span>
-                  )}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="surface-card p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[var(--text-strong)]">Asientos del alumno</h2>
-        </div>
-
-        {!selectedCompany && (
-          <EmptyState
-            icon="companies"
-            title="Selecciona una empresa"
-            description="Necesitas una empresa seleccionada para revisar los asientos del alumno."
-            className="border-none py-6"
-          />
-        )}
-
-        {selectedCompany && journalLoading && (
-          <Spinner className="size-6 text-blue-600" label="Cargando asientos…" />
-        )}
-
-        {selectedCompany && journalError && !journalLoading && (
-          <Alert tone="error">
-            {journalErrorMessage} ({selectedCompany.name}).
-          </Alert>
-        )}
-
-        {selectedCompany && !journalLoading && !journalError && journalEntries.length === 0 && (
-          <>
-            {selectedCompany.accounting_ready === false && (
-              <Alert tone="warning">
-                Esta empresa todavía no tiene apertura contable. Por eso aún no muestra actividad
-                operativa.
-              </Alert>
-            )}
+          {!isLoading && !error && companies.length === 0 && (
             <EmptyState
-              icon="journal"
-              title="No hay asientos registrados"
-              description="Esta empresa todavia no tiene actividad contable."
+              icon="companies"
+              title="Este alumno aun no tiene empresas"
               className="border-none py-6"
             />
-          </>
-        )}
+          )}
 
-        {selectedCompany && !journalLoading && !journalError && journalEntries.length > 0 && (
-          <div className="space-y-4">
-            <div className="subtle-panel p-3.5">
-              <p className="text-sm font-semibold text-[var(--text-strong)]">
-                Resumen contable de {selectedCompany.name}
-              </p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                <article className="summary-stat-card">
-                  <p className="summary-stat-label">Asientos</p>
-                  <p className="summary-stat-value">{companySummary.entries}</p>
-                </article>
-                <article className="summary-stat-card">
-                  <p className="summary-stat-label">Debe total</p>
-                  <p className="summary-stat-value text-[#145f91]">
-                    {arsFormatter.format(companySummary.totalDebit)}
-                  </p>
-                </article>
-                <article className="summary-stat-card">
-                  <p className="summary-stat-label">Haber total</p>
-                  <p className="summary-stat-value text-[#8f4b12]">
-                    {arsFormatter.format(companySummary.totalCredit)}
-                  </p>
-                </article>
-                <article className="summary-stat-card">
-                  <p className="summary-stat-label">Diferencia</p>
-                  <p
+          {!isLoading && !error && companies.length > 0 && (
+            <ul className="space-y-2">
+              {companies.map((company) => (
+                <li key={company.id}>
+                  <button
+                    onClick={() => setSelectedCompanyId(company.id)}
                     className={[
-                      'summary-stat-value',
-                      companySummary.balanceDiff === 0 ? 'text-emerald-700' : 'text-red-700',
+                      'w-full rounded-xl border px-3 py-2.5 text-left text-sm transition-colors',
+                      selectedCompanyId === company.id
+                        ? 'border-[var(--brand-500)] bg-[var(--bg-subtle)] text-[var(--brand-700)]'
+                        : 'border-[var(--border-soft)] text-[var(--text-strong)] hover:bg-[var(--bg-subtle)]',
                     ].join(' ')}
                   >
-                    {arsFormatter.format(companySummary.balanceDiff)}
-                  </p>
-                </article>
-              </div>
-            </div>
+                    <span className="block font-semibold">{company.name}</span>
+                    {company.is_demo && company.demo_slug && (
+                      <span className="muted-text mt-1 block text-xs">
+                        Demo: {company.demo_slug}
+                      </span>
+                    )}
+                    {getCompanyStatusLabels(company).length > 0 && (
+                      <span className="muted-text mt-1 block text-xs">
+                        {getCompanyStatusLabels(company).join(' · ')}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold tracking-wide text-[var(--text-muted)] uppercase">
-                Resumen por cuenta
-              </h3>
-              <div className="accounting-table-shell">
-                <div className="accounting-table-scroll">
-                  <table className="accounting-table">
-                    <thead>
-                      <tr>
-                        <th scope="col">Cuenta</th>
-                        <th scope="col" className="amount-col">
-                          Debe
-                        </th>
-                        <th scope="col" className="amount-col">
-                          Haber
-                        </th>
-                        <th scope="col" className="amount-col">
-                          Saldo neto
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {companySummary.byAccount.map((account) => (
-                        <tr key={account.code}>
-                          <td>
-                            {account.code} · {account.name}
-                          </td>
-                          <td className="amount-cell amount-cell-debit">
-                            {arsFormatter.format(account.debit)}
-                          </td>
-                          <td className="amount-cell amount-cell-credit">
-                            {arsFormatter.format(account.credit)}
-                          </td>
-                          <td
-                            className={[
-                              'amount-cell',
-                              account.balance >= 0 ? 'text-emerald-700' : 'text-red-700',
-                            ].join(' ')}
-                          >
-                            {arsFormatter.format(account.balance)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+        <section className="page-section">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-[var(--text-strong)]">Asientos del alumno</h2>
+          </div>
+
+          {!selectedCompany && (
+            <EmptyState
+              icon="companies"
+              title="Selecciona una empresa"
+              description="Necesitas una empresa seleccionada para revisar los asientos del alumno."
+              className="border-none py-6"
+            />
+          )}
+
+          {selectedCompany && journalLoading && (
+            <Spinner className="size-6 text-blue-600" label="Cargando asientos…" />
+          )}
+
+          {selectedCompany && journalError && !journalLoading && (
+            <Alert tone="error">
+              {journalErrorMessage} ({selectedCompany.name}).
+            </Alert>
+          )}
+
+          {selectedCompany && !journalLoading && !journalError && journalEntries.length === 0 && (
+            <>
+              {selectedCompany.accounting_ready === false && (
+                <Alert tone="warning">
+                  Esta empresa todavía no tiene apertura contable. Por eso aún no muestra actividad
+                  operativa.
+                </Alert>
+              )}
+              <EmptyState
+                icon="journal"
+                title="No hay asientos registrados"
+                description="Esta empresa todavia no tiene actividad contable."
+                className="border-none py-6"
+              />
+            </>
+          )}
+
+          {selectedCompany && !journalLoading && !journalError && journalEntries.length > 0 && (
+            <div className="space-y-4">
+              <div className="subtle-panel p-3.5">
+                <p className="text-sm font-semibold text-[var(--text-strong)]">
+                  Resumen contable de {selectedCompany.name}
+                </p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                  <article className="summary-stat-card">
+                    <p className="summary-stat-label">Asientos</p>
+                    <p className="summary-stat-value">{companySummary.entries}</p>
+                  </article>
+                  <article className="summary-stat-card">
+                    <p className="summary-stat-label">Debe total</p>
+                    <p className="summary-stat-value text-[#145f91]">
+                      {arsFormatter.format(companySummary.totalDebit)}
+                    </p>
+                  </article>
+                  <article className="summary-stat-card">
+                    <p className="summary-stat-label">Haber total</p>
+                    <p className="summary-stat-value text-[#8f4b12]">
+                      {arsFormatter.format(companySummary.totalCredit)}
+                    </p>
+                  </article>
+                  <article className="summary-stat-card">
+                    <p className="summary-stat-label">Diferencia</p>
+                    <p
+                      className={[
+                        'summary-stat-value',
+                        companySummary.balanceDiff === 0 ? 'text-emerald-700' : 'text-red-700',
+                      ].join(' ')}
+                    >
+                      {arsFormatter.format(companySummary.balanceDiff)}
+                    </p>
+                  </article>
                 </div>
               </div>
-            </div>
 
-            <h3 className="text-sm font-semibold tracking-wide text-[var(--text-muted)] uppercase">
-              Detalle de asientos
-            </h3>
-            <ul className="space-y-3">
-              {journalEntries.map((entry) => {
-                const totals = entryTotals(entry)
-                const balanced = totals.debit === totals.credit
-
-                return (
-                  <li key={entry.id} className="accounting-table-shell">
-                    <div className="data-table-head flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-soft)] px-3 py-2 text-sm">
-                      <span className="font-medium text-[var(--text-strong)]">
-                        Asiento #{entry.entry_number} · {entry.date} · {entry.description}
-                      </span>
-                      <span
-                        className={[
-                          'font-semibold tabular-nums',
-                          balanced ? 'text-emerald-700' : 'text-red-700',
-                        ].join(' ')}
-                      >
-                        Debe {arsFormatter.format(totals.debit)} | Haber{' '}
-                        {arsFormatter.format(totals.credit)}
-                      </span>
-                    </div>
-                    <div className="accounting-table-scroll">
-                      <table className="accounting-table">
-                        <thead>
-                          <tr>
-                            <th scope="col">Cuenta</th>
-                            <th scope="col" className="amount-col">
-                              Debe
-                            </th>
-                            <th scope="col" className="amount-col">
-                              Haber
-                            </th>
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                  Resumen por cuenta
+                </h3>
+                <div className="accounting-table-shell">
+                  <div className="accounting-table-scroll">
+                    <table className="accounting-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Cuenta</th>
+                          <th scope="col" className="amount-col">
+                            Debe
+                          </th>
+                          <th scope="col" className="amount-col">
+                            Haber
+                          </th>
+                          <th scope="col" className="amount-col">
+                            Saldo neto
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {companySummary.byAccount.map((account) => (
+                          <tr key={account.code}>
+                            <td>
+                              {account.code} · {account.name}
+                            </td>
+                            <td className="amount-cell amount-cell-debit">
+                              {arsFormatter.format(account.debit)}
+                            </td>
+                            <td className="amount-cell amount-cell-credit">
+                              {arsFormatter.format(account.credit)}
+                            </td>
+                            <td
+                              className={[
+                                'amount-cell',
+                                account.balance >= 0 ? 'text-emerald-700' : 'text-red-700',
+                              ].join(' ')}
+                            >
+                              {arsFormatter.format(account.balance)}
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {entry.lines.map((line, index) => (
-                            <tr key={`${entry.id}-${index}`}>
-                              <td>
-                                {line.account_code} · {line.account_name}
-                              </td>
-                              <td
-                                className={
-                                  line.type === 'DEBIT'
-                                    ? 'amount-cell amount-cell-debit'
-                                    : 'amount-cell-empty'
-                                }
-                              >
-                                {line.type === 'DEBIT' ? lineAmount(line) : '—'}
-                              </td>
-                              <td
-                                className={
-                                  line.type === 'CREDIT'
-                                    ? 'amount-cell amount-cell-credit'
-                                    : 'amount-cell-empty'
-                                }
-                              >
-                                {line.type === 'CREDIT' ? lineAmount(line) : '—'}
-                              </td>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <h3 className="text-sm font-semibold tracking-wide text-[var(--text-muted)] uppercase">
+                Detalle de asientos
+              </h3>
+              <ul className="space-y-3">
+                {journalEntries.map((entry) => {
+                  const totals = entryTotals(entry)
+                  const balanced = totals.debit === totals.credit
+
+                  return (
+                    <li key={entry.id} className="accounting-table-shell">
+                      <div className="data-table-head flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-soft)] px-3 py-2 text-sm">
+                        <span className="font-medium text-[var(--text-strong)]">
+                          Asiento #{entry.entry_number} · {entry.date} · {entry.description}
+                        </span>
+                        <span
+                          className={[
+                            'font-semibold tabular-nums',
+                            balanced ? 'text-emerald-700' : 'text-red-700',
+                          ].join(' ')}
+                        >
+                          Debe {arsFormatter.format(totals.debit)} | Haber{' '}
+                          {arsFormatter.format(totals.credit)}
+                        </span>
+                      </div>
+                      <div className="accounting-table-scroll">
+                        <table className="accounting-table">
+                          <thead>
+                            <tr>
+                              <th scope="col">Cuenta</th>
+                              <th scope="col" className="amount-col">
+                                Debe
+                              </th>
+                              <th scope="col" className="amount-col">
+                                Haber
+                              </th>
                             </tr>
-                          ))}
-                        </tbody>
-                        <tfoot>
-                          <tr>
-                            <td>Total asiento</td>
-                            <td className="amount-cell">{arsFormatter.format(totals.debit)}</td>
-                            <td className="amount-cell">{arsFormatter.format(totals.credit)}</td>
-                          </tr>
-                        </tfoot>
-                      </table>
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
-        )}
-      </section>
+                          </thead>
+                          <tbody>
+                            {entry.lines.map((line, index) => (
+                              <tr key={`${entry.id}-${index}`}>
+                                <td>
+                                  {line.account_code} · {line.account_name}
+                                </td>
+                                <td
+                                  className={
+                                    line.type === 'DEBIT'
+                                      ? 'amount-cell amount-cell-debit'
+                                      : 'amount-cell-empty'
+                                  }
+                                >
+                                  {line.type === 'DEBIT' ? lineAmount(line) : '—'}
+                                </td>
+                                <td
+                                  className={
+                                    line.type === 'CREDIT'
+                                      ? 'amount-cell amount-cell-credit'
+                                      : 'amount-cell-empty'
+                                  }
+                                >
+                                  {line.type === 'CREDIT' ? lineAmount(line) : '—'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr>
+                              <td>Total asiento</td>
+                              <td className="amount-cell">{arsFormatter.format(totals.debit)}</td>
+                              <td className="amount-cell">{arsFormatter.format(totals.credit)}</td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   )
 }
