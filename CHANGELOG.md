@@ -1,3 +1,7 @@
+## <small>1.13.1 (2026-03-19)</small>
+
+* fix: tighten query lifetimes and targeted invalidations ([2ca2f69](https://github.com/gastong256/mono256_sic_web/commit/2ca2f69))
+
 ## 1.13.0 (2026-03-19)
 
 * feat: add admin demo publication controls and align post-closing metadata ([be1c783](https://github.com/gastong256/mono256_sic_web/commit/be1c783))
