@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router'
 import { accountQueryKeys } from '@/features/accounts/hooks/accountQueryKeys'
 import { authApi } from '@/features/auth/api/auth.api'
+import { authQueryKeys } from '@/features/auth/hooks/authQueryKeys'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { companyQueryKeys } from '@/features/companies/hooks/companyQueryKeys'
 import { accountChartQueryKeys } from '@/features/settings/hooks/accountChartQueryKeys'
@@ -38,7 +39,7 @@ export function useLogin() {
 
       // 3. Invalidate auth/business domains that may be stale after login
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['me'] }),
+        queryClient.invalidateQueries({ queryKey: authQueryKeys.root }),
         queryClient.invalidateQueries({ queryKey: companyQueryKeys.root }),
         queryClient.invalidateQueries({ queryKey: accountQueryKeys.root }),
         queryClient.invalidateQueries({ queryKey: ['journal'] }),

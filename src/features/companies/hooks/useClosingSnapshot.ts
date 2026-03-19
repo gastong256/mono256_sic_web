@@ -7,6 +7,8 @@ export function useLatestClosingSnapshot(companyId: number, options?: { enabled?
     queryKey: companyQueryKeys.latestSnapshot(companyId),
     queryFn: () => companyClosingApi.latestSnapshot(companyId),
     enabled: (options?.enabled ?? true) && companyId > 0,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   })
 }
 
@@ -19,5 +21,7 @@ export function useClosingSnapshot(
     queryKey: companyQueryKeys.snapshot(companyId, snapshotId),
     queryFn: () => companyClosingApi.snapshot(companyId, snapshotId),
     enabled: (options?.enabled ?? true) && companyId > 0 && snapshotId > 0,
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: 60 * 60 * 1000,
   })
 }

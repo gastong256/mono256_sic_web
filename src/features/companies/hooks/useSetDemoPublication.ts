@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { authQueryKeys } from '@/features/auth/hooks/authQueryKeys'
 import { companiesApi } from '@/features/companies/api/companies.api'
 import { companyQueryKeys } from '@/features/companies/hooks/companyQueryKeys'
 import { logger } from '@/shared/lib/logger'
@@ -22,8 +23,8 @@ export function useSetDemoPublication() {
         isPublished: is_published ?? null,
       })
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: companyQueryKeys.root }),
-        queryClient.invalidateQueries({ queryKey: ['me'] }),
+        queryClient.invalidateQueries({ queryKey: companyQueryKeys.list }),
+        queryClient.invalidateQueries({ queryKey: authQueryKeys.root }),
       ])
     },
     onError: (error, variables) => {

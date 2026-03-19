@@ -17,6 +17,8 @@ export function useTeacherStudentContext(
         entriesLimit,
       }),
     enabled: studentId > 0,
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     placeholderData: (previousData) => previousData,
   })
 }

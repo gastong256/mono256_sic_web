@@ -7,5 +7,7 @@ export function useLogicalExercises(companyId: number, options?: { enabled?: boo
     queryKey: companyQueryKeys.logicalExercises(companyId),
     queryFn: () => companyClosingApi.logicalExercises(companyId),
     enabled: (options?.enabled ?? true) && companyId > 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   })
 }

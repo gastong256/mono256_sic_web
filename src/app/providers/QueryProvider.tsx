@@ -31,6 +31,8 @@ export function QueryProvider({ children }: QueryProviderProps) {
           queries: {
             // Data is considered fresh for 1 minute
             staleTime: 60 * 1000,
+            // Keep query data around long enough for back-navigation and short task switches
+            gcTime: 10 * 60 * 1000,
             // Don't retry on 4xx client errors
             retry: (failureCount, error) => {
               const status = getErrorStatus(error)

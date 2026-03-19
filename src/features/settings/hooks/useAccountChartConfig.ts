@@ -11,7 +11,8 @@ export function useAccountChartBootstrap(options?: { teacherId?: number; enabled
   return useQuery<AccountChartBootstrapResponse>({
     queryKey: accountChartQueryKeys.bootstrap(options?.teacherId),
     queryFn: () => accountChartApi.getBootstrap({ teacherId: options?.teacherId }),
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
     enabled: options?.enabled ?? true,
   })
 }
@@ -20,7 +21,8 @@ export function useAccountChartConfig(options?: { teacherId?: number; enabled?: 
   return useQuery({
     queryKey: accountChartQueryKeys.config(options?.teacherId),
     queryFn: () => accountChartApi.getConfig({ teacherId: options?.teacherId }),
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
     enabled: options?.enabled ?? true,
   })
 }

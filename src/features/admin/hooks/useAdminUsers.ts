@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { adminApi } from '@/features/admin/api/admin.api'
+import { authQueryKeys } from '@/features/auth/hooks/authQueryKeys'
 import type { AdminRoleUpdatePayload } from '@/shared/types'
 import type { AdminListUsersParams, AdminUsersPage } from '@/features/admin/api/admin.api'
 
@@ -21,7 +22,7 @@ export function useUpdateUserRole() {
       adminApi.updateUserRole(userId, payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ADMIN_USERS_QUERY_KEY })
-      await queryClient.invalidateQueries({ queryKey: ['me'] })
+      await queryClient.invalidateQueries({ queryKey: authQueryKeys.root })
     },
   })
 }
@@ -31,6 +32,7 @@ export function useAdminTeachers(options?: { enabled?: boolean }) {
     queryKey: ADMIN_TEACHERS_QUERY_KEY,
     queryFn: adminApi.listTeachers,
     enabled: options?.enabled ?? true,
-    staleTime: 60_000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   })
 }

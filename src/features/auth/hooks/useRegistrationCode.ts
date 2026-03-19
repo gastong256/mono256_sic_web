@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { authApi } from '@/features/auth/api/auth.api'
-import { ME_QUERY_KEY } from '@/features/auth/hooks/useMe'
+import { authQueryKeys } from '@/features/auth/hooks/authQueryKeys'
 
 export function useRotateRegistrationCode() {
   const queryClient = useQueryClient()
@@ -8,7 +8,7 @@ export function useRotateRegistrationCode() {
   return useMutation({
     mutationFn: authApi.rotateRegistrationCode,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY })
+      await queryClient.invalidateQueries({ queryKey: authQueryKeys.root })
     },
   })
 }

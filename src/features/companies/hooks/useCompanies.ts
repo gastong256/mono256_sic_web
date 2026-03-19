@@ -8,9 +8,10 @@ interface UseCompaniesOptions {
 
 export function useCompanies(options?: UseCompaniesOptions) {
   return useQuery({
-    queryKey: companyQueryKeys.root,
+    queryKey: companyQueryKeys.list,
     queryFn: companiesApi.list,
     enabled: options?.enabled ?? true,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   })
 }

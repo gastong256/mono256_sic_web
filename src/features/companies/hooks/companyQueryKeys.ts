@@ -1,5 +1,6 @@
 export const companyQueryKeys = {
   root: ['companies'] as const,
+  list: ['companies', 'list'] as const,
   closingState: (companyId: number) => ['companies', companyId, 'closing-state'] as const,
   logicalExercises: (companyId: number) => ['companies', companyId, 'logical-exercises'] as const,
   latestSnapshot: (companyId: number) =>

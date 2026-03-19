@@ -6,6 +6,7 @@ import { getCompanyAccountingBlockMessage } from '@/features/companies/lib/compa
 import { useTrialBalanceReport } from '@/features/reports/hooks/useTrialBalanceReport'
 import { useDownloadTrialBalanceReport } from '@/features/reports/hooks/useDownloadReports'
 import { ReportExercisePanel } from '@/features/reports/components/ReportExercisePanel'
+import { getReportCacheConfig } from '@/features/reports/lib/reportCache'
 import { getReportDownloadErrorMessage } from '@/features/reports/lib/downloadErrors'
 import { Spinner } from '@/shared/ui/Spinner'
 import { PageHeader } from '@/shared/ui/PageHeader'
@@ -40,15 +41,21 @@ export function TrialBalanceReportPage() {
   const [dateToInput, setDateToInput] = useState('')
   const [filters, setFilters] = useState<{ dateFrom?: string; dateTo?: string }>({})
   const isAccountingReady = activeCompany?.accounting_ready !== false
+  const reportCacheConfig = useMemo(() => getReportCacheConfig(activeCompany), [activeCompany])
 
   const hasInvalidRange = useMemo(
     () => Boolean(dateFromInput && dateToInput && dateFromInput > dateToInput),
     [dateFromInput, dateToInput]
   )
 
-  const { data, isLoading, isError, error } = useTrialBalanceReport(activeCompanyId, filters, {
-    enabled: activeCompanyId !== null && !companyLoading && isAccountingReady,
-  })
+  const { data, isLoading, isFetching, isError, error } = useTrialBalanceReport(
+    activeCompanyId,
+    filters,
+    {
+      enabled: activeCompanyId !== null && !companyLoading && isAccountingReady,
+      ...reportCacheConfig,
+    }
+  )
   const downloadMutation = useDownloadTrialBalanceReport()
   const canSearch = !hasInvalidRange && activeCompanyId !== null
   const fieldErrors = useMemo(() => extractFieldValidationErrors(error), [error])
@@ -208,6 +215,12 @@ export function TrialBalanceReportPage() {
 
       {activeCompanyId !== null && !isLoading && !isError && data && (
         <section className="space-y-4">
+          {isFetching && (
+            <Alert tone="info">
+              Actualizando el Balance de Comprobación con los filtros aplicados…
+            </Alert>
+          )}
+
           <ReportExercisePanel
             requestedRange={data.requested_range}
             exerciseRange={data.exercise_range}

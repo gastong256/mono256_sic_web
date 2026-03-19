@@ -1,7 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { companyQueryKeys } from '@/features/companies/hooks/companyQueryKeys'
 import { journalApi } from '@/features/journal/api/journal.api'
 import { journalEntriesQueryKey } from '@/features/journal/hooks/useJournalEntries'
 import { journalEntryQueryKey } from '@/features/journal/hooks/useJournalEntry'
+import { reportQueryKeys } from '@/features/reports/hooks/reportQueryKeys'
 import { logger } from '@/shared/lib/logger'
 import type { ReverseJournalEntryPayload } from '@/features/journal/types/journal.types'
 
@@ -17,7 +19,9 @@ export function useReverseJournalEntry(companyId: number) {
         queryClient.invalidateQueries({
           queryKey: journalEntryQueryKey(companyId, variables.entryId),
         }),
-        queryClient.invalidateQueries({ queryKey: ['reports'] }),
+        queryClient.invalidateQueries({ queryKey: reportQueryKeys.company(companyId) }),
+        queryClient.invalidateQueries({ queryKey: companyQueryKeys.closingState(companyId) }),
+        queryClient.invalidateQueries({ queryKey: companyQueryKeys.logicalExercises(companyId) }),
       ])
       logger.info({ message: 'Journal entry reversed', entryId: entry.id })
     },

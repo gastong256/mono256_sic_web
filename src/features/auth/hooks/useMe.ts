@@ -2,8 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 import { authApi } from '@/features/auth/api/auth.api'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import type { MeInclude } from '@/features/auth/api/auth.api'
+import { buildAuthMeQueryKey, authQueryKeys } from '@/features/auth/hooks/authQueryKeys'
 
-export const ME_QUERY_KEY = ['me'] as const
+export const ME_QUERY_KEY = authQueryKeys.root
 
 function normalizeIncludes(include?: MeInclude[]): MeInclude[] {
   if (!include || include.length === 0) return []
@@ -20,13 +21,14 @@ export function useMe(options?: { include?: MeInclude[]; enabled?: boolean }) {
   const include = normalizeIncludes(options?.include)
 
   return useQuery({
-    queryKey: [...ME_QUERY_KEY, include.join(',')] as const,
+    queryKey: buildAuthMeQueryKey(include),
     queryFn: async () => {
       const user = await authApi.me({ include })
       setUser(user)
       return user
     },
     enabled: (options?.enabled ?? true) && !!accessToken,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   })
 }

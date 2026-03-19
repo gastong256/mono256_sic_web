@@ -8,6 +8,7 @@ export function useTeacherCoursesList() {
     queryKey: teacherQueryKeys.coursesOverview,
     queryFn: teacherApi.coursesOverview,
     staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   })
 }
 
