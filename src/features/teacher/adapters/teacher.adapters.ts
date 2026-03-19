@@ -47,6 +47,14 @@ function normalizeCompany(raw: unknown): TeacherCompanyItem | null {
     id,
     name: toStringValue(raw.name),
     tax_id: typeof raw.tax_id === 'string' ? raw.tax_id : null,
+    is_demo: typeof raw.is_demo === 'boolean' ? raw.is_demo : undefined,
+    is_read_only: typeof raw.is_read_only === 'boolean' ? raw.is_read_only : undefined,
+    is_published: typeof raw.is_published === 'boolean' ? raw.is_published : undefined,
+    demo_slug: toStringValue(raw.demo_slug) || null,
+    has_opening_entry:
+      typeof raw.has_opening_entry === 'boolean' ? raw.has_opening_entry : undefined,
+    accounting_ready: typeof raw.accounting_ready === 'boolean' ? raw.accounting_ready : undefined,
+    opening_entry_id: toNumberValue(raw.opening_entry_id, 0) || null,
     created_at: toStringValue(raw.created_at),
   }
 }
@@ -275,6 +283,12 @@ export function normalizeTeacherStudentContextPayload(
           account_count: toNumberValue(company.account_count),
           journal_entry_count: toNumberValue(company.journal_entry_count),
           last_entry_date: toStringValue(company.last_entry_date) || null,
+          is_demo: typeof company.is_demo === 'boolean' ? company.is_demo : undefined,
+          is_read_only:
+            typeof company.is_read_only === 'boolean' ? company.is_read_only : undefined,
+          is_published:
+            typeof company.is_published === 'boolean' ? company.is_published : undefined,
+          demo_slug: toStringValue(company.demo_slug) || null,
           has_opening_entry:
             typeof company.has_opening_entry === 'boolean' ? company.has_opening_entry : undefined,
           accounting_ready:

@@ -152,6 +152,8 @@ const companies: Company[] = [
     books_closed_until: null,
     is_demo: false,
     is_read_only: false,
+    is_published: false,
+    demo_slug: null,
     has_opening_entry: true,
     accounting_ready: true,
     opening_entry_id: 1,
@@ -168,6 +170,8 @@ const companies: Company[] = [
     books_closed_until: null,
     is_demo: false,
     is_read_only: false,
+    is_published: false,
+    demo_slug: null,
     has_opening_entry: false,
     accounting_ready: false,
     opening_entry_id: null,
@@ -184,6 +188,8 @@ const companies: Company[] = [
     books_closed_until: null,
     is_demo: false,
     is_read_only: false,
+    is_published: false,
+    demo_slug: null,
     has_opening_entry: true,
     accounting_ready: true,
     opening_entry_id: 3,
@@ -200,6 +206,8 @@ const companies: Company[] = [
     books_closed_until: null,
     is_demo: false,
     is_read_only: false,
+    is_published: false,
+    demo_slug: null,
     has_opening_entry: true,
     accounting_ready: true,
     opening_entry_id: null,
@@ -216,6 +224,8 @@ const companies: Company[] = [
     books_closed_until: null,
     is_demo: false,
     is_read_only: false,
+    is_published: false,
+    demo_slug: null,
     has_opening_entry: true,
     accounting_ready: true,
     opening_entry_id: null,
@@ -232,6 +242,8 @@ const companies: Company[] = [
     books_closed_until: null,
     is_demo: true,
     is_read_only: true,
+    is_published: false,
+    demo_slug: 'empresa-demo-guiada',
     has_opening_entry: true,
     accounting_ready: true,
     opening_entry_id: null,
@@ -507,6 +519,8 @@ export function buildAuthMeResponse(
             books_closed_until: company.books_closed_until ?? null,
             is_demo: company.is_demo ?? false,
             is_read_only: company.is_read_only ?? false,
+            is_published: company.is_published ?? false,
+            demo_slug: company.demo_slug ?? null,
             has_opening_entry: company.has_opening_entry ?? false,
             accounting_ready: company.accounting_ready ?? false,
             opening_entry_id: company.opening_entry_id ?? null,
@@ -694,13 +708,15 @@ export function canAccessCompany(user: User, company: Company): boolean {
     : user.role === 'teacher' && isStudentAssignedToTeacher(company.owner_username, user.username)
 }
 
-function isVisibleCompanyInMock(company: Company): boolean {
-  return company.is_demo !== true
+function isVisibleCompanyInMock(company: Company, user: User): boolean {
+  if (company.is_demo !== true) return true
+  if (user.role === 'admin') return true
+  return company.is_published === true
 }
 
 export function listCompaniesForUser(user: User): Company[] {
   return companies.filter(
-    (company) => canAccessCompany(user, company) && isVisibleCompanyInMock(company)
+    (company) => canAccessCompany(user, company) && isVisibleCompanyInMock(company, user)
   )
 }
 
@@ -729,7 +745,8 @@ export function listCompaniesForStudentAsTeacher(
   }
 
   return companies.filter(
-    (company) => company.owner_username === student.username && isVisibleCompanyInMock(company)
+    (company) =>
+      company.owner_username === student.username && isVisibleCompanyInMock(company, teacher)
   )
 }
 
@@ -769,6 +786,8 @@ export function createCompany(
     books_closed_until: null,
     is_demo: false,
     is_read_only: false,
+    is_published: false,
+    demo_slug: null,
     has_opening_entry: false,
     accounting_ready: false,
     opening_entry_id: null,
@@ -801,6 +820,25 @@ export function updateCompany(
     ...(payload.name !== undefined ? { name: payload.name } : null),
     ...(payload.description !== undefined ? { description: payload.description } : null),
     ...(payload.tax_id !== undefined ? { tax_id: payload.tax_id } : null),
+    updated_at: new Date().toISOString(),
+  }
+
+  return companies[idx]
+}
+
+export function setDemoPublication(
+  companyId: number,
+  isPublished: boolean
+): Company | { error: string; status: number } {
+  const idx = companies.findIndex((company) => company.id === companyId)
+  if (idx === -1) return { error: 'Not found.', status: 404 }
+  if (companies[idx].is_demo !== true) {
+    return { error: 'Solo las empresas demo admiten cambios de publicación.', status: 400 }
+  }
+
+  companies[idx] = {
+    ...companies[idx],
+    is_published: isPublished,
     updated_at: new Date().toISOString(),
   }
 
@@ -1868,7 +1906,7 @@ export function listTeacherCoursesOverview(user: User): Array<{
         .map((student) => {
           const studentCompanies = companies.filter(
             (company) =>
-              company.owner_username === student.username && isVisibleCompanyInMock(company)
+              company.owner_username === student.username && isVisibleCompanyInMock(company, user)
           )
           const studentCompanyIds = new Set(studentCompanies.map((company) => company.id))
           const studentEntries = journalEntries.filter((entry) =>
@@ -2083,12 +2121,16 @@ export function listTeacherCourseCompanies(
         companies: companies
           .filter(
             (company) =>
-              company.owner_username === student.username && isVisibleCompanyInMock(company)
+              company.owner_username === student.username && isVisibleCompanyInMock(company, user)
           )
           .map((company) => ({
             id: company.id,
             name: company.name,
             tax_id: company.tax_id ?? '',
+            is_demo: company.is_demo ?? false,
+            is_read_only: company.is_read_only ?? false,
+            is_published: company.is_published ?? false,
+            demo_slug: company.demo_slug ?? null,
             has_opening_entry: company.has_opening_entry ?? false,
             accounting_ready: company.accounting_ready ?? false,
             opening_entry_id: company.opening_entry_id ?? null,
@@ -2259,7 +2301,8 @@ export function getTeacherStudentContext(
 
   const studentCompanies = companies
     .filter(
-      (company) => company.owner_username === student.username && isVisibleCompanyInMock(company)
+      (company) =>
+        company.owner_username === student.username && isVisibleCompanyInMock(company, user)
     )
     .map((company) => {
       const companyEntries = journalEntries
@@ -2272,6 +2315,10 @@ export function getTeacherStudentContext(
         account_count: company.account_count,
         journal_entry_count: companyEntries.length,
         last_entry_date: companyEntries[0]?.date ?? null,
+        is_demo: company.is_demo ?? false,
+        is_read_only: company.is_read_only ?? false,
+        is_published: company.is_published ?? false,
+        demo_slug: company.demo_slug ?? null,
         has_opening_entry: company.has_opening_entry ?? false,
         accounting_ready: company.accounting_ready ?? false,
         opening_entry_id: company.opening_entry_id ?? null,

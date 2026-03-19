@@ -4,6 +4,9 @@ import { getCompanyStatusLabels } from '@/features/companies/lib/companyAccounti
 interface CompanyTableProps {
   companies: Company[]
   showOwner?: boolean
+  canManageDemoPublication?: boolean
+  onToggleDemoPublication?: (company: Company) => void
+  demoPublicationPendingId?: number | null
   onView: (company: Company) => void
   onEdit: (company: Company) => void
   onDelete: (company: Company) => void
@@ -12,6 +15,9 @@ interface CompanyTableProps {
 export function CompanyTable({
   companies,
   showOwner = false,
+  canManageDemoPublication = false,
+  onToggleDemoPublication,
+  demoPublicationPendingId = null,
   onView,
   onEdit,
   onDelete,
@@ -73,7 +79,12 @@ export function CompanyTable({
                   className="transition-colors odd:bg-white even:bg-slate-50/50 hover:bg-[var(--bg-subtle)]"
                 >
                   <td className="px-4 py-3 font-medium text-[var(--text-strong)]">
-                    {company.name}
+                    <div>
+                      <p>{company.name}</p>
+                      {company.is_demo && company.demo_slug && (
+                        <p className="muted-text mt-1 text-xs">Slug demo: {company.demo_slug}</p>
+                      )}
+                    </div>
                   </td>
                   <td className="muted-text px-4 py-3">{company.tax_id ?? '—'}</td>
                   <td className="muted-text px-4 py-3">
@@ -100,6 +111,7 @@ export function CompanyTable({
                     <div className="flex items-center justify-end gap-1">
                       {/* Ver */}
                       <button
+                        type="button"
                         onClick={() => onView(company)}
                         className="rounded p-1.5 text-[var(--text-muted)] transition-colors hover:bg-white hover:text-[var(--brand-600)]"
                         aria-label={`Ver ${company.name}`}
@@ -121,6 +133,7 @@ export function CompanyTable({
                       </button>
                       {/* Editar */}
                       <button
+                        type="button"
                         onClick={() => onEdit(company)}
                         disabled={!canEditCompany}
                         className="rounded p-1.5 text-[var(--text-muted)] transition-colors hover:bg-white hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-40"
@@ -138,6 +151,7 @@ export function CompanyTable({
                       </button>
                       {/* Eliminar */}
                       <button
+                        type="button"
                         onClick={() => onDelete(company)}
                         disabled={!canEditCompany}
                         className="rounded p-1.5 text-[var(--text-muted)] transition-colors hover:bg-white hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
@@ -157,6 +171,20 @@ export function CompanyTable({
                           />
                         </svg>
                       </button>
+                      {canManageDemoPublication && company.is_demo && onToggleDemoPublication && (
+                        <button
+                          type="button"
+                          onClick={() => onToggleDemoPublication(company)}
+                          disabled={demoPublicationPendingId === company.id}
+                          className="rounded-full border border-[var(--border-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--text-muted)] transition-colors hover:border-[var(--brand-500)] hover:bg-white hover:text-[var(--brand-700)] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {demoPublicationPendingId === company.id
+                            ? 'Actualizando…'
+                            : company.is_published === true
+                              ? 'Ocultar demo'
+                              : 'Publicar demo'}
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

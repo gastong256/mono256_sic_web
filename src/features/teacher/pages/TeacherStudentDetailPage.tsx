@@ -171,6 +171,9 @@ export function TeacherStudentDetailPage() {
                   ].join(' ')}
                 >
                   <span className="block font-semibold">{company.name}</span>
+                  {company.is_demo && company.demo_slug && (
+                    <span className="muted-text mt-1 block text-xs">Demo: {company.demo_slug}</span>
+                  )}
                   {getCompanyStatusLabels(company).length > 0 && (
                     <span className="muted-text mt-1 block text-xs">
                       {getCompanyStatusLabels(company).join(' · ')}

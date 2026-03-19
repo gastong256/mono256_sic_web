@@ -3,6 +3,7 @@ import type {
   Company,
   CreateCompanyPayload,
   OpeningEntryPayload,
+  SetDemoPublicationPayload,
   UpdateCompanyPayload,
 } from '@/features/companies/types/company.types'
 import { fetchAllPages } from '@/shared/lib/fetchAllPages'
@@ -20,6 +21,9 @@ export const companiesApi = {
 
   update: (id: number, payload: UpdateCompanyPayload): Promise<Company> =>
     httpClient.put<Company>(`/companies/${id}/`, payload).then((r) => r.data),
+
+  setDemoPublication: (id: number, payload: SetDemoPublicationPayload): Promise<Company> =>
+    httpClient.patch<Company>(`/companies/${id}/demo-publication/`, payload).then((r) => r.data),
 
   remove: (id: number): Promise<void> =>
     httpClient.delete(`/companies/${id}/`).then(() => undefined),

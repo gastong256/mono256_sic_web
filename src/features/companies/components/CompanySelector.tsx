@@ -35,6 +35,11 @@ export function CompanySelector() {
             {labels.join(' · ')}
           </span>
         )}
+        {companies[0].is_demo && companies[0].demo_slug && (
+          <span className="mt-1 truncate text-[11px] text-[var(--text-muted)]">
+            Demo: {companies[0].demo_slug}
+          </span>
+        )}
       </div>
     )
   }

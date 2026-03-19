@@ -8,11 +8,17 @@ export interface Company {
   books_closed_until?: string | null
   is_demo?: boolean
   is_read_only?: boolean
+  is_published?: boolean
+  demo_slug?: string | null
   has_opening_entry?: boolean
   accounting_ready?: boolean
   opening_entry_id?: number | null
   created_at: string
   updated_at: string
+}
+
+export interface SetDemoPublicationPayload {
+  is_published: boolean
 }
 
 export type OpeningInventoryKind = 'INITIAL' | 'GENERAL'

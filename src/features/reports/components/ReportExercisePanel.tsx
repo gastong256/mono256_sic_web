@@ -21,6 +21,7 @@ interface ReportExercisePanelProps {
   activeExercise: LogicalExercise | null
   previousExercises: LogicalExercise[]
   onSelectExercise?: (exercise: LogicalExercise) => void
+  onSelectSnapshot?: (exercise: LogicalExercise) => void
 }
 
 export function ReportExercisePanel({
@@ -30,6 +31,7 @@ export function ReportExercisePanel({
   activeExercise,
   previousExercises,
   onSelectExercise,
+  onSelectSnapshot,
 }: ReportExercisePanelProps) {
   const requestedDateFrom = requestedRange?.date_from ?? null
   const requestedDateTo = requestedRange?.date_to ?? null
@@ -75,14 +77,20 @@ export function ReportExercisePanel({
           <p className="text-sm font-semibold text-[var(--text-strong)]">Ejercicios anteriores</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {previousExercises.map((exercise) => (
-              <Button
-                key={exercise.exercise_id}
-                type="button"
-                variant="secondary"
-                onClick={() => onSelectExercise?.(exercise)}
-              >
-                {formatExerciseLabel(exercise)}
-              </Button>
+              <div key={exercise.exercise_id} className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => onSelectExercise?.(exercise)}
+                >
+                  {formatExerciseLabel(exercise)}
+                </Button>
+                {exercise.snapshot_id !== null && onSelectSnapshot && (
+                  <Button type="button" variant="ghost" onClick={() => onSelectSnapshot(exercise)}>
+                    Ver snapshot
+                  </Button>
+                )}
+              </div>
             ))}
           </div>
         </div>

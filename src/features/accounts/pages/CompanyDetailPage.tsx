@@ -118,6 +118,9 @@ export function CompanyDetailPage() {
             ))}
           </div>
         )}
+        {company?.is_demo && company.demo_slug && (
+          <p className="muted-text mt-2 text-xs">Slug demo: {company.demo_slug}</p>
+        )}
       </div>
 
       {companyWriteBlockMessage && <Alert tone="warning">{companyWriteBlockMessage}</Alert>}
@@ -201,7 +204,7 @@ export function CompanyDetailPage() {
             <div>
               <p className="font-semibold text-[var(--text-strong)]">Ejercicios lógicos</p>
               <p className="muted-text mt-1 text-sm">
-                Secuencia inferida de apertura, cierres patrimoniales y reaperturas.
+                Secuencia de apertura, cierres patrimoniales y reaperturas resuelta por backend.
               </p>
             </div>
 

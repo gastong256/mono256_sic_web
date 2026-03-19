@@ -4,6 +4,7 @@ import { useCompanies } from '@/features/companies/hooks/useCompanies'
 import { CompanyTable } from '@/features/companies/components/CompanyTable'
 import { CompanyForm } from '@/features/companies/components/CompanyForm'
 import { DeleteCompanyDialog } from '@/features/companies/components/DeleteCompanyDialog'
+import { useSetDemoPublication } from '@/features/companies/hooks/useSetDemoPublication'
 import { Button } from '@/shared/ui/Button'
 import type { Company } from '@/features/companies/types/company.types'
 import { PageHeader } from '@/shared/ui/PageHeader'
@@ -11,10 +12,16 @@ import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { Skeleton } from '@/shared/ui/Skeleton'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
+import { useToast } from '@/shared/ui/ToastProvider'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 
 export function CompaniesPage() {
+  const { pushToast } = useToast()
+  const user = useAuthStore((state) => state.user)
   const navigate = useNavigate()
   const { data: companies = [], isLoading, error } = useCompanies()
+  const [publishingCompanyId, setPublishingCompanyId] = useState<number | null>(null)
+  const { mutate: setDemoPublication } = useSetDemoPublication()
   const loadErrorMessage = useMemo(
     () =>
       getHttpErrorMessage(error, {
@@ -43,6 +50,42 @@ export function CompaniesPage() {
   function closeForm() {
     setFormOpen(false)
   }
+
+  function handleToggleDemoPublication(company: Company) {
+    if (!company.is_demo) return
+
+    const nextPublished = company.is_published !== true
+    setPublishingCompanyId(company.id)
+    setDemoPublication(
+      {
+        companyId: company.id,
+        payload: { is_published: nextPublished },
+      },
+      {
+        onSuccess: () => {
+          pushToast(
+            nextPublished ? 'Demo publicada correctamente.' : 'Demo ocultada correctamente.',
+            'success'
+          )
+          setPublishingCompanyId(null)
+        },
+        onError: (mutationError) => {
+          pushToast(
+            getHttpErrorMessage(mutationError, {
+              defaultMessage: 'No se pudo actualizar la visibilidad de la demo.',
+              forbiddenMessage: 'No tenés permisos para publicar u ocultar demos.',
+              notFoundMessage: 'La empresa demo ya no existe o no está disponible.',
+            }),
+            'error'
+          )
+          setPublishingCompanyId(null)
+        },
+      }
+    )
+  }
+
+  const showOwner = user?.role === 'admin'
+  const canManageDemoPublication = user?.role === 'admin'
 
   return (
     <div className="space-y-6">
@@ -95,7 +138,10 @@ export function CompaniesPage() {
       {!isLoading && !error && companies.length > 0 && (
         <CompanyTable
           companies={companies}
-          showOwner={false}
+          showOwner={showOwner}
+          canManageDemoPublication={canManageDemoPublication}
+          demoPublicationPendingId={publishingCompanyId}
+          onToggleDemoPublication={handleToggleDemoPublication}
           onView={(c) => void navigate(`/companies/${c.id}`)}
           onEdit={openEdit}
           onDelete={(c) => setDeletingCompany(c)}

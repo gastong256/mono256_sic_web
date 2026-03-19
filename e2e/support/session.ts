@@ -27,6 +27,8 @@ export async function clearSession(page: Page) {
     localStorage.clear()
     sessionStorage.clear()
   })
+  await page.goto('/login')
+  await expect(page.getByRole('heading', { name: 'Bienvenido' })).toBeVisible()
 }
 
 export async function loginAs(page: Page, role: TestUserRole = 'admin') {
@@ -47,7 +49,14 @@ export async function logout(page: Page) {
 }
 
 export async function openBooksMenu(page: Page) {
-  await page.getByRole('button', { name: 'Libros' }).click()
+  const button = page.getByRole('button', { name: 'Libros' })
+  const link = page.getByRole('link', { name: 'Libro Diario' })
+
+  await button.click()
+  if (!(await link.isVisible())) {
+    await button.click()
+  }
+  await expect(link).toBeVisible()
 }
 
 export async function openSupervisionMenu(page: Page) {

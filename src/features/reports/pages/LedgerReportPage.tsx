@@ -243,6 +243,12 @@ export function LedgerReportPage() {
             onSelectExercise={(exercise) =>
               applyExerciseRange(exercise.start_date, exercise.closing_date)
             }
+            onSelectSnapshot={(exercise) => {
+              if (activeCompanyId === null || exercise.snapshot_id === null) return
+              void navigate(
+                `/companies/${activeCompanyId}/closing/snapshots/${exercise.snapshot_id}`
+              )
+            }}
           />
 
           <div className="glass-panel rounded-xl p-3 text-sm">

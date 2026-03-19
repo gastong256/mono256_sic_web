@@ -394,10 +394,25 @@ export function ClosingWorkflowModal({
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2 text-sm">
                   {preview.previous_exercises.map((exercise) => (
-                    <span key={exercise.exercise_id} className="metric-chip">
-                      Ejercicio {exercise.exercise_index} · {exercise.start_date}
-                      {exercise.closing_date ? ` a ${exercise.closing_date}` : ''}
-                    </span>
+                    <div key={exercise.exercise_id} className="flex flex-wrap gap-2">
+                      <span className="metric-chip">
+                        Ejercicio {exercise.exercise_index} · {exercise.start_date}
+                        {exercise.closing_date ? ` a ${exercise.closing_date}` : ''}
+                      </span>
+                      {exercise.snapshot_id !== null && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() =>
+                            void navigate(
+                              `/companies/${companyId}/closing/snapshots/${exercise.snapshot_id}`
+                            )
+                          }
+                        >
+                          Ver snapshot
+                        </Button>
+                      )}
+                    </div>
                   ))}
                 </div>
               </article>

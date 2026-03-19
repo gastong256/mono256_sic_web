@@ -37,4 +37,21 @@ test.describe('Companies critical flow', () => {
     await openCompaniesPage(page)
     await expect(page.getByRole('cell', { name: updatedName, exact: true })).not.toBeVisible()
   })
+
+  test('admin can publish and hide a demo company', async ({ page }) => {
+    await loginAs(page, 'admin')
+    await openCompaniesPage(page)
+
+    const demoRow = await companyRow(page, 'Empresa Demo Guiada')
+    await expect(demoRow.getByText('Oculta')).toBeVisible()
+    await expect(demoRow.getByText(/slug demo: empresa-demo-guiada/i)).toBeVisible()
+
+    await demoRow.getByRole('button', { name: 'Publicar demo' }).click()
+    await expect(demoRow.getByText('Publicada')).toBeVisible()
+    await expect(demoRow.getByRole('button', { name: 'Ocultar demo' })).toBeVisible()
+
+    await demoRow.getByRole('button', { name: 'Ocultar demo' }).click()
+    await expect(demoRow.getByText('Oculta')).toBeVisible()
+    await expect(demoRow.getByRole('button', { name: 'Publicar demo' })).toBeVisible()
+  })
 })

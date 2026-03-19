@@ -14,6 +14,7 @@ import {
   getRequestUser,
   listJournalEntriesByCompany,
   listCompaniesForUser,
+  setDemoPublication,
   updateCompany,
   buildClosingPreviewResponse,
 } from '@/mocks/data/mockDb'
@@ -136,6 +137,32 @@ export const companiesHandlers = [
     })
 
     if (!updated) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    return HttpResponse.json(updated)
+  }),
+
+  http.patch(`${BASE}/companies/:id/demo-publication/`, async ({ request, params }) => {
+    await delay(160)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+    if (user.role !== 'admin') {
+      return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    }
+
+    const companyId = Number(params.id)
+    const current = getCompanyById(companyId)
+    if (!current) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+
+    const body = (await request.json()) as { is_published?: boolean }
+    if (typeof body.is_published !== 'boolean') {
+      return HttpResponse.json({ is_published: ['Este campo es obligatorio.'] }, { status: 400 })
+    }
+
+    const updated = setDemoPublication(companyId, body.is_published)
+    if ('error' in updated) {
+      return HttpResponse.json({ detail: updated.error }, { status: updated.status })
+    }
+
     return HttpResponse.json(updated)
   }),
 

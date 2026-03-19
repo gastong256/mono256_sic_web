@@ -7,6 +7,8 @@ import type { Account } from '@/features/accounts/types/account.types'
 type CompanyStateLike = {
   is_demo?: boolean
   is_read_only?: boolean
+  is_published?: boolean
+  demo_slug?: string | null
   has_opening_entry?: boolean
   accounting_ready?: boolean
   books_closed_until?: string | null
@@ -187,6 +189,8 @@ export function getCompanyStatusLabels(company: CompanyStateLike | null | undefi
 
   const labels: string[] = []
   if (company.is_demo) labels.push('Demo')
+  if (company.is_demo && company.is_published === true) labels.push('Publicada')
+  if (company.is_demo && company.is_published === false) labels.push('Oculta')
   if (company.is_read_only) labels.push('Solo lectura')
   if (company.accounting_ready === false) labels.push('Pendiente de apertura')
   if (company.books_closed_until) labels.push('Libros cerrados')
