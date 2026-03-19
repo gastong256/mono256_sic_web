@@ -1,3 +1,7 @@
+## 1.13.0 (2026-03-19)
+
+* feat: add admin demo publication controls and align post-closing metadata ([be1c783](https://github.com/gastong256/mono256_sic_web/commit/be1c783))
+
 ## <small>1.12.1 (2026-03-18)</small>
 
 * fix: support explicit requested and visible exercise ranges ([c3ff1b2](https://github.com/gastong256/mono256_sic_web/commit/c3ff1b2))
