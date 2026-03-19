@@ -1,3 +1,7 @@
+## <small>1.13.2 (2026-03-19)</small>
+
+* fix: refine page layouts and visual hierarchy across app ([7dfb398](https://github.com/gastong256/mono256_sic_web/commit/7dfb398))
+
 ## <small>1.13.1 (2026-03-19)</small>
 
 * fix: tighten query lifetimes and targeted invalidations ([2ca2f69](https://github.com/gastong256/mono256_sic_web/commit/2ca2f69))
