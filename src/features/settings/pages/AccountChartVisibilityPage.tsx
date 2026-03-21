@@ -105,7 +105,7 @@ export function AccountChartVisibilityPage() {
       {isAdmin && (
         <section className="filter-panel p-4">
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-            <label className="text-sm font-semibold text-[var(--text-strong)]">
+            <label className="field-label text-[var(--text-strong)]">
               Docente
               <select
                 value={selectedTeacherId ?? ''}
@@ -114,7 +114,7 @@ export function AccountChartVisibilityPage() {
                   const nextId = Number(event.target.value)
                   setSelectedTeacherId(Number.isFinite(nextId) && nextId > 0 ? nextId : null)
                 }}
-                className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-white px-3 py-2 text-sm text-[var(--text-strong)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
+                className="field-control px-3 py-2 text-sm text-[var(--text-strong)]"
               >
                 <option value="" disabled>
                   Seleccioná un docente...
@@ -148,25 +148,14 @@ export function AccountChartVisibilityPage() {
       )}
 
       {!bootstrapLoading && !bootstrapError && data.length > 0 && (
-        <section className="grid gap-3 md:grid-cols-3">
-          <article className="summary-stat-card">
-            <p className="summary-stat-label">Niveles raíz</p>
-            <p className="summary-stat-value">{buildTree(draft).length}</p>
-          </article>
-          <article className="summary-stat-card">
-            <p className="summary-stat-label">Nodos configurables</p>
-            <p className="summary-stat-value">{draft.length}</p>
-          </article>
-          <article className="summary-stat-card">
-            <p className="summary-stat-label">Docente actual</p>
-            <p className="summary-stat-value text-[0.95rem]">
-              {isAdmin
-                ? teachers.find((teacher) => teacher.id === selectedTeacherId)?.full_name ||
-                  'Sin seleccionar'
-                : 'Tu configuración'}
-            </p>
-          </article>
-        </section>
+        <Alert tone="info">
+          {isAdmin
+            ? `Configurá qué cuentas estarán disponibles para los alumnos del docente ${
+                teachers.find((teacher) => teacher.id === selectedTeacherId)?.full_name ??
+                'seleccionado'
+              }.`
+            : 'Configurá qué cuentas estarán disponibles para tus alumnos.'}
+        </Alert>
       )}
 
       {canLoadConfig && bootstrapLoading && (

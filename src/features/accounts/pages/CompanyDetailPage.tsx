@@ -5,11 +5,9 @@ import { AccountTree } from '@/features/accounts/components/AccountTree'
 import { AccountForm } from '@/features/accounts/components/AccountForm'
 import { DeleteAccountDialog } from '@/features/accounts/components/DeleteAccountDialog'
 import { OpeningEntryModal } from '@/features/companies/components/OpeningEntryModal'
-import { ClosingWorkflowModal } from '@/features/companies/components/ClosingWorkflowModal'
 import { useActiveCompany } from '@/features/companies/hooks/useActiveCompany'
-import { useCompanyClosingState } from '@/features/companies/hooks/useCompanyClosingState'
-import { useLogicalExercises } from '@/features/companies/hooks/useLogicalExercises'
 import {
+  filterAccountsForOpening,
   getCompanyStatusLabels,
   getCompanyWriteBlockMessage,
 } from '@/features/companies/lib/companyAccounting'
@@ -24,20 +22,9 @@ export function CompanyDetailPage() {
   const { companyId } = useParams<{ companyId: string }>()
   const navigate = useNavigate()
   const id = Number(companyId)
-  const {
-    activeCompany: company,
-    canManageOpening,
-    canManageClosing,
-    canWriteCompany,
-  } = useActiveCompany(id)
+  const { activeCompany: company, canManageOpening, canWriteCompany } = useActiveCompany(id)
 
   const { data: accounts = [], isLoading, error } = useCompanyAccounts(id)
-  const { data: logicalExercises } = useLogicalExercises(id, { enabled: id > 0 })
-  const {
-    data: closingState,
-    isLoading: closingStateLoading,
-    error: closingStateError,
-  } = useCompanyClosingState(id, { enabled: id > 0 })
   const loadErrorMessage = useMemo(
     () =>
       getHttpErrorMessage(error, {
@@ -48,30 +35,18 @@ export function CompanyDetailPage() {
       }),
     [error]
   )
-  const closingStateErrorMessage = useMemo(
-    () =>
-      getHttpErrorMessage(closingStateError, {
-        defaultMessage: 'No se pudo cargar el estado de cierre de la empresa.',
-        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
-        forbiddenMessage: 'No tenés permisos para consultar el estado de cierre.',
-        notFoundMessage: 'La empresa ya no existe o no está disponible.',
-      }),
-    [closingStateError]
-  )
 
   const [accountFormOpen, setAccountFormOpen] = useState(false)
   const [selectedParent, setSelectedParent] = useState<Account | null>(null)
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)
   const [deletingAccount, setDeletingAccount] = useState<Account | null>(null)
   const [openingModalOpen, setOpeningModalOpen] = useState(false)
-  const [closingModalOpen, setClosingModalOpen] = useState(false)
   const companyStatusLabels = useMemo(() => getCompanyStatusLabels(company), [company])
   const companyWriteBlockMessage = useMemo(() => getCompanyWriteBlockMessage(company), [company])
-  const canStartClosing =
-    canManageClosing &&
-    company?.accounting_ready !== false &&
-    company?.is_read_only !== true &&
-    (closingState?.can_close ?? true)
+  const visibleAccounts = useMemo(
+    () => (company?.accounting_ready === false ? filterAccountsForOpening(accounts) : accounts),
+    [accounts, company?.accounting_ready]
+  )
 
   function openCreate(parent: Account) {
     if (!canWriteCompany) return
@@ -102,198 +77,60 @@ export function CompanyDetailPage() {
             <Button type="button" variant="secondary" onClick={() => void navigate('/companies')}>
               Volver a empresas
             </Button>
+          </>
+        }
+      />
+
+      <section className="space-y-1 border-b border-[var(--border-soft)]/80 pb-3">
+        <p className="text-lg font-semibold tracking-tight text-[var(--text-strong)] sm:text-xl">
+          {company?.name ?? 'Empresa seleccionada'}
+        </p>
+        <p className="muted-text max-w-3xl text-sm sm:text-[0.95rem]">
+          {company?.description ||
+            'Revisá el estado contable y la estructura operativa de la empresa.'}
+        </p>
+        {company?.tax_id && (
+          <p className="muted-text text-sm sm:text-[0.95rem]">CUIT/CUIL: {company.tax_id}</p>
+        )}
+        {companyStatusLabels.filter((label) => label !== 'Pendiente de apertura').length > 0 && (
+          <div className="page-meta-row mt-3">
+            {companyStatusLabels
+              .filter((label) => label !== 'Pendiente de apertura')
+              .map((label) => (
+                <span key={label} className="status-badge">
+                  {label}
+                </span>
+              ))}
+          </div>
+        )}
+        {company?.is_demo && company.demo_slug && (
+          <p className="muted-text mt-2 text-xs">Slug de demo: {company.demo_slug}</p>
+        )}
+      </section>
+
+      {companyWriteBlockMessage && (
+        <Alert tone="warning">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold">Registrá la apertura contable</p>
+              <p className="mt-1">
+                La empresa todavía no puede operar en asientos contables ni reportes hasta cargar el
+                inventario inicial o general.
+              </p>
+            </div>
             {company?.accounting_ready === false && canManageOpening && (
               <Button
                 type="button"
+                variant="secondary"
+                className="border border-amber-500 bg-[linear-gradient(135deg,#f59e0b,#d97706)] text-white shadow-[0_12px_24px_-16px_rgba(180,83,9,0.85)] hover:border-amber-600 hover:text-white hover:brightness-105 focus-visible:ring-amber-500"
                 disabled={!canWriteCompany}
                 onClick={() => setOpeningModalOpen(true)}
               >
                 Registrar apertura
               </Button>
             )}
-            {canStartClosing && (
-              <Button type="button" onClick={() => setClosingModalOpen(true)}>
-                Preparar cierre
-              </Button>
-            )}
-          </>
-        }
-      />
-
-      <section className="page-section-muted">
-        <p className="text-sm font-semibold text-[var(--text-strong)]">
-          {company?.name ?? 'Empresa seleccionada'}
-        </p>
-        <p className="muted-text mt-1 text-sm">
-          {company?.description ||
-            'Revisá el estado contable y la estructura operativa de la empresa.'}
-        </p>
-        {companyStatusLabels.length > 0 && (
-          <div className="page-meta-row mt-3">
-            {companyStatusLabels.map((label) => (
-              <span key={label} className="status-badge">
-                {label}
-              </span>
-            ))}
           </div>
-        )}
-        {company?.is_demo && company.demo_slug && (
-          <p className="muted-text mt-2 text-xs">Slug demo: {company.demo_slug}</p>
-        )}
-      </section>
-
-      {companyWriteBlockMessage && <Alert tone="warning">{companyWriteBlockMessage}</Alert>}
-
-      <section className="page-section flex flex-col gap-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="font-semibold text-[var(--text-strong)]">Estado de cierre</p>
-            <p className="muted-text mt-1 text-sm">
-              Seguimiento del último cierre patrimonial y de la reapertura de libros.
-            </p>
-          </div>
-        </div>
-
-        {company?.books_closed_until && (
-          <Alert tone="info">
-            Los libros están cerrados hasta <strong>{company.books_closed_until}</strong>.
-          </Alert>
-        )}
-
-        {closingStateLoading && (
-          <Spinner className="size-5 text-[var(--brand-500)]" label="Cargando estado de cierre…" />
-        )}
-
-        {closingStateError && !closingStateLoading && (
-          <Alert tone="error">{closingStateErrorMessage}</Alert>
-        )}
-
-        {!closingStateLoading && !closingStateError && (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <article className="summary-stat-card">
-              <p className="summary-stat-label">Libros cerrados hasta</p>
-              <p className="summary-stat-value text-[0.95rem]">
-                {closingState?.books_closed_until ?? company?.books_closed_until ?? 'Sin cierre'}
-              </p>
-            </article>
-            <article className="summary-stat-card">
-              <p className="summary-stat-label">Último cierre patrimonial</p>
-              <p className="summary-stat-value text-[0.95rem]">
-                {closingState?.last_patrimonial_closing_date ?? 'Sin registrar'}
-              </p>
-            </article>
-            <article className="summary-stat-card">
-              <p className="summary-stat-label">Última reapertura</p>
-              <p className="summary-stat-value text-[0.95rem]">
-                {closingState?.last_reopening_date ?? 'Sin registrar'}
-              </p>
-            </article>
-            <article className="summary-stat-card">
-              <p className="summary-stat-label">Elegibilidad</p>
-              <p className="summary-stat-value text-[0.95rem]">
-                {closingState?.can_close ? 'Puede cerrar' : 'No disponible'}
-              </p>
-            </article>
-            <article className="summary-stat-card">
-              <p className="summary-stat-label">Ejercicio actual</p>
-              <p className="summary-stat-value text-[0.95rem]">
-                {closingState?.current_exercise
-                  ? `#${closingState.current_exercise.exercise_index} · ${closingState.current_exercise.start_date}`
-                  : 'Sin ejercicio'}
-              </p>
-            </article>
-          </div>
-        )}
-
-        {!canManageClosing &&
-          company?.accounting_ready !== false &&
-          company?.is_read_only !== true && (
-            <p className="muted-text text-sm">
-              Solo el propietario o un administrador pueden ejecutar el cierre contable.
-            </p>
-          )}
-
-        {logicalExercises && logicalExercises.exercises.length > 0 && (
-          <div className="space-y-3">
-            <div>
-              <p className="font-semibold text-[var(--text-strong)]">Ejercicios lógicos</p>
-              <p className="muted-text mt-1 text-sm">
-                Secuencia de apertura, cierres patrimoniales y reaperturas resuelta por backend.
-              </p>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              {logicalExercises.exercises.map((exercise) => (
-                <article
-                  key={exercise.exercise_id}
-                  className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-semibold text-[var(--text-strong)]">
-                      Ejercicio {exercise.exercise_index}
-                    </p>
-                    <span className="metric-chip">
-                      {exercise.exercise_id === logicalExercises.current_exercise_id
-                        ? 'Actual'
-                        : exercise.status === 'closed'
-                          ? 'Cerrado'
-                          : 'Abierto'}
-                    </span>
-                  </div>
-                  <div className="mt-3 space-y-1 text-sm text-[var(--text-muted)]">
-                    <p>Inicio: {exercise.start_date}</p>
-                    <p>Cierre: {exercise.closing_date ?? 'Pendiente'}</p>
-                    <p>Origen: {exercise.opening_source_type}</p>
-                  </div>
-                  {exercise.snapshot_id !== null && (
-                    <div className="mt-3">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() =>
-                          navigate(`/companies/${id}/closing/snapshots/${exercise.snapshot_id}`)
-                        }
-                      >
-                        Ver snapshot confirmado
-                      </Button>
-                    </div>
-                  )}
-                </article>
-              ))}
-            </div>
-
-            {logicalExercises.exercises.some((exercise) => exercise.snapshot_id !== null) && (
-              <div>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => navigate(`/companies/${id}/closing/latest-snapshot`)}
-                >
-                  Ver último snapshot confirmado
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-      </section>
-
-      {company?.accounting_ready === false && canManageOpening && (
-        <section className="page-section flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="font-semibold text-[var(--text-strong)]">Registrá la apertura contable</p>
-            <p className="muted-text mt-1 text-sm">
-              La empresa todavía no puede operar en journal ni reportes hasta cargar el inventario
-              inicial o general.
-            </p>
-          </div>
-          <Button
-            type="button"
-            disabled={!canWriteCompany}
-            onClick={() => setOpeningModalOpen(true)}
-          >
-            Registrar apertura
-          </Button>
-        </section>
+        </Alert>
       )}
 
       {isLoading && (
@@ -304,15 +141,19 @@ export function CompanyDetailPage() {
 
       {error && !isLoading && <Alert tone="error">{loadErrorMessage}</Alert>}
 
-      {!isLoading && !error && accounts.length === 0 && (
+      {!isLoading && !error && visibleAccounts.length === 0 && (
         <div className="page-section rounded-xl border-2 border-dashed border-gray-200 py-16 text-center">
-          <p className="text-sm font-medium text-gray-500">No hay cuentas registradas.</p>
+          <p className="text-sm font-medium text-gray-500">
+            {company?.accounting_ready === false
+              ? 'No hay cuentas válidas disponibles para registrar la apertura.'
+              : 'No hay cuentas registradas.'}
+          </p>
         </div>
       )}
 
-      {!isLoading && !error && accounts.length > 0 && (
+      {!isLoading && !error && visibleAccounts.length > 0 && (
         <AccountTree
-          accounts={accounts}
+          accounts={visibleAccounts}
           onAddChild={canWriteCompany ? openCreate : undefined}
           onEdit={canWriteCompany ? openEdit : undefined}
           onDelete={canWriteCompany ? (a) => setDeletingAccount(a) : undefined}
@@ -335,13 +176,7 @@ export function CompanyDetailPage() {
         isOpen={openingModalOpen}
         onClose={() => setOpeningModalOpen(false)}
         companyId={id}
-        existingAccounts={accounts}
-      />
-      <ClosingWorkflowModal
-        isOpen={closingModalOpen}
-        onClose={() => setClosingModalOpen(false)}
-        companyId={id}
-        state={closingState}
+        existingAccounts={visibleAccounts}
       />
     </div>
   )

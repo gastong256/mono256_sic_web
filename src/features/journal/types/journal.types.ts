@@ -38,6 +38,13 @@ export interface JournalEntryDetail extends JournalEntry {
   lines: JournalLine[]
 }
 
+export interface JournalEntryListResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: JournalEntry[]
+}
+
 export interface CreateJournalLinePayload {
   account_id: number
   type: JournalLineType

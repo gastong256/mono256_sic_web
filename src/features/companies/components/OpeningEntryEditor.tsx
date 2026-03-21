@@ -77,13 +77,19 @@ function Section({
   onRemove: (index: number) => void
 }) {
   return (
-    <section className="space-y-3 rounded-2xl border border-[var(--border-soft)] p-4">
+    <section className="space-y-4 rounded-2xl border border-[var(--border-soft)] p-4 xl:p-5">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-[var(--text-strong)]">{title}</h3>
           <p className="muted-text mt-1 text-xs">{hint}</p>
         </div>
-        <Button type="button" variant="secondary" disabled={disabled} onClick={onAdd}>
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={disabled}
+          onClick={onAdd}
+          aria-label={`Agregar concepto en ${title.toLowerCase()}`}
+        >
           Agregar
         </Button>
       </div>
@@ -99,9 +105,9 @@ function Section({
             return (
               <div
                 key={`${item.parent_code}-${index}`}
-                className="grid grid-cols-1 gap-3 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 md:grid-cols-[1.4fr_1.6fr_1fr_auto]"
+                className="grid grid-cols-1 gap-3 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 xl:grid-cols-[8fr_8fr_8fr_1fr] xl:gap-4 xl:p-4"
               >
-                <label className="text-sm font-semibold text-[var(--text-muted)]">
+                <label className="min-w-0 text-sm font-semibold text-[var(--text-muted)]">
                   Colectiva padre
                   <select
                     value={item.parent_code}
@@ -121,7 +127,7 @@ function Section({
                   </select>
                 </label>
 
-                <label className="text-sm font-semibold text-[var(--text-muted)]">
+                <label className="min-w-0 text-sm font-semibold text-[var(--text-muted)]">
                   Cuenta movimiento
                   <input
                     type="text"
@@ -145,7 +151,7 @@ function Section({
                   )}
                 </label>
 
-                <label className="text-sm font-semibold text-[var(--text-muted)]">
+                <label className="min-w-0 text-sm font-semibold text-[var(--text-muted)]">
                   Importe
                   <input
                     type="number"
@@ -164,15 +170,17 @@ function Section({
                   />
                 </label>
 
-                <div className="flex items-end">
+                <div className="flex items-end justify-center">
                   <Button
                     type="button"
                     variant="ghost"
                     disabled={disabled}
                     onClick={() => onRemove(index)}
-                    className="w-full text-red-700 hover:bg-red-50 hover:text-red-800"
+                    className="inline-flex h-10 items-center justify-center rounded-full border border-red-200 bg-red-50 px-3 text-sm font-semibold text-red-700 hover:border-red-300 hover:bg-red-100 hover:text-red-800 xl:h-10 xl:w-10 xl:px-0"
+                    aria-label={`Quitar concepto ${index + 1}`}
                   >
-                    Quitar
+                    <span className="xl:hidden">Eliminar</span>
+                    <span className="hidden text-lg leading-none font-semibold xl:inline">×</span>
                   </Button>
                 </div>
               </div>
@@ -222,7 +230,7 @@ export function OpeningEntryEditor({
   }
 
   return (
-    <div className="space-y-4 rounded-2xl border border-[var(--border-soft)] bg-white p-4">
+    <div className="space-y-5 rounded-2xl border border-[var(--border-soft)] bg-white p-4 xl:p-6">
       <div className="space-y-1">
         <h3 className="text-base font-semibold text-[var(--text-strong)]">Apertura contable</h3>
         <p className="muted-text text-sm">
@@ -230,8 +238,8 @@ export function OpeningEntryEditor({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <label className="text-sm font-semibold text-[var(--text-muted)]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_1fr_2fr] xl:gap-5">
+        <label className="min-w-0 text-sm font-semibold text-[var(--text-muted)]">
           Fecha
           <input
             type="date"
@@ -242,7 +250,7 @@ export function OpeningEntryEditor({
           />
         </label>
 
-        <label className="text-sm font-semibold text-[var(--text-muted)]">
+        <label className="min-w-0 text-sm font-semibold text-[var(--text-muted)]">
           Tipo de inventario
           <select
             value={value.inventory_kind}
@@ -263,7 +271,7 @@ export function OpeningEntryEditor({
           </select>
         </label>
 
-        <label className="text-sm font-semibold text-[var(--text-muted)]">
+        <label className="min-w-0 text-sm font-semibold text-[var(--text-muted)]">
           Referencia
           <input
             type="text"

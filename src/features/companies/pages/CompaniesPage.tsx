@@ -14,6 +14,7 @@ import { Skeleton } from '@/shared/ui/Skeleton'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 import { useToast } from '@/shared/ui/ToastProvider'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { hasRole } from '@/shared/lib/authorization'
 
 export function CompaniesPage() {
   const { pushToast } = useToast()
@@ -36,6 +37,27 @@ export function CompaniesPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editingCompany, setEditingCompany] = useState<Company | null>(null)
   const [deletingCompany, setDeletingCompany] = useState<Company | null>(null)
+  const orderedCompanies = useMemo(() => {
+    return [...companies].sort((left, right) => {
+      const leftIsOwn = left.owner_username === user?.username
+      const rightIsOwn = right.owner_username === user?.username
+
+      if (leftIsOwn !== rightIsOwn) return leftIsOwn ? -1 : 1
+
+      const ownerOrder = left.owner_username.localeCompare(right.owner_username, 'es', {
+        sensitivity: 'base',
+      })
+      if (ownerOrder !== 0) return ownerOrder
+
+      const leftPendingOpening = left.accounting_ready === false
+      const rightPendingOpening = right.accounting_ready === false
+      if (leftPendingOpening !== rightPendingOpening) {
+        return leftPendingOpening ? 1 : -1
+      }
+
+      return left.name.localeCompare(right.name, 'es', { sensitivity: 'base' })
+    })
+  }, [companies, user?.username])
 
   function openCreate() {
     setEditingCompany(null)
@@ -84,10 +106,11 @@ export function CompaniesPage() {
     )
   }
 
-  const showOwner = user?.role === 'admin'
+  const showOwner = hasRole(user, ['admin', 'teacher'])
   const canManageDemoPublication = user?.role === 'admin'
-  const demoCompaniesCount = companies.filter((company) => company.is_demo).length
-  const blockedCompaniesCount = companies.filter(
+  const showSummaryStats = hasRole(user, ['admin'])
+  const demoCompaniesCount = orderedCompanies.filter((company) => company.is_demo).length
+  const blockedCompaniesCount = orderedCompanies.filter(
     (company) => company.accounting_ready === false || company.is_read_only === true
   ).length
 
@@ -100,11 +123,11 @@ export function CompaniesPage() {
         actions={<Button onClick={openCreate}>Nueva empresa</Button>}
       />
 
-      {!isLoading && !error && companies.length > 0 && (
+      {!isLoading && !error && orderedCompanies.length > 0 && showSummaryStats && (
         <section className="grid gap-3 md:grid-cols-3">
           <article className="summary-stat-card">
             <p className="summary-stat-label">Empresas visibles</p>
-            <p className="summary-stat-value">{companies.length}</p>
+            <p className="summary-stat-value">{orderedCompanies.length}</p>
           </article>
           <article className="summary-stat-card">
             <p className="summary-stat-label">Empresas demo</p>
@@ -142,7 +165,7 @@ export function CompaniesPage() {
 
       {error && !isLoading && <Alert tone="error">{loadErrorMessage}</Alert>}
 
-      {!isLoading && !error && companies.length === 0 && (
+      {!isLoading && !error && orderedCompanies.length === 0 && (
         <EmptyState
           icon="companies"
           title="No hay empresas registradas"
@@ -151,9 +174,9 @@ export function CompaniesPage() {
         />
       )}
 
-      {!isLoading && !error && companies.length > 0 && (
+      {!isLoading && !error && orderedCompanies.length > 0 && (
         <CompanyTable
-          companies={companies}
+          companies={orderedCompanies}
           showOwner={showOwner}
           canManageDemoPublication={canManageDemoPublication}
           demoPublicationPendingId={publishingCompanyId}

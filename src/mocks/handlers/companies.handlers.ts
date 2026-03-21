@@ -6,6 +6,7 @@ import {
   createCompany,
   deleteCompany,
   executeClosing,
+  getCurrentBookBalances,
   getClosingSnapshotById,
   getClosingState,
   getCompanyById,
@@ -247,6 +248,28 @@ export const companiesHandlers = [
     const logicalExercises = getLogicalExercises(companyId)
     if (!logicalExercises) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
     return HttpResponse.json(logicalExercises)
+  }),
+
+  http.get(`${BASE}/companies/:id/closing/current-balances/`, async ({ request, params }) => {
+    await delay(140)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+
+    const companyId = Number(params.id)
+    const company = getCompanyById(companyId)
+    if (!company) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
+    if (!canAccessCompany(user, company)) {
+      return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    }
+
+    const dateTo = new URL(request.url).searchParams.get('date_to') ?? undefined
+    const balances = getCurrentBookBalances(companyId, dateTo)
+    if ('error' in balances) {
+      return HttpResponse.json({ detail: balances.error }, { status: balances.status })
+    }
+
+    return HttpResponse.json(balances)
   }),
 
   http.post(`${BASE}/companies/:id/closing/preview/`, async ({ request, params }) => {

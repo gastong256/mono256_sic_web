@@ -69,12 +69,12 @@ export function AdminRolesPage() {
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
           />
-          <label className="text-sm font-semibold text-[var(--text-strong)]">
+          <label className="field-label text-[var(--text-strong)]">
             Rol
             <select
               value={roleFilter}
               onChange={(event) => setRoleFilter(event.target.value as 'all' | Role)}
-              className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-white px-3 py-2 text-sm text-[var(--text-strong)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
+              className="field-control px-3 py-2 text-sm text-[var(--text-strong)]"
             >
               <option value="all">Todos</option>
               <option value="admin">admin</option>

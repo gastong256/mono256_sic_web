@@ -5,30 +5,23 @@ import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
 import { Modal } from '@/shared/ui/Modal'
 import { useToast } from '@/shared/ui/ToastProvider'
+import { formatARSAmount } from '@/shared/lib/currency'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
+import { useCurrentBookBalances } from '@/features/companies/hooks/useCurrentBookBalances'
 import { useExecuteClosing } from '@/features/companies/hooks/useExecuteClosing'
 import { usePreviewClosing } from '@/features/companies/hooks/usePreviewClosing'
 import type {
   BalanceSheet,
   ClosingAdjustmentStatus,
+  CurrentBookBalances,
+  ClosingStatementAccountDetail,
   ClosingState,
   IncomeStatement,
   SimplifiedClosingPreview,
   SimplifiedClosingRequest,
 } from '@/features/companies/types/closing.types'
 import type { LogicalExercise } from '@/features/companies/types/logicalExercises.types'
-import { getJournalSourceTypeLabel } from '@/features/journal/lib/sourceTypes'
-
-const arsFormatter = new Intl.NumberFormat('es-AR', {
-  style: 'currency',
-  currency: 'ARS',
-})
-
-function formatAmount(value: string | null): string {
-  if (value === null) return '—'
-  const parsed = Number(value)
-  return arsFormatter.format(Number.isFinite(parsed) ? parsed : 0)
-}
+import { getJournalSourceTone, getJournalSourceTypeLabel } from '@/features/journal/lib/sourceTypes'
 
 function addDays(date: string, amount: number): string {
   const base = new Date(`${date}T00:00:00`)
@@ -105,11 +98,134 @@ function getPreviewEntries(preview: SimplifiedClosingPreview) {
   ]
 }
 
+function getOrderedDraftLines(
+  entry: SimplifiedClosingPreview['entries']['result_closing'][number]
+) {
+  return [...entry.lines].sort((left, right) => {
+    if (left.type === right.type) return 0
+    return left.type === 'DEBIT' ? -1 : 1
+  })
+}
+
 function getExerciseLabel(exercise: LogicalExercise | null): string {
   if (!exercise) return 'Sin ejercicio lógico activo'
   return `Ejercicio ${exercise.exercise_index} · ${exercise.start_date}${
     exercise.closing_date ? ` a ${exercise.closing_date}` : ''
   }`
+}
+
+function formatPreviewAmount(value: string | null | undefined): string {
+  return value === null || value === undefined ? '—' : formatARSAmount(value)
+}
+
+function getNetResultKindLabel(
+  kind: SimplifiedClosingPreview['result_summary']['net_result_kind']
+): string {
+  return kind === 'gain' ? 'Ganancia' : kind === 'loss' ? 'Pérdida' : 'Neutro'
+}
+
+function PreviewMetaRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid grid-cols-[auto,1fr] items-start gap-x-3 gap-y-1">
+      <span className="text-[0.72rem] font-semibold tracking-[0.08em] text-[var(--text-muted)] uppercase">
+        {label}
+      </span>
+      <span className="min-w-0 text-sm font-medium text-[var(--text-strong)]">{value}</span>
+    </div>
+  )
+}
+
+function CurrentBalanceHint({
+  label,
+  value,
+  balances,
+  isLoading,
+}: {
+  label: string
+  value: CurrentBookBalances['cash'] | null
+  balances: CurrentBookBalances | undefined
+  isLoading: boolean
+}) {
+  if (isLoading) {
+    return <p className="mt-1 text-xs text-[var(--text-muted)]">Cargando saldo contable…</p>
+  }
+  if (!value || !balances) return null
+
+  return (
+    <p className="mt-1 text-xs text-[var(--text-muted)]">
+      {label} al {balances.as_of_date}:{' '}
+      <span className="font-semibold text-[var(--text-strong)]">
+        {formatARSAmount(value.book_balance)}
+      </span>
+    </p>
+  )
+}
+
+function CurrentBalanceField({
+  label,
+  placeholder,
+  value,
+  onChange,
+  balance,
+  balances,
+  isLoading,
+}: {
+  label: string
+  placeholder: string
+  value: string
+  onChange: (value: string) => void
+  balance: CurrentBookBalances['cash'] | null
+  balances: CurrentBookBalances | undefined
+  isLoading: boolean
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-sm font-semibold text-[var(--text-strong)]">{label}</label>
+      <input
+        type="number"
+        step="0.01"
+        min="0"
+        inputMode="decimal"
+        placeholder={placeholder}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={[
+          'rounded-xl border px-3 py-2 text-sm transition-all duration-200',
+          'bg-white/96 shadow-[inset_0_1px_0_rgb(255_255_255_/_85%)] placeholder:text-[var(--text-muted)]',
+          'border-[var(--border-strong)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none',
+        ].join(' ')}
+      />
+      <CurrentBalanceHint
+        label="Saldo contable"
+        value={balance}
+        balances={balances}
+        isLoading={isLoading}
+      />
+    </div>
+  )
+}
+
+function renderNestedAccounts(accounts: ClosingStatementAccountDetail[]) {
+  if (accounts.length === 0) return null
+
+  return (
+    <ul className="mt-2 space-y-1.5 border-l border-[var(--border-soft)] pl-3 text-xs text-[var(--text-muted)]">
+      {accounts.map((account, index) => (
+        <li
+          key={`${account.account_code ?? account.account_name}-${index}`}
+          className="flex items-start justify-between gap-3"
+        >
+          <span className="min-w-0">
+            {account.account_code ? `${account.account_code} · ` : ''}
+            {account.account_name}
+          </span>
+          <span className="font-medium whitespace-nowrap text-[var(--text-strong)]">
+            {formatARSAmount(account.amount)}
+          </span>
+        </li>
+      ))}
+    </ul>
+  )
 }
 
 function renderStatementAccounts(accounts: IncomeStatement['positive_results']['accounts']) {
@@ -118,11 +234,22 @@ function renderStatementAccounts(accounts: IncomeStatement['positive_results']['
   }
 
   return (
-    <ul className="mt-2 space-y-1 text-sm">
+    <ul className="mt-2 space-y-2.5 text-sm">
       {accounts.map((account, index) => (
-        <li key={`${account.account_code ?? account.account_name}-${index}`}>
-          {account.account_code ? `${account.account_code} · ` : ''}
-          {account.account_name}: {formatAmount(account.amount)}
+        <li
+          key={`${account.account_code ?? account.account_name}-${index}`}
+          className="rounded-xl border border-[var(--border-soft)] bg-white/70 p-3"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <span className="min-w-0 font-medium text-[var(--text-strong)]">
+              {account.account_code ? `${account.account_code} · ` : ''}
+              {account.account_name}
+            </span>
+            <span className="font-semibold whitespace-nowrap text-[var(--text-strong)]">
+              {formatARSAmount(account.subtotal)}
+            </span>
+          </div>
+          {renderNestedAccounts(account.accounts)}
         </li>
       ))}
     </ul>
@@ -135,10 +262,21 @@ function renderBalanceGroups(groups: BalanceSheet['assets']['groups']) {
   }
 
   return (
-    <ul className="mt-2 space-y-1 text-sm">
+    <ul className="mt-2 space-y-2.5 text-sm">
       {groups.map((group) => (
-        <li key={`${group.account_code}-${group.account_name}`}>
-          {group.account_code} · {group.account_name}: {formatAmount(group.amount)}
+        <li
+          key={`${group.account_code}-${group.account_name}`}
+          className="rounded-xl border border-[var(--border-soft)] bg-white/70 p-3"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <span className="min-w-0 font-medium text-[var(--text-strong)]">
+              {group.account_code} · {group.account_name}
+            </span>
+            <span className="font-semibold whitespace-nowrap text-[var(--text-strong)]">
+              {formatARSAmount(group.subtotal)}
+            </span>
+          </div>
+          {renderNestedAccounts(group.accounts)}
         </li>
       ))}
     </ul>
@@ -165,6 +303,13 @@ export function ClosingWorkflowModal({
   const [form, setForm] = useState<SimplifiedClosingRequest>(() => buildDefaultRequest(state))
   const [preview, setPreview] = useState<SimplifiedClosingPreview | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const {
+    data: currentBalances,
+    isLoading: currentBalancesLoading,
+    error: currentBalancesError,
+  } = useCurrentBookBalances(companyId, form.closing_date || undefined, {
+    enabled: isOpen && companyId > 0,
+  })
 
   useEffect(() => {
     if (!isOpen) return
@@ -206,7 +351,6 @@ export function ClosingWorkflowModal({
       setSubmitError(
         getHttpErrorMessage(error, {
           defaultMessage: 'No se pudo preparar la preview del cierre.',
-          badRequestMessage: 'Revisá las fechas y los importes cargados.',
           unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
           forbiddenMessage: 'No tenés permisos para preparar el cierre de esta empresa.',
           notFoundMessage: 'La empresa ya no existe o no está disponible.',
@@ -232,13 +376,12 @@ export function ClosingWorkflowModal({
       )
       handleClose()
       if (response.snapshot_id) {
-        void navigate(`/companies/${companyId}/closing/snapshots/${response.snapshot_id}`)
+        void navigate(`/reports/closing/snapshots/${response.snapshot_id}`)
       }
     } catch (error) {
       setSubmitError(
         getHttpErrorMessage(error, {
           defaultMessage: 'No se pudo ejecutar el cierre.',
-          badRequestMessage: 'Revisá los datos del cierre e intentá nuevamente.',
           unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
           forbiddenMessage: 'No tenés permisos para ejecutar el cierre de esta empresa.',
           notFoundMessage: 'La empresa ya no existe o no está disponible.',
@@ -248,20 +391,37 @@ export function ClosingWorkflowModal({
   }
 
   const previewEntries = preview ? getPreviewEntries(preview) : []
+  const currentBalancesErrorMessage = getHttpErrorMessage(currentBalancesError, {
+    defaultMessage: 'No se pudieron cargar los saldos contables actuales.',
+    unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
+    forbiddenMessage: 'No tenés permisos para consultar estos saldos.',
+    notFoundMessage: 'La empresa ya no existe o no está disponible.',
+    conflictMessage: 'Los saldos contables solo están disponibles para empresas con apertura.',
+  })
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
       title={preview ? 'Confirmar cierre contable' : 'Preparar cierre contable'}
-      className="max-w-5xl"
+      className="xl:max-w-6xl 2xl:max-w-7xl"
     >
       <div className="space-y-5">
+        {state?.current_exercise?.start_date && (
+          <p className="text-sm text-[var(--text-muted)]">
+            Se va a cerrar el ejercicio abierto el{' '}
+            <span className="font-semibold text-[var(--text-strong)]">
+              {state.current_exercise.start_date}
+            </span>
+            .
+          </p>
+        )}
+
         {submitError && <Alert tone="error">{submitError}</Alert>}
 
         {!preview ? (
           <>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <Input
                 label="Fecha de cierre"
                 type="date"
@@ -287,35 +447,33 @@ export function ClosingWorkflowModal({
                   setForm((current) => ({ ...current, reopening_date: event.target.value }))
                 }
               />
-              <Input
+              <CurrentBalanceField
                 label="Arqueo de caja real (opcional)"
-                type="number"
-                step="0.01"
-                min="0"
-                inputMode="decimal"
                 placeholder="Ej. 1100.00"
                 value={form.cash_actual ?? ''}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, cash_actual: event.target.value }))
-                }
+                onChange={(value) => setForm((current) => ({ ...current, cash_actual: value }))}
+                balance={currentBalances?.cash ?? null}
+                balances={currentBalances}
+                isLoading={currentBalancesLoading}
               />
-              <Input
+              <CurrentBalanceField
                 label="Inventario real de mercaderías (opcional)"
-                type="number"
-                step="0.01"
-                min="0"
-                inputMode="decimal"
                 placeholder="Ej. 450.00"
                 value={form.inventory_actual ?? ''}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, inventory_actual: event.target.value }))
+                onChange={(value) =>
+                  setForm((current) => ({ ...current, inventory_actual: value }))
                 }
+                balance={currentBalances?.inventory ?? null}
+                balances={currentBalances}
+                isLoading={currentBalancesLoading}
               />
             </div>
 
+            {currentBalancesError && <Alert tone="warning">{currentBalancesErrorMessage}</Alert>}
+
             <Alert tone="info">
-              Primero se genera una preview del cierre. Recién después vas a poder confirmar la
-              ejecución real.
+              El cierre se prepara siempre sobre el ejercicio lógico abierto actual. Primero se
+              genera una preview y recién después vas a poder confirmar la ejecución real.
             </Alert>
 
             <div className="flex justify-end gap-3">
@@ -329,37 +487,53 @@ export function ClosingWorkflowModal({
           </>
         ) : (
           <>
-            <div className="grid gap-3 lg:grid-cols-3">
-              <article className="surface-card p-4">
+            <div className="grid gap-4 xl:grid-cols-2">
+              <article className="surface-card p-4 lg:p-5">
                 <p className="text-sm font-semibold text-[var(--text-strong)]">Fechas</p>
-                <div className="mt-3 space-y-2 text-sm">
-                  <p>Cierre: {preview.closing_date}</p>
-                  <p>Reapertura: {preview.reopening_date}</p>
-                  <p>Libros cerrados hoy: {preview.books_closed_until ?? 'Sin cierres previos'}</p>
-                  <p>Ejercicio activo: {getExerciseLabel(preview.active_exercise)}</p>
+                <div className="mt-3 space-y-2.5">
+                  <PreviewMetaRow label="Cierre" value={preview.closing_date} />
+                  <PreviewMetaRow label="Reapertura" value={preview.reopening_date} />
+                  <PreviewMetaRow
+                    label="Libros"
+                    value={preview.books_closed_until ?? 'Sin cierres previos'}
+                  />
+                  <PreviewMetaRow
+                    label="Ejercicio"
+                    value={getExerciseLabel(preview.active_exercise)}
+                  />
                 </div>
               </article>
 
-              <article className="surface-card p-4">
+              <article className="surface-card p-4 lg:p-5">
                 <p className="text-sm font-semibold text-[var(--text-strong)]">Resultado</p>
-                <div className="mt-3 space-y-2 text-sm">
-                  <p>Resultado negativo: {formatAmount(preview.result_summary.negative_total)}</p>
-                  <p>Resultado positivo: {formatAmount(preview.result_summary.positive_total)}</p>
-                  <p>Resultado neto: {formatAmount(preview.result_summary.net_result)}</p>
-                  <p>
-                    Tipo:{' '}
-                    {preview.result_summary.net_result_kind === 'gain'
-                      ? 'Ganancia'
-                      : preview.result_summary.net_result_kind === 'loss'
-                        ? 'Pérdida'
-                        : 'Neutro'}
-                  </p>
+                <div className="mt-3 space-y-2.5">
+                  <PreviewMetaRow
+                    label="Negativo"
+                    value={formatARSAmount(preview.result_summary.negative_total)}
+                  />
+                  <PreviewMetaRow
+                    label="Positivo"
+                    value={formatARSAmount(preview.result_summary.positive_total)}
+                  />
+                  <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] px-3 py-2">
+                    <p className="text-[0.72rem] font-semibold tracking-[0.08em] text-[var(--text-muted)] uppercase">
+                      Resultado neto
+                    </p>
+                    <div className="mt-1 flex items-end justify-between gap-3">
+                      <p className="text-base font-semibold text-[var(--text-strong)]">
+                        {formatARSAmount(preview.result_summary.net_result)}
+                      </p>
+                      <span className="metric-chip">
+                        {getNetResultKindLabel(preview.result_summary.net_result_kind)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </article>
 
-              <article className="surface-card p-4">
+              <article className="surface-card p-4 lg:p-5 xl:col-span-2">
                 <p className="text-sm font-semibold text-[var(--text-strong)]">Ajustes</p>
-                <div className="mt-3 space-y-3 text-sm">
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
                   {[
                     { key: 'cash', label: 'Caja', value: preview.adjustments.cash },
                     {
@@ -372,15 +546,28 @@ export function ClosingWorkflowModal({
                       key={item.key}
                       className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3"
                     >
-                      <p className="font-semibold text-[var(--text-strong)]">{item.label}</p>
-                      <p className="muted-text mt-1 text-xs">
-                        Estado: {getAdjustmentStatusLabel(item.value.status)}
-                      </p>
-                      <div className="mt-2 grid gap-1 text-xs text-[var(--text-muted)]">
-                        <span>Contable: {formatAmount(item.value.book_balance)}</span>
-                        <span>Real: {formatAmount(item.value.actual_balance)}</span>
-                        <span>Diferencia: {formatAmount(item.value.difference)}</span>
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="font-semibold text-[var(--text-strong)]">{item.label}</p>
+                        <span className="metric-chip">
+                          {getAdjustmentStatusLabel(item.value.status)}
+                        </span>
                       </div>
+                      {item.value.status !== 'not_requested' && (
+                        <div className="mt-2 space-y-1.5">
+                          <PreviewMetaRow
+                            label="Contable"
+                            value={formatPreviewAmount(item.value.book_balance)}
+                          />
+                          <PreviewMetaRow
+                            label="Real"
+                            value={formatPreviewAmount(item.value.actual_balance)}
+                          />
+                          <PreviewMetaRow
+                            label="Diferencia"
+                            value={formatPreviewAmount(item.value.difference)}
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -388,7 +575,7 @@ export function ClosingWorkflowModal({
             </div>
 
             {preview.previous_exercises.length > 0 && (
-              <article className="surface-card p-4">
+              <article className="surface-card p-4 lg:p-5">
                 <p className="text-sm font-semibold text-[var(--text-strong)]">
                   Ejercicios anteriores
                 </p>
@@ -404,12 +591,10 @@ export function ClosingWorkflowModal({
                           type="button"
                           variant="ghost"
                           onClick={() =>
-                            void navigate(
-                              `/companies/${companyId}/closing/snapshots/${exercise.snapshot_id}`
-                            )
+                            void navigate(`/reports/closing/snapshots/${exercise.snapshot_id}`)
                           }
                         >
-                          Ver snapshot
+                          Ver cierre confirmado
                         </Button>
                       )}
                     </div>
@@ -423,18 +608,18 @@ export function ClosingWorkflowModal({
                 <p className="text-sm font-semibold text-[var(--text-strong)]">
                   Estado de resultados
                 </p>
-                <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                  <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3">
+                <div className="mt-3 grid gap-4 xl:grid-cols-2">
+                  <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 lg:p-4">
                     <p className="font-semibold text-[var(--text-strong)]">Resultados positivos</p>
                     <p className="mt-2 text-sm">
-                      Total: {formatAmount(preview.income_statement.positive_results.total)}
+                      Total: {formatARSAmount(preview.income_statement.positive_results.total)}
                     </p>
                     {renderStatementAccounts(preview.income_statement.positive_results.accounts)}
                   </div>
-                  <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3">
+                  <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 lg:p-4">
                     <p className="font-semibold text-[var(--text-strong)]">Resultados negativos</p>
                     <p className="mt-2 text-sm">
-                      Total: {formatAmount(preview.income_statement.negative_results.total)}
+                      Total: {formatARSAmount(preview.income_statement.negative_results.total)}
                     </p>
                     {renderStatementAccounts(preview.income_statement.negative_results.accounts)}
                   </div>
@@ -443,34 +628,53 @@ export function ClosingWorkflowModal({
             )}
 
             {preview.balance_sheet && (
-              <article className="surface-card p-4">
-                <p className="text-sm font-semibold text-[var(--text-strong)]">
-                  Balance general ajustado
-                </p>
-                <div className="mt-3 grid gap-3 lg:grid-cols-3">
-                  <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3">
+              <article className="surface-card border-sky-200/80 bg-gradient-to-b from-sky-50/70 to-white p-5 lg:p-6">
+                <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-sky-200/80 bg-white/80 px-4 py-3">
+                  <p className="text-lg font-semibold text-[var(--text-strong)]">
+                    Balance general ajustado
+                  </p>
+                  <span
+                    className={[
+                      'metric-chip',
+                      preview.balance_sheet.equation.is_balanced
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                        : 'border-amber-200 bg-amber-50 text-amber-700',
+                    ].join(' ')}
+                  >
+                    {preview.balance_sheet.equation.is_balanced ? 'Balanceado' : 'Revisar ecuación'}
+                  </span>
+                </div>
+
+                <div className="mt-4 grid gap-4 xl:grid-cols-3">
+                  <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 lg:p-4">
                     <p className="font-semibold text-[var(--text-strong)]">Activo</p>
                     <p className="mt-2 text-sm">
-                      Total: {formatAmount(preview.balance_sheet.assets.total)}
+                      Total: {formatARSAmount(preview.balance_sheet.assets.total)}
                     </p>
                     {renderBalanceGroups(preview.balance_sheet.assets.groups)}
                   </div>
-                  <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3">
+                  <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 lg:p-4">
                     <p className="font-semibold text-[var(--text-strong)]">Pasivo</p>
                     <p className="mt-2 text-sm">
-                      Total: {formatAmount(preview.balance_sheet.liabilities.total)}
+                      Total: {formatARSAmount(preview.balance_sheet.liabilities.total)}
                     </p>
                     {renderBalanceGroups(preview.balance_sheet.liabilities.groups)}
                   </div>
-                  <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3">
+                  <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 lg:p-4">
                     <p className="font-semibold text-[var(--text-strong)]">Patrimonio neto</p>
                     <p className="mt-2 text-sm">
-                      Total: {formatAmount(preview.balance_sheet.equity.total)}
+                      Total: {formatARSAmount(preview.balance_sheet.equity.total)}
                     </p>
-                    <p className="mt-2 text-sm">
-                      Resultado del ejercicio:{' '}
-                      {formatAmount(preview.balance_sheet.equity.derived_result?.amount ?? null)}
-                    </p>
+                    <div className="mt-2 rounded-xl border border-sky-100 bg-white/85 px-3 py-2">
+                      <p className="text-[0.72rem] font-semibold tracking-[0.08em] text-sky-700 uppercase">
+                        Resultado del ejercicio
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-[var(--text-strong)]">
+                        {formatARSAmount(
+                          preview.balance_sheet.equity.derived_result?.amount ?? null
+                        )}
+                      </p>
+                    </div>
                     {renderBalanceGroups(preview.balance_sheet.equity.groups)}
                   </div>
                 </div>
@@ -491,50 +695,143 @@ export function ClosingWorkflowModal({
                 <Alert tone="warning">La preview no generó asientos para este cierre.</Alert>
               ) : (
                 <ul className="space-y-3">
-                  {previewEntries.map((entry, index) => (
-                    <li
-                      key={`${entry.source_ref}-${entry.date}-${index}`}
-                      className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-4"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <p className="font-semibold text-[var(--text-strong)]">
-                            {entry.description}
-                          </p>
-                          <p className="muted-text mt-1 text-xs">
-                            {entry.date} · {getJournalSourceTypeLabel(entry.source_type)} · Ref.{' '}
-                            {entry.source_ref || '—'}
-                          </p>
-                        </div>
-                        <div className="text-right text-sm">
-                          <p>Debe: {formatAmount(entry.total_debit)}</p>
-                          <p>Haber: {formatAmount(entry.total_credit)}</p>
-                        </div>
-                      </div>
+                  {previewEntries.map((entry, index) =>
+                    (() => {
+                      const sourceTone = getJournalSourceTone(entry.source_type)
+                      const orderedLines = getOrderedDraftLines(entry)
 
-                      {entry.lines.length > 0 && (
-                        <div className="mt-3 rounded-xl border border-[var(--border-soft)] bg-white p-3">
-                          <ul className="space-y-2 text-sm">
-                            {entry.lines.map((line, lineIndex) => (
-                              <li
-                                key={`${line.parent_code ?? 'line'}-${lineIndex}`}
-                                className="flex flex-wrap items-center justify-between gap-2"
+                      return (
+                        <li
+                          key={`${entry.source_ref}-${entry.date}-${index}`}
+                          className="surface-card overflow-hidden"
+                          style={sourceTone?.shellStyle}
+                        >
+                          <div
+                            className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--border-soft)] px-5 py-4"
+                            style={sourceTone?.headStyle}
+                          >
+                            <div>
+                              <p
+                                className="font-semibold"
+                                style={
+                                  sourceTone
+                                    ? { color: sourceTone.titleColor }
+                                    : { color: 'var(--text-strong)' }
+                                }
                               >
-                                <span className="text-[var(--text-strong)]">
-                                  {line.account_name}
-                                  {line.parent_code ? ` (${line.parent_code})` : ''}
-                                </span>
-                                <span className="muted-text text-xs">
-                                  {line.type === 'DEBIT' ? 'Debe' : 'Haber'} ·{' '}
-                                  {formatAmount(line.amount)}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </li>
-                  ))}
+                                {entry.description}
+                              </p>
+                              <p
+                                className="mt-1 text-xs"
+                                style={
+                                  sourceTone
+                                    ? { color: sourceTone.metaColor }
+                                    : { color: 'var(--text-muted)' }
+                                }
+                              >
+                                {entry.date} · {getJournalSourceTypeLabel(entry.source_type)} · Ref.{' '}
+                                {entry.source_ref || '—'}
+                              </p>
+                            </div>
+                            <div
+                              className="text-right text-sm font-semibold"
+                              style={sourceTone ? { color: sourceTone.totalsColor } : undefined}
+                            >
+                              <p>Debe: {formatARSAmount(entry.total_debit)}</p>
+                              <p>Haber: {formatARSAmount(entry.total_credit)}</p>
+                            </div>
+                          </div>
+
+                          {orderedLines.length > 0 && (
+                            <div className="accounting-table-shell" style={sourceTone?.scrollStyle}>
+                              <div className="accounting-table-scroll">
+                                <table className="accounting-table">
+                                  <thead style={sourceTone?.tableHeadStyle}>
+                                    <tr>
+                                      <th scope="col">Cuenta</th>
+                                      <th scope="col" className="amount-col">
+                                        Debe
+                                      </th>
+                                      <th scope="col" className="amount-col">
+                                        Haber
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {orderedLines.map((line, lineIndex) => (
+                                      <tr
+                                        key={`${line.parent_code ?? line.account_name}-${lineIndex}`}
+                                      >
+                                        <td
+                                          style={
+                                            sourceTone
+                                              ? {
+                                                  backgroundColor:
+                                                    lineIndex % 2 === 0
+                                                      ? sourceTone.rowBgOdd
+                                                      : sourceTone.rowBgEven,
+                                                  color: sourceTone.rowTextColor,
+                                                }
+                                              : undefined
+                                          }
+                                        >
+                                          {line.account_code ? `${line.account_code} · ` : ''}
+                                          {line.account_name}
+                                          {line.parent_code ? ` (${line.parent_code})` : ''}
+                                        </td>
+                                        <td
+                                          className={
+                                            line.type === 'DEBIT'
+                                              ? 'amount-cell amount-cell-debit'
+                                              : 'amount-cell-empty'
+                                          }
+                                          style={
+                                            sourceTone
+                                              ? {
+                                                  backgroundColor:
+                                                    lineIndex % 2 === 0
+                                                      ? sourceTone.rowAmountBgOdd
+                                                      : sourceTone.rowAmountBgEven,
+                                                }
+                                              : undefined
+                                          }
+                                        >
+                                          {line.type === 'DEBIT'
+                                            ? formatARSAmount(line.amount)
+                                            : '—'}
+                                        </td>
+                                        <td
+                                          className={
+                                            line.type === 'CREDIT'
+                                              ? 'amount-cell amount-cell-credit'
+                                              : 'amount-cell-empty'
+                                          }
+                                          style={
+                                            sourceTone
+                                              ? {
+                                                  backgroundColor:
+                                                    lineIndex % 2 === 0
+                                                      ? sourceTone.rowAmountBgOdd
+                                                      : sourceTone.rowAmountBgEven,
+                                                }
+                                              : undefined
+                                          }
+                                        >
+                                          {line.type === 'CREDIT'
+                                            ? formatARSAmount(line.amount)
+                                            : '—'}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          )}
+                        </li>
+                      )
+                    })()
+                  )}
                 </ul>
               )}
             </section>

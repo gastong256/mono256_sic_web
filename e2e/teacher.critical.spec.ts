@@ -1,11 +1,11 @@
 import { expect, test, type Page } from '@playwright/test'
-import { clearSession, loginAs, uniqueName } from './support/session'
+import { clearSession, loginAs, openSupervisionMenu, uniqueName } from './support/session'
 
 async function openTeacherDashboard(page: Page) {
-  await page.getByRole('button', { name: 'Supervision' }).click()
-  const link = page.locator('#menu-supervision a[href="/teacher/dashboard"]').first()
+  await openSupervisionMenu(page)
+  const link = page.locator('a[href="/teacher/dashboard"]:visible').first()
   await expect(link).toBeVisible()
-  await link.dispatchEvent('click')
+  await link.click()
 }
 
 test.describe('Teacher critical flows', () => {

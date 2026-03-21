@@ -1,6 +1,10 @@
 import type {
   BalanceSheet,
   BalanceSheetGroupSummary,
+  ClosingNetResultKind,
+  CurrentBookBalances,
+  CurrentBookBalanceSection,
+  ClosingStatementAccountDetail,
   ClosingSnapshot,
   ClosingSnapshotLine,
   ClosingAdjustmentSummary,
@@ -44,15 +48,54 @@ function normalizeLogicalExercise(raw: unknown): LogicalExercise | null {
   }
 }
 
+function normalizeCurrentBookBalanceSection(raw: unknown): CurrentBookBalanceSection {
+  const section = isRecord(raw) ? raw : {}
+
+  return {
+    parent_code: toStringValue(section.parent_code),
+    parent_name: toStringValue(section.parent_name),
+    total_debit: toDecimalString(section.total_debit, '0.00'),
+    total_credit: toDecimalString(section.total_credit, '0.00'),
+    book_balance: toDecimalString(section.book_balance, '0.00'),
+  }
+}
+
+function normalizeNetResultKind(value: unknown): ClosingNetResultKind {
+  return value === 'gain' || value === 'loss' || value === 'neutral' ? value : 'neutral'
+}
+
+function normalizeStatementAccountDetails(raw: unknown): ClosingStatementAccountDetail[] {
+  const accounts = Array.isArray(raw) ? raw : []
+  return accounts
+    .map((account) => {
+      if (!isRecord(account)) return null
+      const accountName = toStringValue(account.account_name)
+      if (accountName.length === 0) return null
+
+      return {
+        account_id: toNullableNumberValue(account.account_id),
+        account_code: toStringOrNull(account.account_code),
+        account_name: accountName,
+        account_type: toStringValue(account.account_type),
+        amount: toDecimalString(account.amount, '0.00'),
+      }
+    })
+    .filter((account): account is ClosingStatementAccountDetail => account !== null)
+}
+
 function normalizeIncomeStatementAccounts(raw: unknown): IncomeStatementAccountSummary[] {
   const accounts = Array.isArray(raw) ? raw : []
   return accounts
     .map((account) => {
       if (!isRecord(account)) return null
+      const accountName = toStringValue(account.account_name)
+      if (accountName.length === 0) return null
+
       return {
         account_code: toStringOrNull(account.account_code),
-        account_name: toStringValue(account.account_name),
-        amount: toDecimalString(account.amount, '0.00'),
+        account_name: accountName,
+        subtotal: toDecimalString(account.subtotal ?? account.amount, '0.00'),
+        accounts: normalizeStatementAccountDetails(account.accounts),
       }
     })
     .filter((account): account is IncomeStatementAccountSummary => account !== null)
@@ -76,8 +119,7 @@ function normalizeIncomeStatement(raw: unknown): IncomeStatement | null {
     },
     net_result: {
       amount: toDecimalString(net.amount, '0.00'),
-      kind:
-        net.kind === 'gain' || net.kind === 'loss' || net.kind === 'neutral' ? net.kind : 'neutral',
+      kind: normalizeNetResultKind(net.kind),
     },
   }
 }
@@ -93,8 +135,8 @@ function normalizeBalanceSheetGroups(raw: unknown): BalanceSheetGroupSummary[] {
       return {
         account_code: accountCode,
         account_name: accountName,
-        account_type: toStringValue(group.account_type),
-        amount: toDecimalString(group.amount, '0.00'),
+        subtotal: toDecimalString(group.subtotal ?? group.amount, '0.00'),
+        accounts: normalizeStatementAccountDetails(group.accounts),
       }
     })
     .filter((group): group is BalanceSheetGroupSummary => group !== null)
@@ -125,6 +167,7 @@ function normalizeBalanceSheet(raw: unknown): BalanceSheet | null {
         ? {
             name: toStringValue(derivedResult.name),
             amount: toDecimalString(derivedResult.amount, '0.00'),
+            kind: derivedResult.kind === null ? null : normalizeNetResultKind(derivedResult.kind),
           }
         : null,
     },
@@ -211,6 +254,19 @@ export function normalizeClosingStatePayload(payload: unknown): ClosingState {
   }
 }
 
+export function normalizeCurrentBookBalancesPayload(payload: unknown): CurrentBookBalances {
+  const raw = isRecord(payload) ? payload : {}
+
+  return {
+    company_id: typeof raw.company_id === 'number' ? raw.company_id : 0,
+    company: toStringValue(raw.company),
+    as_of_date: toStringValue(raw.as_of_date),
+    books_closed_until: toStringOrNull(raw.books_closed_until),
+    cash: normalizeCurrentBookBalanceSection(raw.cash),
+    inventory: normalizeCurrentBookBalanceSection(raw.inventory),
+  }
+}
+
 export function normalizeLogicalExercisesPayload(payload: unknown): LogicalExerciseListResponse {
   const raw = isRecord(payload) ? payload : {}
   const exercises = Array.isArray(raw.exercises) ? raw.exercises : []
@@ -255,16 +311,9 @@ export function normalizeClosingPreviewPayload(payload: unknown): SimplifiedClos
         '0.00'
       ),
       net_result: toDecimalString(resultSummary.net_result, '0.00'),
-      net_result_kind:
-        resultSummary.net_result_kind === 'gain' ||
-        resultSummary.net_result_kind === 'loss' ||
-        resultSummary.net_result_kind === 'neutral'
-          ? resultSummary.net_result_kind
-          : resultSummary.net_kind === 'gain' ||
-              resultSummary.net_kind === 'loss' ||
-              resultSummary.net_kind === 'neutral'
-            ? resultSummary.net_kind
-            : 'neutral',
+      net_result_kind: normalizeNetResultKind(
+        resultSummary.net_result_kind ?? resultSummary.net_kind
+      ),
     },
     income_statement: normalizeIncomeStatement(raw.income_statement),
     balance_sheet: normalizeBalanceSheet(raw.balance_sheet),

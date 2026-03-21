@@ -77,7 +77,7 @@ describe('CompaniesPage', () => {
     renderCompaniesPage()
 
     const demoRow = await screen.findByRole('row', { name: /empresa demo guiada/i })
-    expect(within(demoRow).getByText(/slug demo: empresa-demo-guiada/i)).toBeInTheDocument()
+    expect(within(demoRow).getByText(/slug de demo: empresa-demo-guiada/i)).toBeInTheDocument()
     expect(within(demoRow).getByText('Oculta')).toBeInTheDocument()
     expect(within(demoRow).getByRole('button', { name: /publicar demo/i })).toBeInTheDocument()
 

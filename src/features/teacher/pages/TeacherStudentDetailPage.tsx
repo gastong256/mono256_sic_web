@@ -7,13 +7,9 @@ import type { TeacherCourseJournalEntry } from '@/features/teacher/types/teacher
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
+import { formatARSAmount } from '@/shared/lib/currency'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 import { getCompanyStatusLabels } from '@/features/companies/lib/companyAccounting'
-
-const arsFormatter = new Intl.NumberFormat('es-AR', {
-  style: 'currency',
-  currency: 'ARS',
-})
 
 function parseAmount(value: string): number {
   const parsed = Number(value)
@@ -53,7 +49,7 @@ function summarizeByAccount(entries: TeacherCourseJournalEntry[]) {
 }
 
 function lineAmount(line: JournalLine): string {
-  return arsFormatter.format(parseAmount(line.amount))
+  return formatARSAmount(parseAmount(line.amount))
 }
 
 function entryTotals(entry: TeacherCourseJournalEntry): { debit: number; credit: number } {
@@ -263,13 +259,13 @@ export function TeacherStudentDetailPage() {
                   <article className="summary-stat-card">
                     <p className="summary-stat-label">Debe total</p>
                     <p className="summary-stat-value text-[#145f91]">
-                      {arsFormatter.format(companySummary.totalDebit)}
+                      {formatARSAmount(companySummary.totalDebit)}
                     </p>
                   </article>
                   <article className="summary-stat-card">
                     <p className="summary-stat-label">Haber total</p>
                     <p className="summary-stat-value text-[#8f4b12]">
-                      {arsFormatter.format(companySummary.totalCredit)}
+                      {formatARSAmount(companySummary.totalCredit)}
                     </p>
                   </article>
                   <article className="summary-stat-card">
@@ -280,7 +276,7 @@ export function TeacherStudentDetailPage() {
                         companySummary.balanceDiff === 0 ? 'text-emerald-700' : 'text-red-700',
                       ].join(' ')}
                     >
-                      {arsFormatter.format(companySummary.balanceDiff)}
+                      {formatARSAmount(companySummary.balanceDiff)}
                     </p>
                   </article>
                 </div>
@@ -314,10 +310,10 @@ export function TeacherStudentDetailPage() {
                               {account.code} · {account.name}
                             </td>
                             <td className="amount-cell amount-cell-debit">
-                              {arsFormatter.format(account.debit)}
+                              {formatARSAmount(account.debit)}
                             </td>
                             <td className="amount-cell amount-cell-credit">
-                              {arsFormatter.format(account.credit)}
+                              {formatARSAmount(account.credit)}
                             </td>
                             <td
                               className={[
@@ -325,7 +321,7 @@ export function TeacherStudentDetailPage() {
                                 account.balance >= 0 ? 'text-emerald-700' : 'text-red-700',
                               ].join(' ')}
                             >
-                              {arsFormatter.format(account.balance)}
+                              {formatARSAmount(account.balance)}
                             </td>
                           </tr>
                         ))}
@@ -351,12 +347,12 @@ export function TeacherStudentDetailPage() {
                         </span>
                         <span
                           className={[
-                            'font-semibold tabular-nums',
+                            'entry-inline-totals',
                             balanced ? 'text-emerald-700' : 'text-red-700',
                           ].join(' ')}
                         >
-                          Debe {arsFormatter.format(totals.debit)} | Haber{' '}
-                          {arsFormatter.format(totals.credit)}
+                          Debe {formatARSAmount(totals.debit)} | Haber{' '}
+                          {formatARSAmount(totals.credit)}
                         </span>
                       </div>
                       <div className="accounting-table-scroll">
@@ -402,8 +398,8 @@ export function TeacherStudentDetailPage() {
                           <tfoot>
                             <tr>
                               <td>Total asiento</td>
-                              <td className="amount-cell">{arsFormatter.format(totals.debit)}</td>
-                              <td className="amount-cell">{arsFormatter.format(totals.credit)}</td>
+                              <td className="amount-cell">{formatARSAmount(totals.debit)}</td>
+                              <td className="amount-cell">{formatARSAmount(totals.credit)}</td>
                             </tr>
                           </tfoot>
                         </table>

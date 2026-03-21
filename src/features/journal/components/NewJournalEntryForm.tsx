@@ -12,6 +12,7 @@ import { Alert } from '@/shared/ui/Alert'
 import { useToast } from '@/shared/ui/ToastProvider'
 import type { Company } from '@/features/companies/types/company.types'
 import { getCompanyAccountingBlockMessage } from '@/features/companies/lib/companyAccounting'
+import { formatARSAmount } from '@/shared/lib/currency'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 // ── Zod schema ────────────────────────────────────────────────────────────────
@@ -40,14 +41,6 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 const defaultLine = { account: 0, debe: '0.00', haber: '0.00' }
-
-// ── ARS formatter ─────────────────────────────────────────────────────────────
-
-const arsFormat = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' })
-
-function formatARS(value: number): string {
-  return arsFormat.format(value)
-}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -343,18 +336,18 @@ export function NewJournalEntryForm({
             <div className="flex gap-6">
               <span>
                 <span className="text-gray-500">Debe: </span>
-                <span className="font-medium tabular-nums">{formatARS(totalDebe)}</span>
+                <span className="font-medium tabular-nums">{formatARSAmount(totalDebe)}</span>
               </span>
               <span>
                 <span className="text-gray-500">Haber: </span>
-                <span className="font-medium tabular-nums">{formatARS(totalHaber)}</span>
+                <span className="font-medium tabular-nums">{formatARSAmount(totalHaber)}</span>
               </span>
             </div>
             {isBalanced ? (
               <span className="font-medium text-green-700">Balanceado ✓</span>
             ) : (
               <span className="font-medium text-red-700">
-                Diferencia: {formatARS(Math.abs(diferencia))}
+                Diferencia: {formatARSAmount(Math.abs(diferencia))}
               </span>
             )}
           </div>

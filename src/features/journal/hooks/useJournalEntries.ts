@@ -4,13 +4,14 @@ import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.
 import { journalQueryKeys } from '@/features/journal/hooks/journalQueryKeys'
 
 export const journalEntriesQueryKey = journalQueryKeys.entries
+export const journalEntriesPageQueryKey = journalQueryKeys.entriesPage
 
-export function useJournalEntries(options?: { enabled?: boolean }) {
+export function useJournalEntries(page = 1, options?: { enabled?: boolean }) {
   const { activeCompanyId } = useActiveCompanyStore()
 
   return useQuery({
-    queryKey: journalEntriesQueryKey(activeCompanyId),
-    queryFn: () => journalApi.list(activeCompanyId!),
+    queryKey: journalEntriesPageQueryKey(activeCompanyId, page),
+    queryFn: () => journalApi.list(activeCompanyId!, page),
     enabled: (options?.enabled ?? true) && activeCompanyId !== null,
     staleTime: 30 * 1000,
     gcTime: 10 * 60 * 1000,

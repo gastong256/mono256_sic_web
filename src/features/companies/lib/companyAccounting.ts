@@ -46,6 +46,10 @@ const OPENING_ASSET_PARENT_CODES = OPENING_ASSET_PARENT_OPTIONS_FALLBACK.map(
 const OPENING_LIABILITY_PARENT_CODES = OPENING_LIABILITY_PARENT_OPTIONS_FALLBACK.map(
   (option) => option.code
 ) as readonly string[]
+const OPENING_PARENT_CODES = [
+  ...OPENING_ASSET_PARENT_CODES,
+  ...OPENING_LIABILITY_PARENT_CODES,
+] as readonly string[]
 
 export const OPENING_INVENTORY_KIND_OPTIONS: Array<{
   value: OpeningInventoryKind
@@ -102,6 +106,24 @@ export function getDefaultOpeningLiabilityParentCode(chart?: Account[]): string 
     getOpeningLiabilityParentOptions(chart)[0]?.code ??
     OPENING_LIABILITY_PARENT_OPTIONS_FALLBACK[0].code
   )
+}
+
+export function filterAccountsForOpening(accounts: Account[]): Account[] {
+  const filteredAccounts: Account[] = []
+
+  for (const root of accounts) {
+    const eligibleChildren =
+      root.children?.filter((account) => OPENING_PARENT_CODES.includes(account.code)) ?? []
+
+    if (eligibleChildren.length === 0) continue
+
+    filteredAccounts.push({
+      ...root,
+      children: eligibleChildren,
+    })
+  }
+
+  return filteredAccounts
 }
 
 export function getDefaultOpeningEntry(): OpeningEntryPayload {

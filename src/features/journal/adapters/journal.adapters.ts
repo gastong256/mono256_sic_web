@@ -1,9 +1,10 @@
 import type {
   JournalEntry,
   JournalEntryDetail,
+  JournalEntryListResponse,
   JournalLine,
 } from '@/features/journal/types/journal.types'
-import { extractListPayload } from '@/shared/lib/apiPagination'
+import { extractListPayload, extractPaginationMeta } from '@/shared/lib/apiPagination'
 import { isRecord, toDecimalString, toNumberValue } from '@/shared/lib/valueParsers'
 
 function normalizeLine(value: unknown): JournalLine | null {
@@ -47,6 +48,20 @@ export function normalizeJournalEntryListPayload(payload: unknown): JournalEntry
   return extractListPayload<unknown>(payload)
     .map(normalizeEntry)
     .filter((entry): entry is JournalEntry => entry !== null)
+}
+
+export function normalizeJournalEntryListResponsePayload(
+  payload: unknown
+): JournalEntryListResponse {
+  const results = normalizeJournalEntryListPayload(payload)
+  const meta = extractPaginationMeta(payload, results.length)
+
+  return {
+    count: meta.count ?? results.length,
+    next: meta.next,
+    previous: meta.previous,
+    results,
+  }
 }
 
 export function normalizeJournalEntryDetailPayload(payload: unknown): JournalEntryDetail {

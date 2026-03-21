@@ -6,7 +6,9 @@ import { MemoryRouter, Route, Routes } from 'react-router'
 import { http, HttpResponse } from 'msw'
 import { CompanyDetailPage } from '@/features/accounts/pages/CompanyDetailPage'
 import { ClosingSnapshotPage } from '@/features/companies/pages/ClosingSnapshotPage'
+import { BalanceAndClosingPage } from '@/features/reports/pages/BalanceAndClosingPage'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
 import { registerTokenProvider } from '@/shared/lib/http'
 import { env } from '@/shared/config/env'
 import { server } from '@/mocks/server'
@@ -51,6 +53,7 @@ function setAuthenticatedUser(
         ...(overrides ?? {}),
       },
     })
+    useActiveCompanyStore.setState({ activeCompanyId: null })
   })
 
   registerTokenProvider({
@@ -69,6 +72,12 @@ function renderCompanyDetailPage(path = '/companies/1') {
         <ToastProvider>
           <Routes>
             <Route path="/companies/:companyId" element={<CompanyDetailPage />} />
+            <Route path="/reports/closing" element={<BalanceAndClosingPage />} />
+            <Route
+              path="/reports/closing/snapshots/:snapshotId"
+              element={<ClosingSnapshotPage />}
+            />
+            <Route path="/reports/closing/latest-snapshot" element={<ClosingSnapshotPage />} />
             <Route
               path="/companies/:companyId/closing/snapshots/:snapshotId"
               element={<ClosingSnapshotPage />}
@@ -240,22 +249,32 @@ describe('CompanyDetailPage', () => {
 
     renderCompanyDetailPage('/companies/600')
 
-    expect(await screen.findByText(/modo solo lectura/i)).toBeInTheDocument()
+    expect(await screen.findByText(/^solo lectura$/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /\+ agregar cuenta/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /editar/i })).not.toBeInTheDocument()
   })
 
-  it('previews and executes a simplified closing from company detail', async () => {
+  it('previews and executes a simplified closing from balance general y cierres', async () => {
     const user = userEvent.setup()
     setAuthenticatedUser('student')
+    act(() => {
+      useActiveCompanyStore.setState({ activeCompanyId: 1 })
+    })
     const expectedClosingDate = new Date().toISOString().slice(0, 10)
 
-    renderCompanyDetailPage('/companies/9')
+    renderCompanyDetailPage('/reports/closing')
 
-    expect(await screen.findByText(/estado de cierre/i)).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: /balance general y cierres/i })
+    ).toBeInTheDocument()
     await user.click(await screen.findByRole('button', { name: /preparar cierre/i }))
 
     const prepareDialog = await screen.findByRole('dialog', { name: /preparar cierre contable/i })
+    expect(
+      await within(prepareDialog).findAllByText(
+        new RegExp(`Saldo contable al ${expectedClosingDate}`, 'i')
+      )
+    ).toHaveLength(2)
     await user.click(within(prepareDialog).getByRole('button', { name: /ver preview/i }))
 
     expect(
@@ -265,9 +284,7 @@ describe('CompanyDetailPage', () => {
 
     await user.click(screen.getByRole('button', { name: /ejecutar cierre/i }))
 
-    expect(
-      await screen.findByRole('heading', { name: /snapshot confirmado del cierre/i })
-    ).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /cierre confirmado/i })).toBeInTheDocument()
     expect(await screen.findByText(/documento contable de solo lectura/i)).toBeInTheDocument()
     expect(await screen.findByText(expectedClosingDate)).toBeInTheDocument()
   })

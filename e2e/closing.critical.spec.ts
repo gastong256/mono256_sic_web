@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test'
-import { companyRow, openCompaniesPage } from './support/companies'
-import { clearSession, loginAs, selectActiveCompany } from './support/session'
+import {
+  clearSession,
+  loginAs,
+  openBooksMenu,
+  openAsientosMenu,
+  selectActiveCompany,
+} from './support/session'
 
 test.describe('Closing critical flow', () => {
   test.beforeEach(async ({ page }) => {
@@ -14,12 +19,11 @@ test.describe('Closing critical flow', () => {
     const reopeningDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
 
     await loginAs(page, 'student')
-    await openCompaniesPage(page)
+    await selectActiveCompany(page, 'Ferretería Los Andes')
+    await openBooksMenu(page)
+    await page.locator('a[href="/reports/closing"]:visible').first().click()
 
-    const row = await companyRow(page, 'Ferretería Los Andes')
-    await row.getByRole('button', { name: /ver ferretería los andes/i }).click()
-
-    await expect(page.getByRole('heading', { name: 'Plan de cuentas' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Balance General y Cierres' })).toBeVisible()
     await page.getByRole('button', { name: 'Preparar cierre' }).click()
 
     const dialog = page.getByRole('dialog', { name: /preparar cierre contable/i })
@@ -32,15 +36,14 @@ test.describe('Closing critical flow', () => {
     await page.getByRole('button', { name: 'Ejecutar cierre' }).click()
 
     await expect(page.getByText(/cierre ejecutado correctamente/i)).toBeVisible()
+    await expect(page.getByRole('heading', { name: /cierre confirmado/i })).toBeVisible()
     await expect(
-      page.getByRole('heading', { name: /snapshot confirmado del cierre/i })
+      page.getByRole('alert').getByText(/documento contable de solo lectura/i)
     ).toBeVisible()
-    await expect(page.getByText(/documento contable de solo lectura/i)).toBeVisible()
     await expect(page.getByText(closingDate)).toBeVisible()
 
-    await selectActiveCompany(page, 'Ferretería Los Andes')
-    await page.getByRole('button', { name: 'Asientos' }).click()
-    await page.getByRole('link', { name: 'Registro manual' }).click()
+    await openAsientosMenu(page)
+    await page.locator('a[href="/journal"]:visible').first().click()
     await expect(page.getByRole('heading', { name: 'Asientos' })).toBeVisible()
 
     const closingEntry = page.getByRole('button', {

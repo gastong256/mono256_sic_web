@@ -1,5 +1,6 @@
 import type { Company, OpeningEntryPayload } from '@/features/companies/types/company.types'
 import type {
+  CurrentBookBalances,
   ClosingSnapshot,
   ClosingDraftEntry,
   ClosingState,
@@ -1542,7 +1543,11 @@ function seedExpandedMockDataset() {
         liabilities: { groups: [], total: '18000.00' },
         equity: {
           groups: [],
-          derived_result: { name: 'Resultado del Ejercicio', amount: '45000.00' },
+          derived_result: {
+            name: 'Resultado del Ejercicio',
+            amount: '45000.00',
+            kind: null,
+          },
           total: '50000.00',
         },
         equation: {
@@ -1584,7 +1589,11 @@ function seedExpandedMockDataset() {
         liabilities: { groups: [], total: '6000.00' },
         equity: {
           groups: [],
-          derived_result: { name: 'Resultado del Ejercicio', amount: '78000.00' },
+          derived_result: {
+            name: 'Resultado del Ejercicio',
+            amount: '78000.00',
+            kind: null,
+          },
           total: '84000.00',
         },
         equation: {
@@ -2390,6 +2399,7 @@ function buildBalanceSheet(companyId: number, closingDate: string) {
       derived_result: {
         name: 'Resultado del Ejercicio',
         amount: resultSummary.net_result,
+        kind: resultSummary.net_result_kind,
       },
       total: toDecimal(equityTotal),
     },
@@ -2590,6 +2600,69 @@ function buildResultSummary(companyId: number, closingDate: string) {
     net_result: toDecimal(Math.abs(netResult)),
     net_result_kind:
       netResult > 0 ? ('gain' as const) : netResult < 0 ? ('loss' as const) : ('neutral' as const),
+  }
+}
+
+function getLatestJournalDate(companyId: number): string | null {
+  return (
+    [...listJournalEntryDetailsByCompany(companyId)]
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .at(-1)?.date ?? null
+  )
+}
+
+function buildCurrentBookBalanceSection(
+  companyId: number,
+  parentCode: '1.01' | '1.09',
+  parentName: string,
+  dateTo: string
+) {
+  const totals = listJournalEntryDetailsByCompany(companyId)
+    .filter((entry) => entry.date <= dateTo)
+    .flatMap((entry) => entry.lines)
+    .filter((line) => line.account_code.startsWith(`${parentCode}.`))
+    .reduce(
+      (acc, line) => {
+        const amount = Number(line.amount)
+        if (line.type === 'DEBIT') acc.totalDebit += amount
+        if (line.type === 'CREDIT') acc.totalCredit += amount
+        return acc
+      },
+      { totalDebit: 0, totalCredit: 0 }
+    )
+
+  return {
+    parent_code: parentCode,
+    parent_name: parentName,
+    total_debit: toDecimal(totals.totalDebit),
+    total_credit: toDecimal(totals.totalCredit),
+    book_balance: toDecimal(totals.totalDebit - totals.totalCredit),
+  }
+}
+
+export function getCurrentBookBalances(
+  companyId: number,
+  dateTo?: string
+): CurrentBookBalances | { error: string; status: number } {
+  const company = getCompanyById(companyId)
+  if (!company) return { error: 'Company not found.', status: 404 }
+  if (company.accounting_ready === false || !company.has_opening_entry) {
+    return {
+      error: 'La empresa debe tener apertura contable para consultar saldos contables actuales.',
+      status: 409,
+    }
+  }
+
+  const resolvedDate =
+    dateTo || getLatestJournalDate(companyId) || new Date().toISOString().slice(0, 10)
+
+  return {
+    company_id: company.id,
+    company: company.name,
+    as_of_date: resolvedDate,
+    books_closed_until: company.books_closed_until ?? null,
+    cash: buildCurrentBookBalanceSection(companyId, '1.01', 'Caja', resolvedDate),
+    inventory: buildCurrentBookBalanceSection(companyId, '1.09', 'Mercaderías', resolvedDate),
   }
 }
 

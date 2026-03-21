@@ -1,106 +1,190 @@
-import { Link } from 'react-router'
+import { useMemo, useState } from 'react'
+import { Link, Navigate, useNavigate } from 'react-router'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { env } from '@/shared/config/env'
-import { BrandMark } from '@/shared/ui/BrandMark'
-
-const FEATURES = [
-  { icon: '⚛️', label: 'React 19', desc: 'Latest React with concurrent features' },
-  { icon: '⚡', label: 'Vite 6', desc: 'Instant HMR, optimized builds' },
-  { icon: '🎨', label: 'Tailwind v4', desc: 'CSS-first, zero-config setup' },
-  { icon: '🔐', label: 'Auth + JWT', desc: 'Access token in memory, refresh in storage' },
-  { icon: '🔄', label: 'TanStack Query', desc: 'Async state, caching, background refetch' },
-  { icon: '📋', label: 'React Hook Form', desc: 'Performant forms with Zod validation' },
-  { icon: '🧪', label: 'Vitest + RTL', desc: 'Fast unit tests with Testing Library' },
-  { icon: '🎭', label: 'Playwright', desc: 'Reliable end-to-end tests' },
-  { icon: '🎭', label: 'MSW v2', desc: 'API mocking in browser and tests' },
-] as const
+import {
+  CompanyBooksClosedAlert,
+  CompanyPendingOpeningState,
+} from '@/features/companies/components/CompanyOperationalAlerts'
+import { OpeningEntryModal } from '@/features/companies/components/OpeningEntryModal'
+import { useActiveCompany } from '@/features/companies/hooks/useActiveCompany'
+import { JournalEntryCard } from '@/features/journal/components/JournalEntryCard'
+import { NewJournalEntryForm } from '@/features/journal/components/NewJournalEntryForm'
+import { useJournalEntries } from '@/features/journal/hooks/useJournalEntries'
+import { Alert } from '@/shared/ui/Alert'
+import { Button } from '@/shared/ui/Button'
+import { EmptyState } from '@/shared/ui/EmptyState'
+import { PageHeader } from '@/shared/ui/PageHeader'
+import { Skeleton } from '@/shared/ui/Skeleton'
+import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 export function HomePage() {
-  const { accessToken, user } = useAuthStore()
+  const navigate = useNavigate()
+  const { accessToken, refreshToken } = useAuthStore()
+  const isAuthenticated = Boolean(accessToken ?? refreshToken)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [isOpeningModalOpen, setIsOpeningModalOpen] = useState(false)
+  const {
+    activeCompanyId,
+    activeCompany,
+    canManageOpening,
+    canWriteCompany,
+    isAccountingReady,
+    isReadOnly,
+    booksClosedUntil,
+    accountingBlockMessage,
+    isLoading: companyLoading,
+  } = useActiveCompany()
+
+  const { data, isLoading, isError, error } = useJournalEntries(1, {
+    enabled: activeCompanyId !== null && !companyLoading && isAccountingReady,
+  })
+
+  const loadErrorMessage = useMemo(
+    () =>
+      getHttpErrorMessage(error, {
+        defaultMessage: 'No se pudo cargar la actividad reciente de la empresa activa.',
+        unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
+        forbiddenMessage: 'No tenés permisos para ver esta actividad.',
+        notFoundMessage: 'La empresa activa no existe o ya no está disponible.',
+        conflictMessage:
+          !isAccountingReady || isReadOnly ? (accountingBlockMessage ?? undefined) : undefined,
+      }),
+    [accountingBlockMessage, error, isAccountingReady, isReadOnly]
+  )
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (activeCompanyId === null) {
+    return (
+      <EmptyState
+        icon="companies"
+        title="Seleccioná una empresa"
+        description="Necesitás una empresa activa para consultar la actividad reciente."
+        action={<Button onClick={() => navigate('/companies')}>Ir a empresas</Button>}
+        className="py-24"
+      />
+    )
+  }
 
   return (
-    <div className="space-y-16">
-      {/* Hero */}
-      <section className="rounded-2xl bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-8 py-16 text-center">
-        <div className="mx-auto max-w-2xl">
-          <div className="mb-4 flex justify-center">
-            <BrandMark variant="horizontal" className="h-16 w-auto max-w-[24rem]" />
-          </div>
-          <p className="mt-4 text-lg text-gray-600">
-            A production-ready React template. Feature-first architecture, strict TypeScript, full
-            auth flow, and a complete test suite — ready to ship.
-          </p>
+    <div className="space-y-6">
+      <PageHeader
+        icon="journal"
+        title="Inicio"
+        subtitle="Vista rápida de la actividad reciente de la empresa activa."
+        actions={
+          <Button
+            disabled={activeCompanyId === null || !isAccountingReady || isReadOnly}
+            onClick={() => setIsFormOpen(true)}
+          >
+            + Nuevo asiento
+          </Button>
+        }
+      />
 
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            {accessToken ? (
-              <>
-                <p className="text-sm text-gray-500">
-                  Sesión iniciada como{' '}
-                  <strong className="font-medium text-gray-700">
-                    {user?.username ?? 'Usuario'}
-                  </strong>
-                </p>
-                <Link
-                  to="/companies"
-                  className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
-                >
-                  Ver empresas →
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
-                >
-                  Iniciar sesión
-                </Link>
-              </>
-            )}
-          </div>
+      {activeCompany?.accounting_ready === false && accountingBlockMessage && (
+        <Alert tone="warning">{accountingBlockMessage}</Alert>
+      )}
 
-          {env.VITE_USE_MOCK_API && (
-            <p className="mt-4 text-xs text-blue-500">
-              Modo mock — usá <strong>admin</strong> / <strong>password</strong>
-            </p>
-          )}
-        </div>
-      </section>
+      {activeCompanyId !== null && isReadOnly && (
+        <Alert tone="info">
+          Esta empresa está en modo solo lectura. Podés revisar la actividad reciente y consultar el
+          detalle completo desde registro manual.
+        </Alert>
+      )}
 
-      {/* Feature grid */}
-      <section>
-        <h2 className="mb-6 text-center text-lg font-semibold text-gray-700">
-          Everything you need, already wired up
-        </h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map(({ icon, label, desc }) => (
-            <div
-              key={label}
-              className="flex items-start gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
-            >
-              <span className="text-2xl" role="img" aria-label={label}>
-                {icon}
-              </span>
-              <div>
-                <p className="font-semibold text-gray-900">{label}</p>
-                <p className="text-sm text-gray-500">{desc}</p>
+      <CompanyBooksClosedAlert booksClosedUntil={booksClosedUntil} />
+
+      {isLoading && (
+        <div className="space-y-3">
+          {[1, 2, 3].map((row) => (
+            <div key={row} className="surface-card overflow-hidden p-5">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-4 w-36" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-10/12" />
               </div>
             </div>
           ))}
         </div>
-      </section>
+      )}
 
-      {/* Quick start */}
-      <section className="rounded-xl border border-gray-200 bg-gray-50 p-6">
-        <h2 className="mb-3 font-semibold text-gray-800">Quick start</h2>
-        <pre className="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-green-400">
-          <code>{`git clone https://github.com/gastong256/react-vite-ts-tailwind-base
-cd react-vite-ts-tailwind-base
-pnpm run init   # replace placeholders
-pnpm install
-pnpm dev`}</code>
-        </pre>
-      </section>
+      {isError && <Alert tone="error">{loadErrorMessage}</Alert>}
+
+      {!isError && (
+        <CompanyPendingOpeningState
+          company={activeCompany}
+          icon="journal"
+          action={
+            canManageOpening && canWriteCompany ? (
+              <Button onClick={() => setIsOpeningModalOpen(true)}>Registrar apertura</Button>
+            ) : undefined
+          }
+          className="py-20"
+        />
+      )}
+
+      {!isLoading && !isError && isAccountingReady && data && data.results.length === 0 && (
+        <EmptyState
+          icon="journal"
+          title="No hay actividad reciente"
+          description="Todavía no hay asientos registrados para la empresa activa."
+          action={<Button onClick={() => navigate('/journal')}>Ir a registro manual</Button>}
+          className="py-20"
+        />
+      )}
+
+      {!isLoading && !isError && isAccountingReady && data && data.results.length > 0 && (
+        <div className="space-y-4">
+          <section className="flex flex-col gap-3 border-b border-[var(--border-soft)]/80 pb-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-[var(--text-strong)]">Actividad reciente</p>
+              <p className="muted-text text-sm">
+                Mostrando los últimos {data.results.length} asientos de un total de {data.count}.
+              </p>
+            </div>
+            {data.next && (
+              <Link
+                to="/journal"
+                className="inline-flex items-center justify-center rounded-lg px-2 py-1 text-sm font-semibold text-[var(--brand-700)] transition-colors hover:bg-[var(--bg-subtle)] hover:text-[var(--brand-700)]"
+              >
+                Ver historial completo
+              </Link>
+            )}
+          </section>
+
+          <div className="space-y-3">
+            {data.results.map((entry) => (
+              <JournalEntryCard
+                key={entry.id}
+                entry={entry}
+                companyId={activeCompanyId}
+                isReadOnly={isReadOnly}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <NewJournalEntryForm
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        companyId={activeCompanyId}
+        company={activeCompany}
+      />
+
+      {activeCompanyId !== null && (
+        <OpeningEntryModal
+          isOpen={isOpeningModalOpen}
+          onClose={() => setIsOpeningModalOpen(false)}
+          companyId={activeCompanyId}
+        />
+      )}
     </div>
   )
 }

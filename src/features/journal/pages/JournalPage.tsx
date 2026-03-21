@@ -1,8 +1,12 @@
-import { useMemo, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Navigate, useSearchParams } from 'react-router'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import {
+  CompanyBooksClosedAlert,
+  CompanyPendingOpeningState,
+} from '@/features/companies/components/CompanyOperationalAlerts'
 import { useActiveCompany } from '@/features/companies/hooks/useActiveCompany'
-import { getCompanyAccountingBlockMessage } from '@/features/companies/lib/companyAccounting'
+import { OpeningEntryModal } from '@/features/companies/components/OpeningEntryModal'
 import { useJournalEntries } from '@/features/journal/hooks/useJournalEntries'
 import { JournalEntryCard } from '@/features/journal/components/JournalEntryCard'
 import { NewJournalEntryForm } from '@/features/journal/components/NewJournalEntryForm'
@@ -14,25 +18,26 @@ import { Skeleton } from '@/shared/ui/Skeleton'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
 export function JournalPage() {
-  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { accessToken, refreshToken } = useAuthStore()
   const {
     activeCompanyId,
     activeCompany,
     canManageOpening,
     canWriteCompany,
+    isAccountingReady,
+    isReadOnly,
+    booksClosedUntil,
+    accountingBlockMessage,
     isLoading: companyLoading,
   } = useActiveCompany()
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const isAccountingReady = activeCompany?.accounting_ready !== false
-  const isReadOnly = activeCompany?.is_read_only === true
+  const [isOpeningModalOpen, setIsOpeningModalOpen] = useState(false)
+  const previousCompanyIdRef = useRef<number | null>(null)
+  const pageParam = Number(searchParams.get('page') ?? '1')
+  const currentPage = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1
 
-  const {
-    data: entries,
-    isLoading,
-    isError,
-    error,
-  } = useJournalEntries({
+  const { data, isLoading, isError, error } = useJournalEntries(currentPage, {
     enabled: activeCompanyId !== null && !companyLoading && isAccountingReady,
   })
   const isAuthenticated = Boolean(accessToken ?? refreshToken)
@@ -44,12 +49,36 @@ export function JournalPage() {
         forbiddenMessage: 'No tenés permisos para ver estos asientos.',
         notFoundMessage: 'La empresa activa no existe o ya no está disponible.',
         conflictMessage:
-          activeCompany?.accounting_ready === false || activeCompany?.is_read_only
-            ? getCompanyAccountingBlockMessage(activeCompany)
-            : undefined,
+          !isAccountingReady || isReadOnly ? (accountingBlockMessage ?? undefined) : undefined,
       }),
-    [activeCompany, error]
+    [accountingBlockMessage, error, isAccountingReady, isReadOnly]
   )
+  const totalPages = Math.max(1, Math.ceil((data?.count ?? 0) / 25))
+  const entries = data?.results ?? []
+
+  useEffect(() => {
+    const previousCompanyId = previousCompanyIdRef.current
+    previousCompanyIdRef.current = activeCompanyId
+
+    if (previousCompanyId === null || previousCompanyId === activeCompanyId) return
+
+    setSearchParams((current) => {
+      if (current.get('page') === '1' || current.get('page') === null) return current
+      const next = new URLSearchParams(current)
+      next.set('page', '1')
+      return next
+    })
+  }, [activeCompanyId, setSearchParams])
+
+  function goToPage(page: number) {
+    const nextPage = Math.max(1, page)
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      if (nextPage === 1) next.delete('page')
+      else next.set('page', String(nextPage))
+      return next
+    })
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
@@ -72,7 +101,7 @@ export function JournalPage() {
       <PageHeader
         icon="journal"
         title="Asientos"
-        subtitle="Registro cronologico de asientos de la empresa activa."
+        subtitle="Registro manual paginado de asientos de la empresa activa."
         actions={
           <Button
             disabled={activeCompanyId === null || !isAccountingReady || isReadOnly}
@@ -83,25 +112,9 @@ export function JournalPage() {
         }
       />
 
-      {activeCompanyId !== null && activeCompany?.accounting_ready === false && (
-        <Alert tone="warning">
-          {getCompanyAccountingBlockMessage(activeCompany)}
-          {canManageOpening && canWriteCompany && (
-            <>
-              {' '}
-              Podés registrar la apertura desde{' '}
-              <button
-                type="button"
-                onClick={() => navigate(`/companies/${activeCompanyId}`)}
-                className="font-semibold underline"
-              >
-                plan de cuentas
-              </button>
-              .
-            </>
-          )}
-        </Alert>
-      )}
+      {activeCompanyId !== null &&
+        activeCompany?.accounting_ready === false &&
+        accountingBlockMessage && <Alert tone="warning">{accountingBlockMessage}</Alert>}
 
       {activeCompanyId !== null && isReadOnly && (
         <Alert tone="info">
@@ -110,12 +123,10 @@ export function JournalPage() {
         </Alert>
       )}
 
-      {activeCompanyId !== null && activeCompany?.books_closed_until && (
-        <Alert tone="info">
-          Los libros están cerrados hasta <strong>{activeCompany.books_closed_until}</strong>. Los
-          nuevos asientos deben registrarse con fecha posterior.
-        </Alert>
-      )}
+      <CompanyBooksClosedAlert booksClosedUntil={booksClosedUntil}>
+        {' '}
+        Los nuevos asientos deben registrarse con fecha posterior.
+      </CompanyBooksClosedAlert>
 
       {/* Content */}
       {isLoading && (
@@ -137,23 +148,20 @@ export function JournalPage() {
 
       {isError && <Alert tone="error">{loadErrorMessage}</Alert>}
 
-      {activeCompanyId !== null && activeCompany?.accounting_ready === false && !isError && (
-        <EmptyState
+      {!isError && (
+        <CompanyPendingOpeningState
+          company={activeCompany}
           icon="journal"
-          title="Pendiente de apertura contable"
-          description={getCompanyAccountingBlockMessage(activeCompany)}
           action={
             canManageOpening && canWriteCompany ? (
-              <Button onClick={() => navigate(`/companies/${activeCompanyId}`)}>
-                Registrar apertura
-              </Button>
+              <Button onClick={() => setIsOpeningModalOpen(true)}>Registrar apertura</Button>
             ) : undefined
           }
           className="py-20"
         />
       )}
 
-      {!isLoading && !isError && isAccountingReady && entries && entries.length === 0 && (
+      {!isLoading && !isError && isAccountingReady && entries.length === 0 && (
         <EmptyState
           icon="journal"
           title="No hay asientos registrados"
@@ -167,16 +175,49 @@ export function JournalPage() {
         />
       )}
 
-      {!isLoading && isAccountingReady && entries && entries.length > 0 && (
-        <div className="space-y-3">
-          {entries.map((entry) => (
-            <JournalEntryCard
-              key={entry.id}
-              entry={entry}
-              companyId={activeCompanyId}
-              isReadOnly={isReadOnly}
-            />
-          ))}
+      {!isLoading && isAccountingReady && entries.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 border-b border-[var(--border-soft)]/80 pb-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-[var(--text-strong)]">Registro manual</p>
+              <p className="muted-text text-sm">
+                Página {currentPage} de {totalPages}. Mostrando {entries.length} asientos de un
+                total de {data?.count ?? entries.length}.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="ghost"
+                disabled={!data?.previous || currentPage <= 1}
+                className={
+                  data?.previous && currentPage > 1
+                    ? 'border border-[var(--border-soft)] bg-white/85'
+                    : undefined
+                }
+                onClick={() => goToPage(currentPage - 1)}
+              >
+                Ver más recientes
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={!data?.next}
+                onClick={() => goToPage(currentPage + 1)}
+              >
+                Ver más antiguos
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {entries.map((entry) => (
+              <JournalEntryCard
+                key={entry.id}
+                entry={entry}
+                companyId={activeCompanyId}
+                isReadOnly={isReadOnly}
+              />
+            ))}
+          </div>
         </div>
       )}
 
@@ -187,6 +228,14 @@ export function JournalPage() {
         companyId={activeCompanyId}
         company={activeCompany}
       />
+
+      {activeCompanyId !== null && (
+        <OpeningEntryModal
+          isOpen={isOpeningModalOpen}
+          onClose={() => setIsOpeningModalOpen(false)}
+          companyId={activeCompanyId}
+        />
+      )}
     </div>
   )
 }

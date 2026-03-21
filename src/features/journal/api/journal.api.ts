@@ -1,23 +1,20 @@
 import { httpClient } from '@/shared/lib/http'
 import type {
-  JournalEntry,
   JournalEntryDetail,
+  JournalEntryListResponse,
   CreateJournalEntryPayload,
   ReverseJournalEntryPayload,
 } from '@/features/journal/types/journal.types'
-import { fetchAllPages } from '@/shared/lib/fetchAllPages'
 import {
   normalizeJournalEntryDetailPayload,
-  normalizeJournalEntryListPayload,
+  normalizeJournalEntryListResponsePayload,
 } from '@/features/journal/adapters/journal.adapters'
 
 export const journalApi = {
-  list: (companyId: number): Promise<JournalEntry[]> =>
-    fetchAllPages<unknown>((page) =>
-      httpClient
-        .get<unknown>(`/companies/${companyId}/journal/`, { params: { page } })
-        .then((r) => r.data)
-    ).then((entries) => normalizeJournalEntryListPayload(entries)),
+  list: (companyId: number, page = 1): Promise<JournalEntryListResponse> =>
+    httpClient
+      .get<unknown>(`/companies/${companyId}/journal/`, { params: { page } })
+      .then((r) => normalizeJournalEntryListResponsePayload(r.data)),
 
   get: (companyId: number, entryId: number): Promise<JournalEntryDetail> =>
     httpClient

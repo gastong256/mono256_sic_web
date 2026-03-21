@@ -7,11 +7,15 @@ interface Crumb {
 
 const segmentLabels: Record<string, string> = {
   companies: 'Empresas',
+  journal: 'Registro manual',
   profile: 'Perfil',
   reports: 'Libros',
   'journal-book': 'Libro Diario',
   ledger: 'Libro Mayor',
   'trial-balance': 'Balance de comprobacion',
+  closing: 'Balance General y Cierres',
+  'latest-snapshot': 'Último snapshot',
+  snapshots: 'Snapshot confirmado',
   teacher: 'Docencia',
   dashboard: 'Panel docente',
   students: 'Alumno',
@@ -24,10 +28,13 @@ const segmentLabels: Record<string, string> = {
 const routableStaticPaths = new Set([
   '/',
   '/companies',
+  '/journal',
   '/profile',
   '/reports/journal-book',
   '/reports/ledger',
   '/reports/trial-balance',
+  '/reports/closing',
+  '/reports/closing/latest-snapshot',
   '/teacher/dashboard',
   '/settings/chart-visibility',
   '/admin/roles',
@@ -36,6 +43,7 @@ const routableStaticPaths = new Set([
 function isRoutablePath(path: string): boolean {
   if (routableStaticPaths.has(path)) return true
   if (/^\/companies\/\d+$/.test(path)) return true
+  if (/^\/reports\/closing\/snapshots\/\d+$/.test(path)) return true
   if (/^\/teacher\/students\/\d+$/.test(path)) return true
   return false
 }
@@ -50,7 +58,7 @@ function normalizeCrumbTarget(path: string): string | undefined {
 }
 
 function buildCrumbs(pathname: string): Crumb[] {
-  if (pathname === '/') return [{ label: 'Asientos' }]
+  if (pathname === '/') return [{ label: 'Inicio' }]
 
   const segments = pathname.split('/').filter(Boolean)
   const crumbs: Crumb[] = []
@@ -64,6 +72,7 @@ function buildCrumbs(pathname: string): Crumb[] {
 
     let label = segmentLabels[segment]
     if (!label && isNumeric && prev === 'companies') label = 'Detalle empresa'
+    if (!label && isNumeric && prev === 'snapshots') label = `Snapshot #${segment}`
     if (!label && isNumeric && prev === 'students') label = `Alumno #${segment}`
     if (!label) label = segment
 

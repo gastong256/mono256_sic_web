@@ -5,6 +5,7 @@ import { Button } from '@/shared/ui/Button'
 import { useToast } from '@/shared/ui/ToastProvider'
 import { OpeningEntryEditor } from '@/features/companies/components/OpeningEntryEditor'
 import { useCreateOpeningEntry } from '@/features/companies/hooks/useCreateOpeningEntry'
+import { useActiveCompany } from '@/features/companies/hooks/useActiveCompany'
 import {
   getDefaultOpeningEntry,
   validateOpeningEntry,
@@ -27,6 +28,7 @@ export function OpeningEntryModal({
   existingAccounts,
 }: OpeningEntryModalProps) {
   const { pushToast } = useToast()
+  const { activeCompany } = useActiveCompany(companyId)
   const mutation = useCreateOpeningEntry(companyId)
   const [openingEntry, setOpeningEntry] = useState<OpeningEntryPayload>(getDefaultOpeningEntry)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -66,10 +68,25 @@ export function OpeningEntryModal({
       isOpen={isOpen}
       onClose={handleClose}
       title="Registrar apertura contable"
-      className="max-w-5xl"
+      className="xl:max-w-6xl 2xl:max-w-7xl"
     >
       <div className="space-y-5">
         {submitError && <Alert tone="error">{submitError}</Alert>}
+
+        <div className="px-4 lg:px-6">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <p className="text-xl font-semibold tracking-[-0.01em] text-[var(--text-strong)]">
+              {activeCompany?.name ?? 'Empresa'}
+            </p>
+            {activeCompany?.tax_id ? (
+              <span className="text-sm font-medium text-[var(--text-muted)]">
+                CUIT/CUIL: {activeCompany.tax_id}
+              </span>
+            ) : activeCompany?.description ? (
+              <span className="text-sm text-[var(--text-muted)]">{activeCompany.description}</span>
+            ) : null}
+          </div>
+        </div>
 
         <OpeningEntryEditor
           value={openingEntry}

@@ -156,16 +156,20 @@ export function CompanyForm({ isOpen, onClose, company }: CompanyFormProps) {
   }
 
   const isOpeningStep = !isEditMode && openingEnabled && step === 2
+  const rootErrorMessage = errors.root?.message ?? null
+  const shouldShowRootAlert =
+    rootErrorMessage !== null &&
+    rootErrorMessage !== 'Completá nombre e importe válido en todos los activos.'
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
       title={isEditMode ? 'Editar empresa' : 'Nueva empresa'}
-      className={isOpeningStep ? 'max-w-5xl' : ''}
+      className={isOpeningStep ? 'xl:max-w-6xl 2xl:max-w-7xl' : ''}
     >
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
-        {errors.root?.message && <Alert tone="error">{errors.root.message}</Alert>}
+        {shouldShowRootAlert && rootErrorMessage && <Alert tone="error">{rootErrorMessage}</Alert>}
 
         {!isOpeningStep ? (
           <>
@@ -219,8 +223,8 @@ export function CompanyForm({ isOpen, onClose, company }: CompanyFormProps) {
                       Registrar apertura ahora
                     </span>
                     <span className="muted-text mt-1 block text-xs">
-                      Si activás esta opción, la empresa se crea ya lista para usar journal y
-                      reportes.
+                      Si activás esta opción, la empresa se crea ya lista para usar asientos
+                      contables y reportes.
                     </span>
                   </span>
                 </label>
@@ -228,21 +232,21 @@ export function CompanyForm({ isOpen, onClose, company }: CompanyFormProps) {
             )}
           </>
         ) : (
-          <div className="space-y-3 rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-[var(--text-strong)]">Paso 2 de 2</p>
-                <p className="muted-text mt-1 text-xs">
-                  Completá la apertura para dejar la empresa lista para operar.
-                </p>
-              </div>
-              <div className="rounded-xl border border-[var(--border-soft)] bg-white px-3 py-2 text-right">
-                <p className="text-xs font-semibold tracking-[0.08em] text-[var(--text-muted)] uppercase">
-                  Empresa
-                </p>
-                <p className="text-sm font-semibold text-[var(--text-strong)]">
+          <div className="space-y-4">
+            <div className="px-4 xl:px-6">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <p className="text-xl font-semibold tracking-[-0.01em] text-[var(--text-strong)]">
                   {getValues('name') || 'Nueva empresa'}
                 </p>
+                {getValues('tax_id') ? (
+                  <span className="text-sm font-medium text-[var(--text-muted)]">
+                    CUIT/CUIL: {getValues('tax_id')}
+                  </span>
+                ) : getValues('description') ? (
+                  <span className="text-sm text-[var(--text-muted)]">
+                    {getValues('description')}
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -254,7 +258,12 @@ export function CompanyForm({ isOpen, onClose, company }: CompanyFormProps) {
           </div>
         )}
 
-        <div className={`flex gap-3 pt-1 ${isOpeningStep ? 'justify-between' : 'justify-end'}`}>
+        <div
+          className={[
+            'flex gap-3',
+            isOpeningStep ? 'justify-between pt-1' : 'justify-end pt-1',
+          ].join(' ')}
+        >
           {isOpeningStep ? (
             <Button type="button" variant="secondary" onClick={handleBackStep} disabled={isPending}>
               Volver

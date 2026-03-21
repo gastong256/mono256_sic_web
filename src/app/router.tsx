@@ -18,6 +18,7 @@ const LoginPage = lazy(() =>
 const RegisterPage = lazy(() =>
   import('@/features/auth/pages/RegisterPage').then((m) => ({ default: m.RegisterPage }))
 )
+const HomePage = lazy(() => import('@/pages/HomePage').then((m) => ({ default: m.HomePage })))
 
 const ProfilePage = lazy(() =>
   import('@/pages/ProfilePage').then((m) => ({ default: m.ProfilePage }))
@@ -70,6 +71,11 @@ const TrialBalanceReportPage = lazy(() =>
     default: m.TrialBalanceReportPage,
   }))
 )
+const BalanceAndClosingPage = lazy(() =>
+  import('@/features/reports/pages/BalanceAndClosingPage').then((m) => ({
+    default: m.BalanceAndClosingPage,
+  }))
+)
 
 const NotFoundPage = lazy(() =>
   import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
@@ -91,7 +97,7 @@ export const router = createBrowserRouter([
       // ── Public routes ──────────────────────────────────────
       {
         index: true,
-        element: page(<JournalPage />),
+        element: page(<HomePage />),
       },
       {
         path: 'login',
@@ -115,16 +121,12 @@ export const router = createBrowserRouter([
             element: page(<CompanyDetailPage />),
           },
           {
-            path: 'companies/:companyId/closing/latest-snapshot',
-            element: page(<ClosingSnapshotPage />),
-          },
-          {
-            path: 'companies/:companyId/closing/snapshots/:snapshotId',
-            element: page(<ClosingSnapshotPage />),
-          },
-          {
             path: 'profile',
             element: page(<ProfilePage />),
+          },
+          {
+            path: 'journal',
+            element: page(<JournalPage />),
           },
           {
             path: 'reports/journal-book',
@@ -137,6 +139,26 @@ export const router = createBrowserRouter([
           {
             path: 'reports/trial-balance',
             element: page(<TrialBalanceReportPage />),
+          },
+          {
+            path: 'reports/closing',
+            element: page(<BalanceAndClosingPage />),
+          },
+          {
+            path: 'reports/closing/latest-snapshot',
+            element: page(<ClosingSnapshotPage />),
+          },
+          {
+            path: 'reports/closing/snapshots/:snapshotId',
+            element: page(<ClosingSnapshotPage />),
+          },
+          {
+            path: 'companies/:companyId/closing/latest-snapshot',
+            element: page(<ClosingSnapshotPage />),
+          },
+          {
+            path: 'companies/:companyId/closing/snapshots/:snapshotId',
+            element: page(<ClosingSnapshotPage />),
           },
           {
             element: <RequireRole roles={['teacher', 'admin']} />,

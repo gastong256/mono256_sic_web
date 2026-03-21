@@ -30,20 +30,29 @@ test.describe('App baseline smoke', () => {
     await loginAs(page, 'admin')
 
     await openBooksMenu(page)
-    await expect(page.getByRole('link', { name: 'Libro Diario' })).toBeVisible()
-    await page.getByRole('link', { name: 'Libro Diario' }).click()
+    const journalBookLink = page.locator('a[href="/reports/journal-book"]:visible').first()
+    await expect(journalBookLink).toBeVisible()
+    await Promise.all([
+      page.waitForURL('/reports/journal-book'),
+      journalBookLink.dispatchEvent('click'),
+    ])
     await expect(page).toHaveURL('/reports/journal-book')
     await expect(page.getByRole('heading', { name: 'Libro Diario' })).toBeVisible()
 
     await openBooksMenu(page)
-    await expect(page.getByRole('link', { name: 'Libro Mayor' })).toBeVisible()
-    await page.getByRole('link', { name: 'Libro Mayor' }).click()
+    const ledgerLink = page.locator('a[href="/reports/ledger"]:visible').first()
+    await expect(ledgerLink).toBeVisible()
+    await Promise.all([page.waitForURL('/reports/ledger'), ledgerLink.dispatchEvent('click')])
     await expect(page).toHaveURL('/reports/ledger')
     await expect(page.getByRole('heading', { name: 'Libro Mayor' })).toBeVisible()
 
     await openBooksMenu(page)
-    await expect(page.getByRole('link', { name: 'Balance de comprobacion' })).toBeVisible()
-    await page.getByRole('link', { name: 'Balance de comprobacion' }).click()
+    const trialBalanceLink = page.locator('a[href="/reports/trial-balance"]:visible').first()
+    await expect(trialBalanceLink).toBeVisible()
+    await Promise.all([
+      page.waitForURL('/reports/trial-balance'),
+      trialBalanceLink.dispatchEvent('click'),
+    ])
     await expect(page).toHaveURL('/reports/trial-balance')
     await expect(page.getByRole('heading', { name: 'Balance de Comprobacion' })).toBeVisible()
   })

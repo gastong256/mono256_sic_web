@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { Company } from '@/features/companies/types/company.types'
 import { getCompanyStatusLabels } from '@/features/companies/lib/companyAccounting'
 
@@ -22,9 +24,54 @@ export function CompanyTable({
   onEdit,
   onDelete,
 }: CompanyTableProps) {
+  const [mobileActionsMenu, setMobileActionsMenu] = useState<{
+    company: Company
+    top: number
+    left: number
+  } | null>(null)
+
+  useEffect(() => {
+    if (!mobileActionsMenu) return
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setMobileActionsMenu(null)
+    }
+
+    function handleViewportChange() {
+      setMobileActionsMenu(null)
+    }
+
+    window.addEventListener('keydown', handleEscape)
+    window.addEventListener('resize', handleViewportChange)
+    window.addEventListener('scroll', handleViewportChange, true)
+
+    return () => {
+      window.removeEventListener('keydown', handleEscape)
+      window.removeEventListener('resize', handleViewportChange)
+      window.removeEventListener('scroll', handleViewportChange, true)
+    }
+  }, [mobileActionsMenu])
+
+  function openMobileActions(company: Company, trigger: HTMLButtonElement) {
+    const rect = trigger.getBoundingClientRect()
+    const menuWidth = 176
+    const viewportPadding = 12
+    const idealLeft = rect.right - menuWidth
+    const left = Math.min(
+      window.innerWidth - menuWidth - viewportPadding,
+      Math.max(viewportPadding, idealLeft)
+    )
+
+    setMobileActionsMenu({
+      company,
+      top: rect.bottom + 8,
+      left,
+    })
+  }
+
   return (
-    <div className="surface-card ui-fade-in overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="surface-card ui-fade-in overflow-visible">
+      <div className="overflow-x-auto overflow-y-visible">
         <table className="w-full min-w-[760px] text-sm">
           <thead className="sticky top-0 border-b border-[var(--border-soft)] bg-[var(--bg-subtle)]">
             <tr>
@@ -62,7 +109,7 @@ export function CompanyTable({
               )}
               <th
                 scope="col"
-                className="px-4 py-3 text-right text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase"
+                className="hidden px-4 py-3 text-right text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase md:table-cell"
               >
                 Acciones
               </th>
@@ -79,10 +126,34 @@ export function CompanyTable({
                   className="transition-colors odd:bg-white even:bg-slate-50/50 hover:bg-[var(--bg-subtle)]"
                 >
                   <td className="px-4 py-3 font-medium text-[var(--text-strong)]">
-                    <div>
-                      <p>{company.name}</p>
+                    <div className="relative">
+                      <div className="flex items-start justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => onView(company)}
+                          className="min-w-0 text-left font-medium text-[var(--text-strong)] transition-colors hover:text-[var(--brand-700)]"
+                        >
+                          <span className="line-clamp-2">{company.name}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(event) => openMobileActions(company, event.currentTarget)}
+                          className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-[var(--border-soft)] bg-white text-[var(--text-muted)] transition-colors hover:border-[var(--brand-500)] hover:text-[var(--text-strong)] md:hidden"
+                          aria-label={`Acciones para ${company.name}`}
+                          aria-expanded={mobileActionsMenu?.company.id === company.id}
+                        >
+                          <svg
+                            className="size-4"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            aria-hidden="true"
+                          >
+                            <path d="M10 6.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm0 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm0 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
+                          </svg>
+                        </button>
+                      </div>
                       {company.is_demo && company.demo_slug && (
-                        <p className="muted-text mt-1 text-xs">Slug demo: {company.demo_slug}</p>
+                        <p className="muted-text mt-1 text-xs">Slug de demo: {company.demo_slug}</p>
                       )}
                     </div>
                   </td>
@@ -98,7 +169,12 @@ export function CompanyTable({
                         {statusLabels.map((label) => (
                           <span
                             key={label}
-                            className="rounded-full border border-[var(--border-soft)] bg-[var(--bg-subtle)] px-2 py-1 text-[11px] font-semibold text-[var(--text-muted)]"
+                            className={[
+                              'rounded-full px-2 py-1 text-[11px] font-semibold',
+                              label === 'Pendiente de apertura'
+                                ? 'border border-amber-200 bg-amber-50 text-amber-700'
+                                : 'border border-[var(--border-soft)] bg-[var(--bg-subtle)] text-[var(--text-muted)]',
+                            ].join(' ')}
                           >
                             {label}
                           </span>
@@ -107,7 +183,7 @@ export function CompanyTable({
                     )}
                   </td>
                   {showOwner && <td className="muted-text px-4 py-3">{company.owner_username}</td>}
-                  <td className="px-4 py-3">
+                  <td className="hidden px-4 py-3 md:table-cell">
                     <div className="flex items-center justify-end gap-1">
                       {/* Ver */}
                       <button
@@ -193,6 +269,74 @@ export function CompanyTable({
           </tbody>
         </table>
       </div>
+      {mobileActionsMenu &&
+        createPortal(
+          <>
+            <button
+              type="button"
+              aria-label="Cerrar acciones"
+              className="fixed inset-0 z-40 cursor-default bg-transparent md:hidden"
+              onClick={() => setMobileActionsMenu(null)}
+            />
+            <div
+              className="fixed z-50 w-44 rounded-2xl border border-[var(--border-soft)] bg-[linear-gradient(180deg,#f8fbff,#eef3f9)] py-1 text-[0.82rem] text-[var(--text-muted)] shadow-[0_18px_50px_-28px_rgba(10,29,64,0.75)] backdrop-blur-sm md:hidden"
+              style={{ top: mobileActionsMenu.top, left: mobileActionsMenu.left }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  onView(mobileActionsMenu.company)
+                  setMobileActionsMenu(null)
+                }}
+                className="menu-dropdown-item w-full text-left"
+              >
+                Ver empresa
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onEdit(mobileActionsMenu.company)
+                  setMobileActionsMenu(null)
+                }}
+                disabled={mobileActionsMenu.company.is_read_only === true}
+                className="menu-dropdown-item w-full text-left disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onDelete(mobileActionsMenu.company)
+                  setMobileActionsMenu(null)
+                }}
+                disabled={mobileActionsMenu.company.is_read_only === true}
+                className="menu-dropdown-item w-full text-left disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Eliminar
+              </button>
+              {canManageDemoPublication &&
+                mobileActionsMenu.company.is_demo &&
+                onToggleDemoPublication && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onToggleDemoPublication(mobileActionsMenu.company)
+                      setMobileActionsMenu(null)
+                    }}
+                    disabled={demoPublicationPendingId === mobileActionsMenu.company.id}
+                    className="menu-dropdown-item w-full text-left disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {demoPublicationPendingId === mobileActionsMenu.company.id
+                      ? 'Actualizando…'
+                      : mobileActionsMenu.company.is_published === true
+                        ? 'Ocultar demo'
+                        : 'Publicar demo'}
+                  </button>
+                )}
+            </div>
+          </>,
+          document.body
+        )}
     </div>
   )
 }

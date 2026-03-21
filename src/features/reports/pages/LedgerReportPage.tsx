@@ -1,11 +1,18 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
+import {
+  CompanyBooksClosedAlert,
+  CompanyPendingOpeningState,
+} from '@/features/companies/components/CompanyOperationalAlerts'
 import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
 import { useActiveCompany } from '@/features/companies/hooks/useActiveCompany'
-import { getCompanyAccountingBlockMessage } from '@/features/companies/lib/companyAccounting'
+import { ReportDateFilters } from '@/features/reports/components/ReportDateFilters'
 import { useLedgerReport } from '@/features/reports/hooks/useLedgerReport'
 import { useDownloadLedgerReport } from '@/features/reports/hooks/useDownloadReports'
-import { ReportExercisePanel } from '@/features/reports/components/ReportExercisePanel'
+import {
+  ReportExerciseInfo,
+  ReportExercisePanel,
+} from '@/features/reports/components/ReportExercisePanel'
 import { getReportCacheConfig } from '@/features/reports/lib/reportCache'
 import { getReportDownloadErrorMessage } from '@/features/reports/lib/downloadErrors'
 import { Spinner } from '@/shared/ui/Spinner'
@@ -14,22 +21,10 @@ import { Button } from '@/shared/ui/Button'
 import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { buildDefaultXlsxFilename, saveBlobAsFile } from '@/shared/lib/fileDownload'
+import { formatARSAmount, hasNonZeroAmount } from '@/shared/lib/currency'
 import { useToast } from '@/shared/ui/ToastProvider'
 import { extractFieldValidationErrors, getHttpErrorMessage } from '@/shared/lib/httpErrors'
-
-const arsFormatter = new Intl.NumberFormat('es-AR', {
-  style: 'currency',
-  currency: 'ARS',
-})
-
-function formatAmount(value: string | number | null) {
-  const amount = typeof value === 'number' ? value : Number(value)
-  return arsFormatter.format(Number.isFinite(amount) ? amount : 0)
-}
-
-function hasAmount(value: number | null) {
-  return value !== null && Math.abs(value) > 0
-}
+import { getAccountTypeLabel, getNormalBalanceLabel } from '@/shared/lib/accountingLabels'
 
 export function LedgerReportPage() {
   const navigate = useNavigate()
@@ -39,6 +34,9 @@ export function LedgerReportPage() {
     activeCompany,
     canManageOpening,
     canWriteCompany,
+    isAccountingReady,
+    booksClosedUntil,
+    accountingBlockMessage,
     isLoading: companyLoading,
   } = useActiveCompany()
   const [dateFromInput, setDateFromInput] = useState('')
@@ -55,8 +53,6 @@ export function LedgerReportPage() {
     () => Boolean(dateFromInput && dateToInput && dateFromInput > dateToInput),
     [dateFromInput, dateToInput]
   )
-  const isAccountingReady = activeCompany?.accounting_ready !== false
-
   const { data, isLoading, isFetching, isError, error } = useLedgerReport(
     activeCompanyId,
     filters,
@@ -78,12 +74,9 @@ export function LedgerReportPage() {
       unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
       forbiddenMessage: 'No tenés permisos para consultar este reporte.',
       notFoundMessage: 'La empresa no existe o ya no está disponible.',
-      conflictMessage:
-        activeCompany?.accounting_ready === false || activeCompany?.is_read_only
-          ? getCompanyAccountingBlockMessage(activeCompany)
-          : undefined,
+      conflictMessage: !isAccountingReady ? (accountingBlockMessage ?? undefined) : undefined,
     })
-  }, [activeCompany, error, fieldErrors.account_id])
+  }, [accountingBlockMessage, error, fieldErrors.account_id, isAccountingReady])
 
   const canSearch = !hasInvalidRange && activeCompanyId !== null
 
@@ -105,7 +98,7 @@ export function LedgerReportPage() {
   function applyExerciseRange(startDate: string, closingDate: string | null) {
     const nextFilters = {
       dateFrom: startDate,
-      dateTo: closingDate ?? data?.date_to ?? undefined,
+      dateTo: closingDate ?? undefined,
       accountId: accountIdInput ? Number(accountIdInput) : undefined,
     }
     setDateFromInput(nextFilters.dateFrom)
@@ -135,32 +128,48 @@ export function LedgerReportPage() {
         }
       />
 
-      <section className="filter-panel p-4">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-          <label className="text-sm font-semibold text-[var(--text-muted)]">
-            Desde
-            <input
-              type="date"
-              value={dateFromInput}
-              onChange={(e) => setDateFromInput(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-white px-2 py-1.5 focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
-            />
-          </label>
-          <label className="text-sm font-semibold text-[var(--text-muted)]">
-            Hasta
-            <input
-              type="date"
-              value={dateToInput}
-              onChange={(e) => setDateToInput(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-white px-2 py-1.5 focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
-            />
-          </label>
-          <label className="text-sm font-semibold text-[var(--text-muted)]">
+      {activeCompanyId !== null && !isLoading && !isError && data && (
+        <ReportExercisePanel
+          companyId={activeCompanyId}
+          activeExercise={data.active_exercise}
+          previousExercises={data.previous_exercises}
+          onSelectExercise={(exercise) =>
+            applyExerciseRange(exercise.start_date, exercise.closing_date)
+          }
+          onSelectSnapshot={(exercise) => {
+            if (activeCompanyId === null || exercise.snapshot_id === null) return
+            void navigate(`/reports/closing/snapshots/${exercise.snapshot_id}`)
+          }}
+        />
+      )}
+
+      <ReportDateFilters
+        dateFrom={dateFromInput}
+        dateTo={dateToInput}
+        onDateFromChange={setDateFromInput}
+        onDateToChange={setDateToInput}
+        onApply={() =>
+          setFilters({
+            dateFrom: dateFromInput || undefined,
+            dateTo: dateToInput || undefined,
+            accountId: accountIdInput ? Number(accountIdInput) : undefined,
+          })
+        }
+        onClear={() => {
+          setDateFromInput('')
+          setDateToInput('')
+          setAccountIdInput('')
+          setFilters({})
+        }}
+        canApply={canSearch}
+        hasInvalidRange={hasInvalidRange}
+        extraFields={
+          <label className="field-label">
             Cuenta (opcional)
             <select
               value={accountIdInput}
               onChange={(e) => setAccountIdInput(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-white px-2 py-1.5 focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
+              className="field-control"
             >
               <option value="">Todas</option>
               {accountOptions.map((account) => (
@@ -170,48 +179,26 @@ export function LedgerReportPage() {
               ))}
             </select>
           </label>
-          <div className="flex items-end gap-2">
-            <Button
-              type="button"
-              disabled={!canSearch}
-              onClick={() =>
-                setFilters({
-                  dateFrom: dateFromInput || undefined,
-                  dateTo: dateToInput || undefined,
-                  accountId: accountIdInput ? Number(accountIdInput) : undefined,
-                })
-              }
-            >
-              Aplicar
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setDateFromInput('')
-                setDateToInput('')
-                setAccountIdInput('')
-                setFilters({})
-              }}
-            >
-              Limpiar
-            </Button>
-          </div>
-        </div>
-        {hasInvalidRange && (
-          <p className="mt-2 text-sm text-red-600">La fecha desde no puede ser mayor a hasta.</p>
-        )}
-      </section>
+        }
+      />
+
+      {activeCompanyId !== null && !isLoading && !isError && data && (
+        <ReportExerciseInfo
+          requestedRange={data.requested_range}
+          exerciseRange={data.exercise_range}
+          visibleRange={data.visible_range}
+          activeExercise={data.active_exercise}
+        />
+      )}
 
       {activeCompanyId === null && (
         <Alert tone="warning">Selecciona una empresa para ver el Libro Mayor.</Alert>
       )}
 
-      {activeCompanyId !== null && activeCompany?.accounting_ready === false && (
-        <EmptyState
+      {activeCompanyId !== null && (
+        <CompanyPendingOpeningState
+          company={activeCompany}
           icon="ledger"
-          title="Pendiente de apertura contable"
-          description={getCompanyAccountingBlockMessage(activeCompany)}
           action={
             canManageOpening && canWriteCompany ? (
               <Button onClick={() => navigate(`/companies/${activeCompanyId}`)}>
@@ -223,11 +210,7 @@ export function LedgerReportPage() {
         />
       )}
 
-      {activeCompanyId !== null && activeCompany?.books_closed_until && (
-        <Alert tone="info">
-          Los libros están cerrados hasta <strong>{activeCompany.books_closed_until}</strong>.
-        </Alert>
-      )}
+      <CompanyBooksClosedAlert booksClosedUntil={booksClosedUntil} />
 
       {activeCompanyId !== null && isLoading && (
         <div className="flex justify-center py-12">
@@ -244,23 +227,6 @@ export function LedgerReportPage() {
           {isFetching && (
             <Alert tone="info">Actualizando el Libro Mayor con los filtros aplicados…</Alert>
           )}
-
-          <ReportExercisePanel
-            requestedRange={data.requested_range}
-            exerciseRange={data.exercise_range}
-            visibleRange={data.visible_range}
-            activeExercise={data.active_exercise}
-            previousExercises={data.previous_exercises}
-            onSelectExercise={(exercise) =>
-              applyExerciseRange(exercise.start_date, exercise.closing_date)
-            }
-            onSelectSnapshot={(exercise) => {
-              if (activeCompanyId === null || exercise.snapshot_id === null) return
-              void navigate(
-                `/companies/${activeCompanyId}/closing/snapshots/${exercise.snapshot_id}`
-              )
-            }}
-          />
 
           <div className="glass-panel rounded-xl p-3 text-sm">
             <p className="font-semibold text-[var(--text-strong)]">
@@ -299,21 +265,21 @@ export function LedgerReportPage() {
                     {card.account_code} · {card.account_name}
                   </p>
                   <p className="mt-1 text-sm text-[var(--text-muted)]">
-                    Tipo {card.account_type || '—'} · Saldo normal{' '}
-                    {card.normal_balance === 'CREDIT' ? 'acreedor' : 'deudor'}
+                    Tipo {getAccountTypeLabel(card.account_type)} · Saldo normal{' '}
+                    {getNormalBalanceLabel(card.normal_balance)}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <span className="metric-chip">
-                      Saldo inicial {formatAmount(card.opening_balance)}
+                      Saldo inicial {formatARSAmount(card.opening_balance)}
                     </span>
                     <span className="metric-chip">
-                      Debe {formatAmount(card.period_totals.total_debit)}
+                      Debe {formatARSAmount(card.period_totals.total_debit)}
                     </span>
                     <span className="metric-chip">
-                      Haber {formatAmount(card.period_totals.total_credit)}
+                      Haber {formatARSAmount(card.period_totals.total_credit)}
                     </span>
                     <span className="metric-chip">
-                      Saldo final {formatAmount(card.closing_balance)}
+                      Saldo final {formatARSAmount(card.closing_balance)}
                     </span>
                   </div>
                 </div>
@@ -344,7 +310,7 @@ export function LedgerReportPage() {
                         <td>—</td>
                         <td className="amount-cell-empty">—</td>
                         <td className="amount-cell-empty">—</td>
-                        <td className="amount-cell">{formatAmount(card.opening_balance)}</td>
+                        <td className="amount-cell">{formatARSAmount(card.opening_balance)}</td>
                       </tr>
 
                       {card.movements.length === 0 && (
@@ -368,23 +334,27 @@ export function LedgerReportPage() {
                           <td>{movement.source_ref || '—'}</td>
                           <td
                             className={
-                              hasAmount(movement.debit)
+                              hasNonZeroAmount(movement.debit)
                                 ? 'amount-cell amount-cell-debit'
                                 : 'amount-cell-empty'
                             }
                           >
-                            {hasAmount(movement.debit) ? formatAmount(movement.debit) : '—'}
+                            {hasNonZeroAmount(movement.debit)
+                              ? formatARSAmount(movement.debit)
+                              : '—'}
                           </td>
                           <td
                             className={
-                              hasAmount(movement.credit)
+                              hasNonZeroAmount(movement.credit)
                                 ? 'amount-cell amount-cell-credit'
                                 : 'amount-cell-empty'
                             }
                           >
-                            {hasAmount(movement.credit) ? formatAmount(movement.credit) : '—'}
+                            {hasNonZeroAmount(movement.credit)
+                              ? formatARSAmount(movement.credit)
+                              : '—'}
                           </td>
-                          <td className="amount-cell">{formatAmount(movement.balance)}</td>
+                          <td className="amount-cell">{formatARSAmount(movement.balance)}</td>
                         </tr>
                       ))}
                     </tbody>

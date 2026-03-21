@@ -1,11 +1,18 @@
 import { Fragment, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
+import {
+  CompanyBooksClosedAlert,
+  CompanyPendingOpeningState,
+} from '@/features/companies/components/CompanyOperationalAlerts'
 import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
 import { useActiveCompany } from '@/features/companies/hooks/useActiveCompany'
-import { getCompanyAccountingBlockMessage } from '@/features/companies/lib/companyAccounting'
+import { ReportDateFilters } from '@/features/reports/components/ReportDateFilters'
 import { useTrialBalanceReport } from '@/features/reports/hooks/useTrialBalanceReport'
 import { useDownloadTrialBalanceReport } from '@/features/reports/hooks/useDownloadReports'
-import { ReportExercisePanel } from '@/features/reports/components/ReportExercisePanel'
+import {
+  ReportExerciseInfo,
+  ReportExercisePanel,
+} from '@/features/reports/components/ReportExercisePanel'
 import { getReportCacheConfig } from '@/features/reports/lib/reportCache'
 import { getReportDownloadErrorMessage } from '@/features/reports/lib/downloadErrors'
 import { Spinner } from '@/shared/ui/Spinner'
@@ -14,18 +21,10 @@ import { Button } from '@/shared/ui/Button'
 import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { buildDefaultXlsxFilename, saveBlobAsFile } from '@/shared/lib/fileDownload'
+import { formatARSAmount } from '@/shared/lib/currency'
 import { useToast } from '@/shared/ui/ToastProvider'
 import { extractFieldValidationErrors, getHttpErrorMessage } from '@/shared/lib/httpErrors'
-
-const arsFormatter = new Intl.NumberFormat('es-AR', {
-  style: 'currency',
-  currency: 'ARS',
-})
-
-function formatAmount(value: string | number | null) {
-  const amount = typeof value === 'number' ? value : Number(value)
-  return arsFormatter.format(Number.isFinite(amount) ? amount : 0)
-}
+import { getAccountTypeLabel } from '@/shared/lib/accountingLabels'
 
 export function TrialBalanceReportPage() {
   const navigate = useNavigate()
@@ -35,12 +34,14 @@ export function TrialBalanceReportPage() {
     activeCompany,
     canManageOpening,
     canWriteCompany,
+    isAccountingReady,
+    booksClosedUntil,
+    accountingBlockMessage,
     isLoading: companyLoading,
   } = useActiveCompany()
   const [dateFromInput, setDateFromInput] = useState('')
   const [dateToInput, setDateToInput] = useState('')
   const [filters, setFilters] = useState<{ dateFrom?: string; dateTo?: string }>({})
-  const isAccountingReady = activeCompany?.accounting_ready !== false
   const reportCacheConfig = useMemo(() => getReportCacheConfig(activeCompany), [activeCompany])
 
   const hasInvalidRange = useMemo(
@@ -69,12 +70,9 @@ export function TrialBalanceReportPage() {
       unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
       forbiddenMessage: 'No tenés permisos para consultar este reporte.',
       notFoundMessage: 'La empresa no existe o ya no está disponible.',
-      conflictMessage:
-        activeCompany?.accounting_ready === false || activeCompany?.is_read_only
-          ? getCompanyAccountingBlockMessage(activeCompany)
-          : undefined,
+      conflictMessage: !isAccountingReady ? (accountingBlockMessage ?? undefined) : undefined,
     })
-  }, [activeCompany, error, fieldErrors.date_from, fieldErrors.date_to])
+  }, [accountingBlockMessage, error, fieldErrors.date_from, fieldErrors.date_to, isAccountingReady])
 
   async function handleDownload() {
     if (activeCompanyId === null) return
@@ -94,7 +92,7 @@ export function TrialBalanceReportPage() {
   function applyExerciseRange(startDate: string, closingDate: string | null) {
     const nextFilters = {
       dateFrom: startDate,
-      dateTo: closingDate ?? data?.date_to ?? undefined,
+      dateTo: closingDate ?? undefined,
     }
     setDateFromInput(nextFilters.dateFrom)
     setDateToInput(nextFilters.dateTo ?? '')
@@ -123,66 +121,59 @@ export function TrialBalanceReportPage() {
         }
       />
 
-      <section className="filter-panel p-4">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-          <label className="text-sm font-semibold text-[var(--text-muted)]">
-            Desde
-            <input
-              type="date"
-              value={dateFromInput}
-              onChange={(e) => setDateFromInput(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-white px-2 py-1.5 focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
-            />
-          </label>
-          <label className="text-sm font-semibold text-[var(--text-muted)]">
-            Hasta
-            <input
-              type="date"
-              value={dateToInput}
-              onChange={(e) => setDateToInput(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-white px-2 py-1.5 focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)] focus:outline-none"
-            />
-          </label>
-          <div className="flex items-end gap-2 md:col-span-2">
-            <Button
-              type="button"
-              disabled={!canSearch}
-              onClick={() =>
-                setFilters({
-                  dateFrom: dateFromInput || undefined,
-                  dateTo: dateToInput || undefined,
-                })
-              }
-            >
-              Aplicar filtros
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setDateFromInput('')
-                setDateToInput('')
-                setFilters({})
-              }}
-            >
-              Limpiar
-            </Button>
-          </div>
-        </div>
-        {hasInvalidRange && (
-          <p className="mt-2 text-sm text-red-600">La fecha desde no puede ser mayor a hasta.</p>
-        )}
-      </section>
+      {activeCompanyId !== null && !isLoading && !isError && data && (
+        <ReportExercisePanel
+          companyId={activeCompanyId}
+          activeExercise={data.active_exercise}
+          previousExercises={data.previous_exercises}
+          onSelectExercise={(exercise) =>
+            applyExerciseRange(exercise.start_date, exercise.closing_date)
+          }
+          onSelectSnapshot={(exercise) => {
+            if (activeCompanyId === null || exercise.snapshot_id === null) return
+            void navigate(`/reports/closing/snapshots/${exercise.snapshot_id}`)
+          }}
+        />
+      )}
+
+      <ReportDateFilters
+        dateFrom={dateFromInput}
+        dateTo={dateToInput}
+        onDateFromChange={setDateFromInput}
+        onDateToChange={setDateToInput}
+        onApply={() =>
+          setFilters({
+            dateFrom: dateFromInput || undefined,
+            dateTo: dateToInput || undefined,
+          })
+        }
+        onClear={() => {
+          setDateFromInput('')
+          setDateToInput('')
+          setFilters({})
+        }}
+        canApply={canSearch}
+        hasInvalidRange={hasInvalidRange}
+        actionsClassName="md:col-span-2"
+      />
+
+      {activeCompanyId !== null && !isLoading && !isError && data && (
+        <ReportExerciseInfo
+          requestedRange={data.requested_range}
+          exerciseRange={data.exercise_range}
+          visibleRange={data.visible_range}
+          activeExercise={data.active_exercise}
+        />
+      )}
 
       {activeCompanyId === null && (
         <Alert tone="warning">Selecciona una empresa para ver el Balance de Comprobacion.</Alert>
       )}
 
-      {activeCompanyId !== null && activeCompany?.accounting_ready === false && (
-        <EmptyState
+      {activeCompanyId !== null && (
+        <CompanyPendingOpeningState
+          company={activeCompany}
           icon="balance"
-          title="Pendiente de apertura contable"
-          description={getCompanyAccountingBlockMessage(activeCompany)}
           action={
             canManageOpening && canWriteCompany ? (
               <Button onClick={() => navigate(`/companies/${activeCompanyId}`)}>
@@ -194,11 +185,7 @@ export function TrialBalanceReportPage() {
         />
       )}
 
-      {activeCompanyId !== null && activeCompany?.books_closed_until && (
-        <Alert tone="info">
-          Los libros están cerrados hasta <strong>{activeCompany.books_closed_until}</strong>.
-        </Alert>
-      )}
+      <CompanyBooksClosedAlert booksClosedUntil={booksClosedUntil} />
 
       {activeCompanyId !== null && isLoading && (
         <div className="flex justify-center py-12">
@@ -221,23 +208,6 @@ export function TrialBalanceReportPage() {
             </Alert>
           )}
 
-          <ReportExercisePanel
-            requestedRange={data.requested_range}
-            exerciseRange={data.exercise_range}
-            visibleRange={data.visible_range}
-            activeExercise={data.active_exercise}
-            previousExercises={data.previous_exercises}
-            onSelectExercise={(exercise) =>
-              applyExerciseRange(exercise.start_date, exercise.closing_date)
-            }
-            onSelectSnapshot={(exercise) => {
-              if (activeCompanyId === null || exercise.snapshot_id === null) return
-              void navigate(
-                `/companies/${activeCompanyId}/closing/snapshots/${exercise.snapshot_id}`
-              )
-            }}
-          />
-
           <div className="glass-panel rounded-xl p-3 text-sm">
             <p className="font-semibold text-[var(--text-strong)]">
               {data.company || 'Totales generales'}
@@ -250,14 +220,32 @@ export function TrialBalanceReportPage() {
                   Ejercicio: #{data.active_exercise.exercise_index}
                 </span>
               )}
-              <span className="metric-chip">Debe: {formatAmount(data.grand_total_debit)}</span>
-              <span className="metric-chip">Haber: {formatAmount(data.grand_total_credit)}</span>
-              <span className="metric-chip">
-                Saldo deudor: {formatAmount(data.totals.total_debit_balance)}
-              </span>
-              <span className="metric-chip">
-                Saldo acreedor: {formatAmount(data.totals.total_credit_balance)}
-              </span>
+            </div>
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="summary-stat-card">
+                <p className="summary-stat-label">Debe</p>
+                <p className="summary-stat-value text-[#145f91]">
+                  {formatARSAmount(data.grand_total_debit)}
+                </p>
+              </div>
+              <div className="summary-stat-card">
+                <p className="summary-stat-label">Haber</p>
+                <p className="summary-stat-value text-[#8f4b12]">
+                  {formatARSAmount(data.grand_total_credit)}
+                </p>
+              </div>
+              <div className="summary-stat-card">
+                <p className="summary-stat-label">Saldo deudor</p>
+                <p className="summary-stat-value">
+                  {formatARSAmount(data.totals.total_debit_balance)}
+                </p>
+              </div>
+              <div className="summary-stat-card">
+                <p className="summary-stat-label">Saldo acreedor</p>
+                <p className="summary-stat-value">
+                  {formatARSAmount(data.totals.total_credit_balance)}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -298,22 +286,22 @@ export function TrialBalanceReportPage() {
                             {group.account_code} · {group.account_name}
                           </td>
                           <td className="font-semibold text-[var(--text-muted)]">
-                            {group.account_type || '—'}
+                            {getAccountTypeLabel(group.account_type)}
                           </td>
                           <td className="amount-cell font-semibold">
-                            {formatAmount(group.subtotal_debit)}
+                            {formatARSAmount(group.subtotal_debit)}
                           </td>
                           <td className="amount-cell font-semibold">
-                            {formatAmount(group.subtotal_credit)}
+                            {formatARSAmount(group.subtotal_credit)}
                           </td>
                           <td className="amount-cell font-semibold">
                             {group.subtotal_debit_balance !== null
-                              ? formatAmount(group.subtotal_debit_balance)
+                              ? formatARSAmount(group.subtotal_debit_balance)
                               : '—'}
                           </td>
                           <td className="amount-cell font-semibold">
                             {group.subtotal_credit_balance !== null
-                              ? formatAmount(group.subtotal_credit_balance)
+                              ? formatARSAmount(group.subtotal_credit_balance)
                               : '—'}
                           </td>
                         </tr>
@@ -322,21 +310,21 @@ export function TrialBalanceReportPage() {
                             <td className="pl-8">
                               {account.account_code} · {account.account_name}
                             </td>
-                            <td>{account.account_type || '—'}</td>
+                            <td>{getAccountTypeLabel(account.account_type)}</td>
                             <td className="amount-cell amount-cell-debit">
-                              {formatAmount(account.total_debit)}
+                              {formatARSAmount(account.total_debit)}
                             </td>
                             <td className="amount-cell amount-cell-credit">
-                              {formatAmount(account.total_credit)}
+                              {formatARSAmount(account.total_credit)}
                             </td>
                             <td className="amount-cell">
                               {account.debit_balance !== null
-                                ? formatAmount(account.debit_balance)
+                                ? formatARSAmount(account.debit_balance)
                                 : '—'}
                             </td>
                             <td className="amount-cell">
                               {account.credit_balance !== null
-                                ? formatAmount(account.credit_balance)
+                                ? formatARSAmount(account.credit_balance)
                                 : '—'}
                             </td>
                           </tr>

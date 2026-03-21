@@ -1,29 +1,24 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
+import { useActiveCompany } from '@/features/companies/hooks/useActiveCompany'
 import { Alert } from '@/shared/ui/Alert'
 import { Button } from '@/shared/ui/Button'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Spinner } from '@/shared/ui/Spinner'
+import { formatARSAmount } from '@/shared/lib/currency'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
+import { getAccountTypeLabel } from '@/shared/lib/accountingLabels'
 import {
   useClosingSnapshot,
   useLatestClosingSnapshot,
 } from '@/features/companies/hooks/useClosingSnapshot'
 
-const arsFormatter = new Intl.NumberFormat('es-AR', {
-  style: 'currency',
-  currency: 'ARS',
-})
-
-function formatAmount(value: string | null | undefined) {
-  const amount = Number(value)
-  return arsFormatter.format(Number.isFinite(amount) ? amount : 0)
-}
-
 export function ClosingSnapshotPage() {
   const navigate = useNavigate()
   const { companyId, snapshotId } = useParams<{ companyId: string; snapshotId?: string }>()
-  const numericCompanyId = Number(companyId)
+  const { activeCompanyId } = useActiveCompany()
+  const numericCompanyId =
+    companyId && Number.isFinite(Number(companyId)) ? Number(companyId) : (activeCompanyId ?? 0)
   const numericSnapshotId = Number(snapshotId)
   const shouldLoadSpecific = Number.isFinite(numericSnapshotId) && numericSnapshotId > 0
 
@@ -40,10 +35,10 @@ export function ClosingSnapshotPage() {
   const errorMessage = useMemo(
     () =>
       getHttpErrorMessage(error, {
-        defaultMessage: 'No se pudo cargar el snapshot confirmado del cierre.',
+        defaultMessage: 'No se pudo cargar el cierre confirmado.',
         unauthorizedMessage: 'Tu sesión expiró. Iniciá sesión nuevamente.',
-        forbiddenMessage: 'No tenés permisos para ver este snapshot.',
-        notFoundMessage: 'El snapshot solicitado no existe o ya no está disponible.',
+        forbiddenMessage: 'No tenés permisos para ver este cierre confirmado.',
+        notFoundMessage: 'El cierre confirmado solicitado no existe o ya no está disponible.',
       }),
     [error]
   )
@@ -52,22 +47,21 @@ export function ClosingSnapshotPage() {
     <div className="page-shell">
       <PageHeader
         icon="balance"
-        title="Snapshot confirmado del cierre"
+        title="Cierre confirmado"
         subtitle="Documento contable de solo lectura generado al confirmar el cierre."
         actions={
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => navigate(`/companies/${companyId}`)}
-          >
-            Volver a la empresa
+          <Button type="button" variant="secondary" onClick={() => navigate('/reports/closing')}>
+            Volver a cierres
           </Button>
         }
       />
 
       {isLoading && (
         <div className="flex justify-center py-12">
-          <Spinner className="size-8 text-[var(--brand-500)]" label="Cargando snapshot..." />
+          <Spinner
+            className="size-8 text-[var(--brand-500)]"
+            label="Cargando cierre confirmado..."
+          />
         </div>
       )}
 
@@ -76,7 +70,7 @@ export function ClosingSnapshotPage() {
       {data && !isLoading && !error && (
         <div className="space-y-4">
           <Alert tone="info">
-            Este snapshot es un documento confirmado del cierre. Su contenido es solo lectura.
+            Este cierre confirmado es un documento contable de solo lectura.
           </Alert>
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -93,7 +87,7 @@ export function ClosingSnapshotPage() {
               <p className="summary-stat-value text-[0.95rem]">{data.reopening_date}</p>
             </article>
             <article className="summary-stat-card">
-              <p className="summary-stat-label">Snapshot ID</p>
+              <p className="summary-stat-label">ID del snapshot</p>
               <p className="summary-stat-value text-[0.95rem]">#{data.id}</p>
             </article>
           </div>
@@ -105,18 +99,18 @@ export function ClosingSnapshotPage() {
                 <article className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 text-sm">
                   <p className="font-semibold text-[var(--text-strong)]">Resultados positivos</p>
                   <p className="mt-2">
-                    {formatAmount(data.income_statement.positive_results.total)}
+                    {formatARSAmount(data.income_statement.positive_results.total)}
                   </p>
                 </article>
                 <article className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 text-sm">
                   <p className="font-semibold text-[var(--text-strong)]">Resultados negativos</p>
                   <p className="mt-2">
-                    {formatAmount(data.income_statement.negative_results.total)}
+                    {formatARSAmount(data.income_statement.negative_results.total)}
                   </p>
                 </article>
                 <article className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 text-sm">
                   <p className="font-semibold text-[var(--text-strong)]">Resultado neto</p>
-                  <p className="mt-2">{formatAmount(data.income_statement.net_result.amount)}</p>
+                  <p className="mt-2">{formatARSAmount(data.income_statement.net_result.amount)}</p>
                 </article>
               </div>
             </section>
@@ -128,20 +122,20 @@ export function ClosingSnapshotPage() {
               <div className="mt-3 grid gap-3 md:grid-cols-3">
                 <article className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 text-sm">
                   <p className="font-semibold text-[var(--text-strong)]">Activo</p>
-                  <p className="mt-2">{formatAmount(data.balance_sheet.assets.total)}</p>
+                  <p className="mt-2">{formatARSAmount(data.balance_sheet.assets.total)}</p>
                 </article>
                 <article className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 text-sm">
                   <p className="font-semibold text-[var(--text-strong)]">Pasivo</p>
-                  <p className="mt-2">{formatAmount(data.balance_sheet.liabilities.total)}</p>
+                  <p className="mt-2">{formatARSAmount(data.balance_sheet.liabilities.total)}</p>
                 </article>
                 <article className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 text-sm">
                   <p className="font-semibold text-[var(--text-strong)]">Patrimonio neto</p>
-                  <p className="mt-2">{formatAmount(data.balance_sheet.equity.total)}</p>
+                  <p className="mt-2">{formatARSAmount(data.balance_sheet.equity.total)}</p>
                 </article>
               </div>
               <div className="mt-3 text-sm text-[var(--text-muted)]">
                 Resultado del ejercicio:{' '}
-                <strong>{formatAmount(data.balance_sheet.equity.derived_result?.amount)}</strong>
+                <strong>{formatARSAmount(data.balance_sheet.equity.derived_result?.amount)}</strong>
               </div>
             </section>
           )}
@@ -172,10 +166,10 @@ export function ClosingSnapshotPage() {
                         <td>
                           {line.account_code} · {line.account_name}
                         </td>
-                        <td>{line.account_type || '—'}</td>
+                        <td>{getAccountTypeLabel(line.account_type)}</td>
                         <td>{line.parent_code ?? '—'}</td>
-                        <td className="amount-cell">{formatAmount(line.debit_balance)}</td>
-                        <td className="amount-cell">{formatAmount(line.credit_balance)}</td>
+                        <td className="amount-cell">{formatARSAmount(line.debit_balance)}</td>
+                        <td className="amount-cell">{formatARSAmount(line.credit_balance)}</td>
                       </tr>
                     ))}
                   </tbody>

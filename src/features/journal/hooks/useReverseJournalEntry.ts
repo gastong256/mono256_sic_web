@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { companyQueryKeys } from '@/features/companies/hooks/companyQueryKeys'
 import { journalApi } from '@/features/journal/api/journal.api'
-import { journalEntriesQueryKey } from '@/features/journal/hooks/useJournalEntries'
 import { journalEntryQueryKey } from '@/features/journal/hooks/useJournalEntry'
+import { journalQueryKeys } from '@/features/journal/hooks/journalQueryKeys'
 import { reportQueryKeys } from '@/features/reports/hooks/reportQueryKeys'
 import { logger } from '@/shared/lib/logger'
 import type { ReverseJournalEntryPayload } from '@/features/journal/types/journal.types'
@@ -15,7 +15,7 @@ export function useReverseJournalEntry(companyId: number) {
       journalApi.reverse(companyId, entryId, payload),
     onSuccess: async (entry, variables) => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: journalEntriesQueryKey(companyId) }),
+        queryClient.invalidateQueries({ queryKey: journalQueryKeys.company(companyId) }),
         queryClient.invalidateQueries({
           queryKey: journalEntryQueryKey(companyId, variables.entryId),
         }),

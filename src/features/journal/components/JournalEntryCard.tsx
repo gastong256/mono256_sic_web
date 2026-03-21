@@ -2,22 +2,17 @@ import { useMemo, useState } from 'react'
 import type { JournalEntry } from '@/features/journal/types/journal.types'
 import { useJournalEntry } from '@/features/journal/hooks/useJournalEntry'
 import { useReverseJournalEntry } from '@/features/journal/hooks/useReverseJournalEntry'
+import { formatARSAmount } from '@/shared/lib/currency'
 import { Spinner } from '@/shared/ui/Spinner'
 import { Alert } from '@/shared/ui/Alert'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { useToast } from '@/shared/ui/ToastProvider'
 import {
+  getJournalSourceTone,
   getJournalSourceTypeLabel,
   isNonReversibleJournalSourceType,
 } from '@/features/journal/lib/sourceTypes'
-
-const arsFormat = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' })
-
-function formatARS(value: string): string {
-  const num = Number(value)
-  return isNaN(num) ? value : arsFormat.format(num)
-}
 
 interface JournalEntryCardProps {
   entry: JournalEntry
@@ -54,6 +49,7 @@ export function JournalEntryCard({ entry, companyId, isReadOnly = false }: Journ
     !isNonReversibleJournalSourceType(entry.source_type) &&
     !entry.reversal_of_id &&
     !entry.reversed_by_id
+  const sourceTone = getJournalSourceTone(entry.source_type)
 
   async function handleReverseEntry() {
     try {
@@ -78,42 +74,81 @@ export function JournalEntryCard({ entry, companyId, isReadOnly = false }: Journ
   }
 
   return (
-    <div className="surface-card ui-fade-in ui-lift overflow-hidden">
+    <div className="surface-card ui-fade-in ui-lift overflow-hidden" style={sourceTone?.shellStyle}>
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-[var(--bg-subtle)]"
+        className="flex w-full items-start justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-[var(--bg-subtle)] sm:items-center"
+        style={sourceTone ? { backgroundColor: 'transparent' } : undefined}
       >
-        <div className="flex items-center gap-4">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="muted-text text-sm font-medium tabular-nums">{entry.date}</span>
-              <span className="font-medium text-[var(--text-strong)]">{entry.description}</span>
-            </div>
-            <p className="muted-text mt-1 text-xs">
+        <div className="min-w-0 flex-1">
+          <div className="min-w-0">
+            <p className="muted-text text-sm font-medium tabular-nums">{entry.date}</p>
+            <p
+              className="mt-1 line-clamp-3 text-sm font-medium sm:line-clamp-2 sm:text-base"
+              style={sourceTone ? { color: sourceTone.titleColor } : undefined}
+            >
+              {entry.description}
+            </p>
+            <p
+              className="mt-1 text-xs"
+              style={sourceTone ? { color: sourceTone.metaColor } : undefined}
+            >
               {getJournalSourceTypeLabel(entry.source_type)} · Ref. {entry.source_ref || '—'}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <span className="summary-stat-card hidden min-w-[9rem] text-right sm:block">
+        <div className="flex w-[48%] shrink-0 items-center justify-end gap-2 sm:w-auto sm:gap-3">
+          <span
+            className="summary-stat-card hidden min-w-[9rem] text-right sm:block"
+            style={{
+              borderColor: '#cfdcf0',
+              background: 'linear-gradient(180deg, #fafdff, #eef4ff)',
+            }}
+          >
             <span className="summary-stat-label">Debe</span>
             <span className="summary-stat-value text-[0.9rem] text-[#145f91]">
-              {formatARS(String(totalDebe))}
+              {formatARSAmount(totalDebe)}
             </span>
           </span>
-          <span className="summary-stat-card hidden min-w-[9rem] text-right sm:block">
+          <span
+            className="summary-stat-card hidden min-w-[9rem] text-right sm:block"
+            style={{
+              borderColor: '#c9d5e4',
+              background: 'linear-gradient(180deg, #f3f6fa, #e7edf5)',
+            }}
+          >
             <span className="summary-stat-label">Haber</span>
             <span className="summary-stat-value text-[0.9rem] text-[#8f4b12]">
-              {formatARS(String(totalHaber))}
+              {formatARSAmount(totalHaber)}
             </span>
           </span>
-          <span className="summary-stat-card min-w-[8.2rem] text-right sm:hidden">
-            <span className="summary-stat-label">Debe/Haber</span>
-            <span className="summary-stat-value text-[0.86rem]">
-              {formatARS(String(totalDebe))} / {formatARS(String(totalHaber))}
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:hidden">
+            <span
+              className="summary-stat-card min-w-0 overflow-hidden px-2.5 py-0.5 text-right"
+              style={{
+                borderColor: '#cfdcf0',
+                background: 'linear-gradient(180deg, #fafdff, #eef4ff)',
+              }}
+            >
+              <span className="summary-stat-label text-[0.62rem] leading-none">Debe</span>
+              <span className="summary-stat-value block truncate text-[0.72rem] leading-none">
+                {formatARSAmount(totalDebe)}
+              </span>
             </span>
-          </span>
+            <span
+              className="summary-stat-card min-w-0 overflow-hidden px-2.5 py-0.5 text-right"
+              style={{
+                borderColor: '#c9d5e4',
+                background: 'linear-gradient(180deg, #f3f6fa, #e7edf5)',
+              }}
+            >
+              <span className="summary-stat-label text-[0.62rem] leading-none">Haber</span>
+              <span className="summary-stat-value block truncate text-[0.72rem] leading-none">
+                {formatARSAmount(totalHaber)}
+              </span>
+            </span>
+          </div>
           <svg
             className={[
               'muted-text size-4 transition-transform',
@@ -165,8 +200,8 @@ export function JournalEntryCard({ entry, companyId, isReadOnly = false }: Journ
             <div className="accounting-table-shell">
               <div className="accounting-table-scroll">
                 <table className="accounting-table">
-                  <thead>
-                    <tr>
+                  <thead style={sourceTone?.tableHeadStyle}>
+                    <tr style={sourceTone ? { color: sourceTone.tableHeadStyle.color } : undefined}>
                       <th scope="col">Cuenta</th>
                       <th scope="col" className="amount-col">
                         Debe
@@ -179,7 +214,17 @@ export function JournalEntryCard({ entry, companyId, isReadOnly = false }: Journ
                   <tbody>
                     {detail.lines.map((line, idx) => (
                       <tr key={`${line.account_id}-${idx}`}>
-                        <td>
+                        <td
+                          style={
+                            sourceTone
+                              ? {
+                                  backgroundColor:
+                                    idx % 2 === 0 ? sourceTone.rowBgOdd : sourceTone.rowBgEven,
+                                  color: sourceTone.rowTextColor,
+                                }
+                              : undefined
+                          }
+                        >
                           {line.account_code} - {line.account_name}
                         </td>
                         <td
@@ -188,8 +233,18 @@ export function JournalEntryCard({ entry, companyId, isReadOnly = false }: Journ
                               ? 'amount-cell amount-cell-debit'
                               : 'amount-cell-empty'
                           }
+                          style={
+                            sourceTone
+                              ? {
+                                  backgroundColor:
+                                    idx % 2 === 0
+                                      ? sourceTone.rowAmountBgOdd
+                                      : sourceTone.rowAmountBgEven,
+                                }
+                              : undefined
+                          }
                         >
-                          {line.type === 'DEBIT' ? formatARS(line.amount) : '—'}
+                          {line.type === 'DEBIT' ? formatARSAmount(line.amount) : '—'}
                         </td>
                         <td
                           className={
@@ -197,8 +252,18 @@ export function JournalEntryCard({ entry, companyId, isReadOnly = false }: Journ
                               ? 'amount-cell amount-cell-credit'
                               : 'amount-cell-empty'
                           }
+                          style={
+                            sourceTone
+                              ? {
+                                  backgroundColor:
+                                    idx % 2 === 0
+                                      ? sourceTone.rowAmountBgOdd
+                                      : sourceTone.rowAmountBgEven,
+                                }
+                              : undefined
+                          }
                         >
-                          {line.type === 'CREDIT' ? formatARS(line.amount) : '—'}
+                          {line.type === 'CREDIT' ? formatARSAmount(line.amount) : '—'}
                         </td>
                       </tr>
                     ))}
@@ -206,8 +271,8 @@ export function JournalEntryCard({ entry, companyId, isReadOnly = false }: Journ
                   <tfoot>
                     <tr>
                       <td>Total</td>
-                      <td className="amount-cell">{formatARS(String(totalDebe))}</td>
-                      <td className="amount-cell">{formatARS(String(totalHaber))}</td>
+                      <td className="amount-cell">{formatARSAmount(totalDebe)}</td>
+                      <td className="amount-cell">{formatARSAmount(totalHaber)}</td>
                     </tr>
                   </tfoot>
                 </table>

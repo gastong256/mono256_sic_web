@@ -44,7 +44,7 @@ test.describe('Companies critical flow', () => {
 
     const demoRow = await companyRow(page, 'Empresa Demo Guiada')
     await expect(demoRow.getByText('Oculta')).toBeVisible()
-    await expect(demoRow.getByText(/slug demo: empresa-demo-guiada/i)).toBeVisible()
+    await expect(demoRow.getByText(/slug de demo: empresa-demo-guiada/i)).toBeVisible()
 
     await demoRow.getByRole('button', { name: 'Publicar demo' }).click()
     await expect(demoRow.getByText('Publicada')).toBeVisible()

@@ -196,14 +196,14 @@ export function RegisterPage() {
               {...register('password_confirm')}
             />
             <Input
-              label="Email (opcional)"
+              label="Email"
               type="email"
               autoComplete="email"
               error={errors.email?.message}
               {...register('email')}
             />
-            <Input label="Nombre (opcional)" {...register('first_name')} />
-            <Input label="Apellido (opcional)" {...register('last_name')} />
+            <Input label="Nombre" {...register('first_name')} />
+            <Input label="Apellido" {...register('last_name')} />
             <Input
               label="Código de registro"
               error={errors.registration_code?.message ?? serverErrors.registration_code}

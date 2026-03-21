@@ -3,7 +3,7 @@ import { authQueryKeys } from '@/features/auth/hooks/authQueryKeys'
 import { accountQueryKeys } from '@/features/accounts/hooks/accountQueryKeys'
 import { companiesApi } from '@/features/companies/api/companies.api'
 import { companyQueryKeys } from '@/features/companies/hooks/companyQueryKeys'
-import { journalEntriesQueryKey } from '@/features/journal/hooks/useJournalEntries'
+import { journalQueryKeys } from '@/features/journal/hooks/journalQueryKeys'
 import { reportQueryKeys } from '@/features/reports/hooks/reportQueryKeys'
 import { logger } from '@/shared/lib/logger'
 import type { OpeningEntryPayload } from '@/features/companies/types/company.types'
@@ -23,7 +23,7 @@ export function useCreateOpeningEntry(companyId: number) {
         queryClient.invalidateQueries({ queryKey: companyQueryKeys.latestSnapshot(companyId) }),
         queryClient.invalidateQueries({ queryKey: accountQueryKeys.company(companyId) }),
         queryClient.invalidateQueries({ queryKey: accountQueryKeys.companyFlat(companyId) }),
-        queryClient.invalidateQueries({ queryKey: journalEntriesQueryKey(companyId) }),
+        queryClient.invalidateQueries({ queryKey: journalQueryKeys.company(companyId) }),
         queryClient.invalidateQueries({ queryKey: reportQueryKeys.company(companyId) }),
       ])
       logger.info({ message: 'Opening entry created', entryId: entry.id, companyId })

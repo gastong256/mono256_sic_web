@@ -13,6 +13,23 @@ export interface ClosingState {
   can_close: boolean
 }
 
+export interface CurrentBookBalanceSection {
+  parent_code: string
+  parent_name: string
+  total_debit: string
+  total_credit: string
+  book_balance: string
+}
+
+export interface CurrentBookBalances {
+  company_id: number
+  company: string
+  as_of_date: string
+  books_closed_until: string | null
+  cash: CurrentBookBalanceSection
+  inventory: CurrentBookBalanceSection
+}
+
 export interface SimplifiedClosingRequest {
   closing_date: string
   reopening_date: string
@@ -23,10 +40,19 @@ export interface SimplifiedClosingRequest {
 export type ClosingAdjustmentStatus = 'not_requested' | 'balanced' | 'shortage' | 'surplus'
 export type ClosingNetResultKind = 'gain' | 'loss' | 'neutral'
 
+export interface ClosingStatementAccountDetail {
+  account_id: number | null
+  account_code: string | null
+  account_name: string
+  account_type: string
+  amount: string
+}
+
 export interface IncomeStatementAccountSummary {
   account_code: string | null
   account_name: string
-  amount: string
+  subtotal: string
+  accounts: ClosingStatementAccountDetail[]
 }
 
 export interface IncomeStatementSection {
@@ -47,8 +73,8 @@ export interface IncomeStatement {
 export interface BalanceSheetGroupSummary {
   account_code: string
   account_name: string
-  account_type: string
-  amount: string
+  subtotal: string
+  accounts: ClosingStatementAccountDetail[]
 }
 
 export interface BalanceSheetSection {
@@ -64,6 +90,7 @@ export interface BalanceSheet {
     derived_result: {
       name: string
       amount: string
+      kind: ClosingNetResultKind | null
     } | null
   }
   equation: {

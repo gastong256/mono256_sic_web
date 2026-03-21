@@ -1,11 +1,11 @@
 import { expect, test, type Page } from '@playwright/test'
-import { clearSession, loginAs, selectActiveCompany } from './support/session'
+import { clearSession, loginAs, openBooksMenu, selectActiveCompany } from './support/session'
 
 async function openReport(page: Page, href: string) {
-  await page.getByRole('button', { name: /^Libros$/ }).click()
-  const link = page.locator(`#menu-libros a[href="${href}"]`).first()
+  await openBooksMenu(page)
+  const link = page.locator(`a[href="${href}"]:visible`).first()
   await expect(link).toBeVisible()
-  await link.dispatchEvent('click')
+  await link.click()
 }
 
 test.describe('Reports critical flows', () => {
@@ -20,8 +20,9 @@ test.describe('Reports critical flows', () => {
     await openReport(page, '/reports/journal-book')
     await expect(page.getByRole('heading', { name: 'Libro Diario' })).toBeVisible()
     await expect(page.getByText(/Cobranza de mostrador/i)).toBeVisible()
-    await expect(page.getByText(/Ejercicios anteriores/i)).toBeVisible()
-    await expect(page.getByRole('button', { name: /Ver snapshot/i }).first()).toBeVisible()
+    await expect(page.getByText(/^Ejercicios$/i)).toBeVisible()
+    await page.getByRole('button', { name: /Ejercicios/i }).click()
+    await expect(page.getByRole('button', { name: /Ver cierre confirmado/i }).first()).toBeVisible()
 
     await openReport(page, '/reports/ledger')
     await expect(page.getByRole('heading', { name: 'Libro Mayor' })).toBeVisible()

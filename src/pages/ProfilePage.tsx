@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuthenticatedBootstrap } from '@/features/auth/hooks/useAuthenticatedBootstrap'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { Spinner } from '@/shared/ui/Spinner'
-import { getRequestId } from '@/shared/lib/tracing'
 import { RegistrationCodeCard } from '@/features/auth/components/RegistrationCodeCard'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Alert } from '@/shared/ui/Alert'
@@ -105,25 +104,6 @@ export function ProfilePage() {
         }
       />
 
-      <section className="grid gap-3 md:grid-cols-4">
-        <article className="summary-stat-card">
-          <p className="summary-stat-label">Usuario</p>
-          <p className="summary-stat-value text-[0.95rem]">@{user.username}</p>
-        </article>
-        <article className="summary-stat-card">
-          <p className="summary-stat-label">Rol</p>
-          <p className="summary-stat-value text-[0.95rem]">{user.role || 'Sin rol'}</p>
-        </article>
-        <article className="summary-stat-card">
-          <p className="summary-stat-label">Email</p>
-          <p className="summary-stat-value text-[0.95rem]">{user.email || 'Sin email'}</p>
-        </article>
-        <article className="summary-stat-card">
-          <p className="summary-stat-label">Sesión</p>
-          <p className="summary-stat-value text-[0.95rem]">ID #{user.id}</p>
-        </article>
-      </section>
-
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-8">
           <div className="flex items-center gap-4">
@@ -198,8 +178,6 @@ export function ProfilePage() {
           <ProfileField label="Nombre completo" value={displayName} />
           <ProfileField label="Email" value={user.email} />
           {user.role && <ProfileField label="Rol" value={user.role} />}
-          <ProfileField label="ID de usuario" value={String(user.id)} mono />
-          <ProfileField label="Request ID de sesión" value={getRequestId()} mono />
         </div>
       </div>
 

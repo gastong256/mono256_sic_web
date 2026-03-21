@@ -2,6 +2,7 @@ import { httpClient } from '@/shared/lib/http'
 import {
   normalizeClosingSnapshotPayload,
   normalizeClosingExecutePayload,
+  normalizeCurrentBookBalancesPayload,
   normalizeLogicalExercisesPayload,
   normalizeClosingPreviewPayload,
   normalizeClosingStatePayload,
@@ -9,6 +10,7 @@ import {
 import type {
   ClosingSnapshot,
   ClosingState,
+  CurrentBookBalances,
   SimplifiedClosingExecuteResponse,
   SimplifiedClosingPreview,
   SimplifiedClosingRequest,
@@ -20,6 +22,13 @@ export const companyClosingApi = {
     httpClient
       .get<unknown>(`/companies/${companyId}/closing/state/`)
       .then((response) => normalizeClosingStatePayload(response.data)),
+
+  currentBalances: (companyId: number, dateTo?: string): Promise<CurrentBookBalances> =>
+    httpClient
+      .get<unknown>(`/companies/${companyId}/closing/current-balances/`, {
+        params: dateTo ? { date_to: dateTo } : undefined,
+      })
+      .then((response) => normalizeCurrentBookBalancesPayload(response.data)),
 
   preview: (
     companyId: number,

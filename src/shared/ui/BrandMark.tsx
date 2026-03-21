@@ -122,12 +122,12 @@ export function BrandMark({
         </text>
         <text
           x="80"
-          y="56"
-          fill="var(--text-muted)"
+          y="58"
+          fill="var(--text)"
           fontFamily="var(--font-sans)"
-          fontSize="10.8"
-          fontWeight="600"
-          letterSpacing="0.025em"
+          fontSize="12.8"
+          fontWeight="700"
+          letterSpacing="0.035em"
         >
           Sistema de Informacion Contable
         </text>
