@@ -20,6 +20,8 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 import { Button } from '@/shared/ui/Button'
 import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
+import { DOWNLOAD_EXCEL_BUTTON_CLASSNAME } from '@/shared/ui/downloadButtonClassName'
+import { getSemanticChipClassName } from '@/shared/ui/semanticTones'
 import { buildDefaultXlsxFilename, saveBlobAsFile } from '@/shared/lib/fileDownload'
 import { formatARSAmount, hasNonZeroAmount } from '@/shared/lib/currency'
 import { useToast } from '@/shared/ui/ToastProvider'
@@ -116,7 +118,7 @@ export function LedgerReportPage() {
           <Button
             type="button"
             variant="secondary"
-            className="border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+            className={DOWNLOAD_EXCEL_BUTTON_CLASSNAME}
             disabled={activeCompanyId === null || hasInvalidRange || !isAccountingReady}
             isLoading={downloadMutation.isPending}
             onClick={() => {
@@ -233,14 +235,18 @@ export function LedgerReportPage() {
               {data.company || 'Empresa seleccionada'}
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
-              <span className="metric-chip">Desde: {data.date_from ?? '—'}</span>
-              <span className="metric-chip">Hasta: {data.date_to ?? '—'}</span>
+              <span className={getSemanticChipClassName('neutral')}>
+                Desde: {data.date_from ?? '—'}
+              </span>
+              <span className={getSemanticChipClassName('neutral')}>
+                Hasta: {data.date_to ?? '—'}
+              </span>
               {data.active_exercise && (
-                <span className="metric-chip">
+                <span className={getSemanticChipClassName('current')}>
                   Ejercicio: #{data.active_exercise.exercise_index}
                 </span>
               )}
-              <span className="metric-chip">
+              <span className={getSemanticChipClassName('neutral')}>
                 Cuenta:{' '}
                 {data.account_id === null ? 'Todas las cuentas de movimiento' : data.account_id}
               </span>
@@ -269,16 +275,16 @@ export function LedgerReportPage() {
                     {getNormalBalanceLabel(card.normal_balance)}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="metric-chip">
+                    <span className={getSemanticChipClassName('neutral')}>
                       Saldo inicial {formatARSAmount(card.opening_balance)}
                     </span>
-                    <span className="metric-chip">
+                    <span className={getSemanticChipClassName('neutral')}>
                       Debe {formatARSAmount(card.period_totals.total_debit)}
                     </span>
-                    <span className="metric-chip">
+                    <span className={getSemanticChipClassName('neutral')}>
                       Haber {formatARSAmount(card.period_totals.total_credit)}
                     </span>
-                    <span className="metric-chip">
+                    <span className={getSemanticChipClassName('neutral')}>
                       Saldo final {formatARSAmount(card.closing_balance)}
                     </span>
                   </div>

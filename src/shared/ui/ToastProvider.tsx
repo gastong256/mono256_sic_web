@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { getSemanticAlertClassName } from '@/shared/ui/semanticTones'
 
 export type ToastTone = 'success' | 'error' | 'info'
 
@@ -18,12 +19,6 @@ const ToastContext = createContext<ToastContextValue | null>(null)
 
 interface ToastProviderProps {
   children: ReactNode
-}
-
-const toneClasses: Record<ToastTone, string> = {
-  success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
-  error: 'border-red-200 bg-red-50 text-red-800',
-  info: 'border-blue-200 bg-blue-50 text-blue-800',
 }
 
 export function ToastProvider({ children }: ToastProviderProps) {
@@ -55,7 +50,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
             className={[
               'pointer-events-auto rounded-lg border px-3 py-2 text-sm font-medium shadow-[var(--shadow-soft)]',
               'animate-[toast-in_180ms_ease-out]',
-              toneClasses[toast.tone],
+              getSemanticAlertClassName(toast.tone),
             ].join(' ')}
           >
             {toast.message}

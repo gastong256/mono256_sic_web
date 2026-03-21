@@ -10,6 +10,7 @@ import { EmptyState } from '@/shared/ui/EmptyState'
 import { formatARSAmount } from '@/shared/lib/currency'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 import { getCompanyStatusLabels } from '@/features/companies/lib/companyAccounting'
+import { getSemanticCardClassName } from '@/shared/ui/semanticTones'
 
 function parseAmount(value: string): number {
   const parsed = Number(value)
@@ -256,19 +257,30 @@ export function TeacherStudentDetailPage() {
                     <p className="summary-stat-label">Asientos</p>
                     <p className="summary-stat-value">{companySummary.entries}</p>
                   </article>
-                  <article className="summary-stat-card">
+                  <article
+                    className={['summary-stat-card', getSemanticCardClassName('info')].join(' ')}
+                  >
                     <p className="summary-stat-label">Debe total</p>
                     <p className="summary-stat-value text-[#145f91]">
                       {formatARSAmount(companySummary.totalDebit)}
                     </p>
                   </article>
-                  <article className="summary-stat-card">
+                  <article
+                    className={['summary-stat-card', getSemanticCardClassName('warning')].join(' ')}
+                  >
                     <p className="summary-stat-label">Haber total</p>
                     <p className="summary-stat-value text-[#8f4b12]">
                       {formatARSAmount(companySummary.totalCredit)}
                     </p>
                   </article>
-                  <article className="summary-stat-card">
+                  <article
+                    className={[
+                      'summary-stat-card',
+                      getSemanticCardClassName(
+                        companySummary.balanceDiff === 0 ? 'success' : 'error'
+                      ),
+                    ].join(' ')}
+                  >
                     <p className="summary-stat-label">Diferencia</p>
                     <p
                       className={[

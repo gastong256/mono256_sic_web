@@ -41,6 +41,10 @@ test.describe('Closing critical flow', () => {
       page.getByRole('alert').getByText(/documento contable de solo lectura/i)
     ).toBeVisible()
     await expect(page.getByText(closingDate)).toBeVisible()
+    const downloadPromise = page.waitForEvent('download')
+    await page.getByRole('button', { name: 'Descargar Excel' }).click()
+    const download = await downloadPromise
+    expect(download.suggestedFilename()).toContain('cierre_contable')
 
     await openAsientosMenu(page)
     await page.locator('a[href="/journal"]:visible').first().click()

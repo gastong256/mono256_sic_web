@@ -76,6 +76,16 @@ export async function openBooksMenu(page: Page) {
   await expect(link).toBeVisible()
 }
 
+export async function navigateFromVisibleLink(
+  page: Page,
+  href: string,
+  expectedUrl: string | RegExp = href
+) {
+  const link = page.locator(`a[href="${href}"]:visible`).first()
+  await expect(link).toBeVisible()
+  await Promise.all([page.waitForURL(expectedUrl), link.dispatchEvent('click')])
+}
+
 export async function openAsientosMenu(page: Page) {
   const mobileMenuButton = page.getByRole('button', { name: /toggle navigation menu|menu/i })
   if (await mobileMenuButton.isVisible().catch(() => false)) {

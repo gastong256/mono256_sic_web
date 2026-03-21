@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { clearSession, loginAs, openBooksMenu } from './support/session'
+import { clearSession, loginAs, navigateFromVisibleLink, openBooksMenu } from './support/session'
 import { createCompany } from './support/companies'
 
 test.describe('App baseline smoke', () => {
@@ -30,29 +30,17 @@ test.describe('App baseline smoke', () => {
     await loginAs(page, 'admin')
 
     await openBooksMenu(page)
-    const journalBookLink = page.locator('a[href="/reports/journal-book"]:visible').first()
-    await expect(journalBookLink).toBeVisible()
-    await Promise.all([
-      page.waitForURL('/reports/journal-book'),
-      journalBookLink.dispatchEvent('click'),
-    ])
+    await navigateFromVisibleLink(page, '/reports/journal-book')
     await expect(page).toHaveURL('/reports/journal-book')
     await expect(page.getByRole('heading', { name: 'Libro Diario' })).toBeVisible()
 
     await openBooksMenu(page)
-    const ledgerLink = page.locator('a[href="/reports/ledger"]:visible').first()
-    await expect(ledgerLink).toBeVisible()
-    await Promise.all([page.waitForURL('/reports/ledger'), ledgerLink.dispatchEvent('click')])
+    await navigateFromVisibleLink(page, '/reports/ledger')
     await expect(page).toHaveURL('/reports/ledger')
     await expect(page.getByRole('heading', { name: 'Libro Mayor' })).toBeVisible()
 
     await openBooksMenu(page)
-    const trialBalanceLink = page.locator('a[href="/reports/trial-balance"]:visible').first()
-    await expect(trialBalanceLink).toBeVisible()
-    await Promise.all([
-      page.waitForURL('/reports/trial-balance'),
-      trialBalanceLink.dispatchEvent('click'),
-    ])
+    await navigateFromVisibleLink(page, '/reports/trial-balance')
     await expect(page).toHaveURL('/reports/trial-balance')
     await expect(page.getByRole('heading', { name: 'Balance de Comprobacion' })).toBeVisible()
   })

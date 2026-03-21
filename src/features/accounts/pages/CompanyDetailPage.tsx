@@ -5,6 +5,7 @@ import { AccountTree } from '@/features/accounts/components/AccountTree'
 import { AccountForm } from '@/features/accounts/components/AccountForm'
 import { DeleteAccountDialog } from '@/features/accounts/components/DeleteAccountDialog'
 import { OpeningEntryModal } from '@/features/companies/components/OpeningEntryModal'
+import { CompanyIdentitySummary } from '@/features/companies/components/CompanyIdentitySummary'
 import { useActiveCompany } from '@/features/companies/hooks/useActiveCompany'
 import {
   filterAccountsForOpening,
@@ -17,6 +18,16 @@ import { Alert } from '@/shared/ui/Alert'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 import { Button } from '@/shared/ui/Button'
 import { PageHeader } from '@/shared/ui/PageHeader'
+import { getSemanticBadgeClassName, type SemanticTone } from '@/shared/ui/semanticTones'
+
+function getCompanyStatusTone(label: string): SemanticTone {
+  if (label === 'Demo') return 'demo'
+  if (label === 'Publicada') return 'published'
+  if (label === 'Oculta') return 'unpublished'
+  if (label === 'Solo lectura') return 'readonly'
+  if (label === 'Libros cerrados') return 'closed'
+  return 'neutral'
+}
 
 export function CompanyDetailPage() {
   const { companyId } = useParams<{ companyId: string }>()
@@ -81,23 +92,19 @@ export function CompanyDetailPage() {
         }
       />
 
-      <section className="space-y-1 border-b border-[var(--border-soft)]/80 pb-3">
-        <p className="text-lg font-semibold tracking-tight text-[var(--text-strong)] sm:text-xl">
-          {company?.name ?? 'Empresa seleccionada'}
-        </p>
-        <p className="muted-text max-w-3xl text-sm sm:text-[0.95rem]">
-          {company?.description ||
-            'Revisá el estado contable y la estructura operativa de la empresa.'}
-        </p>
-        {company?.tax_id && (
-          <p className="muted-text text-sm sm:text-[0.95rem]">CUIT/CUIL: {company.tax_id}</p>
-        )}
+      <CompanyIdentitySummary
+        company={company}
+        fallbackDescription="Revisá el estado contable y la estructura operativa de la empresa."
+      >
         {companyStatusLabels.filter((label) => label !== 'Pendiente de apertura').length > 0 && (
           <div className="page-meta-row mt-3">
             {companyStatusLabels
               .filter((label) => label !== 'Pendiente de apertura')
               .map((label) => (
-                <span key={label} className="status-badge">
+                <span
+                  key={label}
+                  className={getSemanticBadgeClassName(getCompanyStatusTone(label))}
+                >
                   {label}
                 </span>
               ))}
@@ -106,7 +113,7 @@ export function CompanyDetailPage() {
         {company?.is_demo && company.demo_slug && (
           <p className="muted-text mt-2 text-xs">Slug de demo: {company.demo_slug}</p>
         )}
-      </section>
+      </CompanyIdentitySummary>
 
       {companyWriteBlockMessage && (
         <Alert tone="warning">

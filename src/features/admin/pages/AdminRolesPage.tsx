@@ -9,6 +9,7 @@ import { Input } from '@/shared/ui/Input'
 import { Button } from '@/shared/ui/Button'
 import { useToast } from '@/shared/ui/ToastProvider'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
+import { getSemanticCardClassName } from '@/shared/ui/semanticTones'
 
 export function AdminRolesPage() {
   const { pushToast } = useToast()
@@ -137,7 +138,12 @@ export function AdminRolesPage() {
             <p className="summary-stat-label">Total consultado</p>
             <p className="summary-stat-value">{usersPage?.count ?? 0}</p>
           </article>
-          <article className="summary-stat-card">
+          <article
+            className={[
+              'summary-stat-card',
+              getSemanticCardClassName(hasActiveFilters ? 'info' : 'neutral'),
+            ].join(' ')}
+          >
             <p className="summary-stat-label">Filtros activos</p>
             <p className="summary-stat-value">{hasActiveFilters ? 'Sí' : 'No'}</p>
           </article>

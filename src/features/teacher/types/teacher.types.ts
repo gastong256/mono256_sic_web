@@ -36,6 +36,24 @@ export interface TeacherCourseOverviewItem {
   students: TeacherCourseOverviewStudent[]
 }
 
+export interface TeacherCourseDemoCompany {
+  company_id: number
+  company_name: string
+  is_demo: boolean
+  is_read_only: boolean
+  is_published: boolean
+  demo_slug: string | null
+  is_visible: boolean
+  account_count: number
+  journal_entry_count: number
+}
+
+export interface TeacherCourseDemoCompaniesResponse {
+  course_id: number
+  course_name: string
+  demo_companies: TeacherCourseDemoCompany[]
+}
+
 export interface TeacherStudentCompanies {
   student_id: number
   student_username: string
@@ -138,6 +156,10 @@ export interface CourseCreatePayload {
   name: string
   code?: string
   teacher_id?: number
+}
+
+export interface TeacherCourseDemoVisibilityPayload {
+  is_visible: boolean
 }
 
 export interface CourseItem {

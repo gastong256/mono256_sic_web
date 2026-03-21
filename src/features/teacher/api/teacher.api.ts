@@ -3,6 +3,7 @@ import { fetchAllPages } from '@/shared/lib/fetchAllPages'
 import { httpClient } from '@/shared/lib/http'
 import {
   normalizeTeacherAvailableStudentsPayload,
+  normalizeTeacherCourseDemoCompaniesPayload,
   normalizeTeacherCoursesOverviewPayload,
   normalizeTeacherCourseCompaniesPayload,
   normalizeTeacherCourseJournalEntriesPayload,
@@ -14,7 +15,9 @@ import type {
   CourseItem,
   TeacherAvailableStudentsParams,
   TeacherAvailableStudentsResponse,
+  TeacherCourseDemoCompaniesResponse,
   TeacherCourseCompaniesResponse,
+  TeacherCourseDemoVisibilityPayload,
   TeacherCourseOverviewItem,
   TeacherCourseJournalEntry,
   TeacherJournalFilters,
@@ -112,6 +115,28 @@ export const teacherApi = {
         },
       })
       .then((response) => normalizeTeacherAvailableStudentsPayload(response.data)),
+
+  courseDemoCompanies: (courseId: number): Promise<TeacherCourseDemoCompaniesResponse> =>
+    httpClient
+      .get<unknown>(`/courses/${courseId}/demo-companies/`)
+      .then((response) => normalizeTeacherCourseDemoCompaniesPayload(response.data, courseId)),
+
+  setCourseDemoVisibility: (
+    courseId: number,
+    companyId: number,
+    payload: TeacherCourseDemoVisibilityPayload
+  ) =>
+    httpClient.patch<unknown>(`/courses/${courseId}/demo-companies/${companyId}/`, payload).then(
+      (response) =>
+        normalizeTeacherCourseDemoCompaniesPayload(
+          {
+            course_id: courseId,
+            course_name: '',
+            demo_companies: [response.data],
+          },
+          courseId
+        ).demo_companies[0]
+    ),
 
   enrollStudent: (courseId: number, studentId: number): Promise<void> =>
     httpClient.post(`/courses/${courseId}/enrollments/`, { student_id: studentId }).then(() => {}),

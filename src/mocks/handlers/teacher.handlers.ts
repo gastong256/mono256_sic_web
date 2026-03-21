@@ -9,11 +9,13 @@ import {
   getRegistrationCode,
   getTeacherStudentContext,
   listAvailableStudentsForCourse,
+  listCourseDemoCompanies,
   listCourseEnrollmentsForUser,
   listCoursesForUser,
   listTeacherCoursesOverview,
   listTeacherCourseCompanies,
   listTeacherCourseJournalEntries,
+  setCourseDemoCompanyVisibility,
   unenrollStudentFromCourse,
   updateCourseForUser,
 } from '@/mocks/data/mockDb'
@@ -218,6 +220,50 @@ export const teacherHandlers = [
     if (!enrollments) return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
     return HttpResponse.json(paginateFromRequest(enrollments, request))
   }),
+
+  http.get(`${BASE}/courses/:courseId/demo-companies/`, async ({ request, params }) => {
+    await delay(120)
+
+    const user = getRequestUser(request)
+    if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+    if (user.role !== 'teacher' && user.role !== 'admin') {
+      return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    }
+
+    const data = listCourseDemoCompanies(user, Number(params.courseId))
+    if (data === null) return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    return HttpResponse.json(data)
+  }),
+
+  http.patch(
+    `${BASE}/courses/:courseId/demo-companies/:companyId/`,
+    async ({ request, params }) => {
+      await delay(120)
+
+      const user = getRequestUser(request)
+      if (!user) return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+      if (user.role !== 'teacher' && user.role !== 'admin') {
+        return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+      }
+
+      const body = (await request.json()) as { is_visible?: boolean }
+      if (typeof body.is_visible !== 'boolean') {
+        return HttpResponse.json({ is_visible: ['Este campo es obligatorio.'] }, { status: 400 })
+      }
+
+      const result = setCourseDemoCompanyVisibility(
+        user,
+        Number(params.courseId),
+        Number(params.companyId),
+        body.is_visible
+      )
+      if (!result.ok) {
+        return HttpResponse.json({ detail: result.detail }, { status: result.status })
+      }
+
+      return HttpResponse.json(result.item)
+    }
+  ),
 
   http.get(`${BASE}/teacher/courses/:courseId/companies/`, async ({ request, params }) => {
     await delay(120)

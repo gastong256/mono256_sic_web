@@ -287,5 +287,6 @@ describe('CompanyDetailPage', () => {
     expect(await screen.findByRole('heading', { name: /cierre confirmado/i })).toBeInTheDocument()
     expect(await screen.findByText(/documento contable de solo lectura/i)).toBeInTheDocument()
     expect(await screen.findByText(expectedClosingDate)).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /descargar excel/i })).toBeInTheDocument()
   })
 })

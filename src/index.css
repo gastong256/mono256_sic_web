@@ -201,14 +201,14 @@ textarea {
   .status-badge {
     display: inline-flex;
     align-items: center;
-    border: 1px solid var(--border-soft);
+    border: 1px solid var(--tone-border, var(--border-soft));
     border-radius: 9999px;
-    background: color-mix(in oklab, var(--bg-subtle) 82%, white 18%);
+    background: var(--tone-bg, color-mix(in oklab, var(--bg-subtle) 82%, white 18%));
     padding: 0.28rem 0.7rem;
     font-size: 0.72rem;
     font-weight: 800;
     letter-spacing: 0.01em;
-    color: var(--text-muted);
+    color: var(--tone-text, var(--text-muted));
   }
 
   .filter-panel {
@@ -245,13 +245,13 @@ textarea {
   }
 
   .metric-chip {
-    border: 1px solid rgb(255 255 255 / 70%);
+    border: 1px solid var(--tone-border, rgb(255 255 255 / 70%));
     border-radius: 9999px;
-    background: rgb(255 255 255 / 70%);
+    background: var(--tone-bg, rgb(255 255 255 / 70%));
     padding: 0.28rem 0.7rem;
     font-size: 0.76rem;
     font-weight: 700;
-    color: var(--text-strong);
+    color: var(--tone-text, var(--text-strong));
   }
 
   .entry-inline-totals {
@@ -398,9 +398,9 @@ textarea {
   }
 
   .summary-stat-card {
-    border: 1px solid var(--border-soft);
+    border: 1px solid var(--tone-border, var(--border-soft));
     border-radius: 0.85rem;
-    background: linear-gradient(180deg, #fafdff, #f2f7ff);
+    background: var(--tone-surface, linear-gradient(180deg, #fafdff, #f2f7ff));
     padding: 0.7rem 0.8rem;
   }
 
@@ -419,6 +419,88 @@ textarea {
     color: var(--text-strong);
     font-variant-numeric: tabular-nums;
     font-feature-settings: 'tnum';
+  }
+
+  .tone-neutral {
+    --tone-border: var(--border-soft);
+    --tone-bg: color-mix(in oklab, var(--bg-subtle) 82%, white 18%);
+    --tone-text: var(--text-muted);
+    --tone-surface: linear-gradient(180deg, #fafdff, #f2f7ff);
+  }
+
+  .tone-info {
+    --tone-border: #bfdbfe;
+    --tone-bg: #eff6ff;
+    --tone-text: #1d4ed8;
+    --tone-surface: linear-gradient(180deg, #eff6ff, #ffffff);
+  }
+
+  .tone-warning {
+    --tone-border: #fcd34d;
+    --tone-bg: #fffbeb;
+    --tone-text: #b45309;
+    --tone-surface: linear-gradient(180deg, #fffbeb, #ffffff);
+  }
+
+  .tone-error {
+    --tone-border: #fecaca;
+    --tone-bg: #fef2f2;
+    --tone-text: #b93838;
+    --tone-surface: linear-gradient(180deg, #fef2f2, #ffffff);
+  }
+
+  .tone-success,
+  .tone-gain,
+  .tone-visible,
+  .tone-published {
+    --tone-border: #a7f3d0;
+    --tone-bg: #ecfdf5;
+    --tone-text: #047857;
+    --tone-surface: linear-gradient(180deg, #ecfdf5, #ffffff);
+  }
+
+  .tone-loss {
+    --tone-border: #fecdd3;
+    --tone-bg: #fff1f2;
+    --tone-text: #be123c;
+    --tone-surface: linear-gradient(180deg, #fff1f2, #ffffff);
+  }
+
+  .tone-open {
+    --tone-border: #a5f3fc;
+    --tone-bg: #ecfeff;
+    --tone-text: #0f766e;
+    --tone-surface: linear-gradient(180deg, #ecfeff, #ffffff);
+  }
+
+  .tone-closed,
+  .tone-hidden {
+    --tone-border: #cbd5e1;
+    --tone-bg: #f8fafc;
+    --tone-text: #475569;
+    --tone-surface: linear-gradient(180deg, #f8fafc, #ffffff);
+  }
+
+  .tone-current {
+    --tone-border: #bfdbfe;
+    --tone-bg: #eff6ff;
+    --tone-text: #1d4ed8;
+    --tone-surface: linear-gradient(180deg, #eff6ff, #ffffff);
+  }
+
+  .tone-unpublished,
+  .tone-readonly {
+    --tone-border: #fde68a;
+    --tone-bg: #fffbeb;
+    --tone-text: #b45309;
+    --tone-surface: linear-gradient(180deg, #fffbeb, #ffffff);
+  }
+
+  .tone-demo {
+    --tone-border: #ddd6fe;
+    --tone-bg: #f5f3ff;
+    --tone-text: #6d28d9;
+    --tone-surface: linear-gradient(180deg, #f5f3ff, #ffffff);
   }
 }
 

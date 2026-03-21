@@ -20,6 +20,8 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 import { Button } from '@/shared/ui/Button'
 import { Alert } from '@/shared/ui/Alert'
 import { EmptyState } from '@/shared/ui/EmptyState'
+import { DOWNLOAD_EXCEL_BUTTON_CLASSNAME } from '@/shared/ui/downloadButtonClassName'
+import { getSemanticCardClassName, getSemanticChipClassName } from '@/shared/ui/semanticTones'
 import { buildDefaultXlsxFilename, saveBlobAsFile } from '@/shared/lib/fileDownload'
 import { formatARSAmount } from '@/shared/lib/currency'
 import { useToast } from '@/shared/ui/ToastProvider'
@@ -109,7 +111,7 @@ export function TrialBalanceReportPage() {
           <Button
             type="button"
             variant="secondary"
-            className="border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+            className={DOWNLOAD_EXCEL_BUTTON_CLASSNAME}
             disabled={activeCompanyId === null || hasInvalidRange || !isAccountingReady}
             isLoading={downloadMutation.isPending}
             onClick={() => {
@@ -213,22 +215,26 @@ export function TrialBalanceReportPage() {
               {data.company || 'Totales generales'}
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
-              <span className="metric-chip">Desde: {data.date_from ?? '—'}</span>
-              <span className="metric-chip">Hasta: {data.date_to ?? '—'}</span>
+              <span className={getSemanticChipClassName('neutral')}>
+                Desde: {data.date_from ?? '—'}
+              </span>
+              <span className={getSemanticChipClassName('neutral')}>
+                Hasta: {data.date_to ?? '—'}
+              </span>
               {data.active_exercise && (
-                <span className="metric-chip">
+                <span className={getSemanticChipClassName('current')}>
                   Ejercicio: #{data.active_exercise.exercise_index}
                 </span>
               )}
             </div>
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="summary-stat-card">
+              <div className={['summary-stat-card', getSemanticCardClassName('info')].join(' ')}>
                 <p className="summary-stat-label">Debe</p>
                 <p className="summary-stat-value text-[#145f91]">
                   {formatARSAmount(data.grand_total_debit)}
                 </p>
               </div>
-              <div className="summary-stat-card">
+              <div className={['summary-stat-card', getSemanticCardClassName('warning')].join(' ')}>
                 <p className="summary-stat-label">Haber</p>
                 <p className="summary-stat-value text-[#8f4b12]">
                   {formatARSAmount(data.grand_total_credit)}

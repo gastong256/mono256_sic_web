@@ -1,11 +1,15 @@
 import { expect, test, type Page } from '@playwright/test'
-import { clearSession, loginAs, openSupervisionMenu, uniqueName } from './support/session'
+import {
+  clearSession,
+  loginAs,
+  navigateFromVisibleLink,
+  openSupervisionMenu,
+  uniqueName,
+} from './support/session'
 
 async function openTeacherDashboard(page: Page) {
   await openSupervisionMenu(page)
-  const link = page.locator('a[href="/teacher/dashboard"]:visible').first()
-  await expect(link).toBeVisible()
-  await link.click()
+  await navigateFromVisibleLink(page, '/teacher/dashboard', /\/teacher\/dashboard/)
 }
 
 test.describe('Teacher critical flows', () => {
@@ -64,5 +68,26 @@ test.describe('Teacher critical flows', () => {
 
     await page.getByRole('button', { name: /Ferretería Los Andes/i }).click()
     await expect(page.getByText(/Resumen contable de Ferretería Los Andes/i)).toBeVisible()
+  })
+
+  test('teacher can hide and show a published demo for a course', async ({ page }) => {
+    await loginAs(page, 'teacher')
+    await openTeacherDashboard(page)
+
+    const coursePanel = page.locator('section', { hasText: 'Contabilidad I' }).first()
+    await expect(coursePanel).toBeVisible()
+    await coursePanel.getByRole('button', { name: 'Demos del curso' }).click()
+
+    const dialog = page.getByRole('dialog', { name: /demos del curso · contabilidad i/i })
+    await expect(dialog.getByText('Demo Comercial Publicada')).toBeVisible()
+    await dialog.getByRole('button', { name: 'Ocultar en este curso' }).click()
+    await expect(page.getByText('Demo oculta para este curso.')).toBeVisible()
+    await expect(dialog.getByText('Oculta en este curso')).toBeVisible()
+    await expect(dialog.getByRole('button', { name: 'Mostrar en este curso' })).toBeVisible()
+
+    await dialog.getByRole('button', { name: 'Mostrar en este curso' }).click()
+    await expect(page.getByText('Demo visible para este curso.')).toBeVisible()
+    await expect(dialog.getByText('Visible en este curso')).toBeVisible()
+    await expect(dialog.getByRole('button', { name: 'Ocultar en este curso' })).toBeVisible()
   })
 })

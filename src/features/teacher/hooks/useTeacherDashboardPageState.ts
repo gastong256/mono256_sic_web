@@ -49,6 +49,7 @@ export function useTeacherDashboardPageState() {
   const unenrollMutation = useUnenrollStudent()
 
   const canCreateCourse = user?.role === 'teacher' || user?.role === 'admin'
+  const canManageDemoVisibility = user?.role === 'teacher' || user?.role === 'admin'
   const totalAvailablePages = useMemo(() => {
     if (!availableStudents) return 1
     return Math.max(1, Math.ceil(availableStudents.count / AVAILABLE_STUDENTS_PAGE_SIZE))
@@ -164,6 +165,7 @@ export function useTeacherDashboardPageState() {
     availableStudentsErrorMessage,
     hasAvailableStudentsError: Boolean(availableError),
     canCreateCourse,
+    canManageDemoVisibility,
     courseForEnroll,
     courses,
     createCourseError,

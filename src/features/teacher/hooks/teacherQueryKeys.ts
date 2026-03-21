@@ -8,6 +8,8 @@ export const teacherQueryKeys = {
   courses: ['teacher', 'courses'] as const,
   coursesOverview: ['teacher', 'courses', 'overview'] as const,
   course: (courseId: number) => ['teacher', 'courses', courseId] as const,
+  courseDemoCompanies: (courseId: number) =>
+    ['teacher', 'courses', courseId, 'demo-companies'] as const,
   courseCompaniesSummary: (courseId: number) =>
     ['teacher', 'courses', courseId, 'companies', 'summary'] as const,
   studentCompanies: (courseId: number, studentId: number) =>

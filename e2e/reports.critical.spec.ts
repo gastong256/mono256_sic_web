@@ -1,11 +1,15 @@
 import { expect, test, type Page } from '@playwright/test'
-import { clearSession, loginAs, openBooksMenu, selectActiveCompany } from './support/session'
+import {
+  clearSession,
+  loginAs,
+  navigateFromVisibleLink,
+  openBooksMenu,
+  selectActiveCompany,
+} from './support/session'
 
 async function openReport(page: Page, href: string) {
   await openBooksMenu(page)
-  const link = page.locator(`a[href="${href}"]:visible`).first()
-  await expect(link).toBeVisible()
-  await link.click()
+  await navigateFromVisibleLink(page, href)
 }
 
 test.describe('Reports critical flows', () => {

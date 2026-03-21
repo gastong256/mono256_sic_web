@@ -14,6 +14,7 @@ export function TeacherDashboardPage() {
     availableStudents,
     availableStudentsErrorMessage,
     canCreateCourse,
+    canManageDemoVisibility,
     closeCreateCourseModal,
     closeEnrollModal,
     courseForEnroll,
@@ -111,6 +112,7 @@ export function TeacherDashboardPage() {
             <TeacherCoursePanel
               key={course.course_id}
               course={course}
+              canManageDemoVisibility={canManageDemoVisibility}
               onOpenEnroll={openEnrollModal}
               onUnenroll={handleUnenroll}
               isUnenrolling={isUnenrolling}

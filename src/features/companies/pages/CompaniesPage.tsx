@@ -15,6 +15,7 @@ import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 import { useToast } from '@/shared/ui/ToastProvider'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasRole } from '@/shared/lib/authorization'
+import { getSemanticCardClassName } from '@/shared/ui/semanticTones'
 
 export function CompaniesPage() {
   const { pushToast } = useToast()
@@ -58,6 +59,14 @@ export function CompaniesPage() {
       return left.name.localeCompare(right.name, 'es', { sensitivity: 'base' })
     })
   }, [companies, user?.username])
+  const ownCompanies = useMemo(
+    () => orderedCompanies.filter((company) => company.owner_username === user?.username),
+    [orderedCompanies, user?.username]
+  )
+  const otherCompanies = useMemo(
+    () => orderedCompanies.filter((company) => company.owner_username !== user?.username),
+    [orderedCompanies, user?.username]
+  )
 
   function openCreate() {
     setEditingCompany(null)
@@ -129,11 +138,11 @@ export function CompaniesPage() {
             <p className="summary-stat-label">Empresas visibles</p>
             <p className="summary-stat-value">{orderedCompanies.length}</p>
           </article>
-          <article className="summary-stat-card">
+          <article className={['summary-stat-card', getSemanticCardClassName('demo')].join(' ')}>
             <p className="summary-stat-label">Empresas demo</p>
             <p className="summary-stat-value">{demoCompaniesCount}</p>
           </article>
-          <article className="summary-stat-card">
+          <article className={['summary-stat-card', getSemanticCardClassName('warning')].join(' ')}>
             <p className="summary-stat-label">Con restricciones</p>
             <p className="summary-stat-value">{blockedCompaniesCount}</p>
           </article>
@@ -175,16 +184,53 @@ export function CompaniesPage() {
       )}
 
       {!isLoading && !error && orderedCompanies.length > 0 && (
-        <CompanyTable
-          companies={orderedCompanies}
-          showOwner={showOwner}
-          canManageDemoPublication={canManageDemoPublication}
-          demoPublicationPendingId={publishingCompanyId}
-          onToggleDemoPublication={handleToggleDemoPublication}
-          onView={(c) => void navigate(`/companies/${c.id}`)}
-          onEdit={openEdit}
-          onDelete={(c) => setDeletingCompany(c)}
-        />
+        <div className="space-y-5">
+          <section className="flex flex-col gap-4">
+            <div>
+              <p className="font-semibold text-[var(--text-strong)]">Mis empresas</p>
+              <p className="muted-text mt-1 text-sm">
+                Empresas cuyo propietario coincide con la sesión actual.
+              </p>
+            </div>
+
+            {ownCompanies.length > 0 ? (
+              <CompanyTable
+                companies={ownCompanies}
+                showOwner={showOwner}
+                canManageDemoPublication={canManageDemoPublication}
+                demoPublicationPendingId={publishingCompanyId}
+                onToggleDemoPublication={handleToggleDemoPublication}
+                onView={(c) => void navigate(`/companies/${c.id}`)}
+                onEdit={openEdit}
+                onDelete={(c) => setDeletingCompany(c)}
+              />
+            ) : (
+              <Alert tone="info">Todavía no tenés empresas propias en este listado.</Alert>
+            )}
+          </section>
+
+          {otherCompanies.length > 0 && (
+            <section className="flex flex-col gap-4">
+              <div>
+                <p className="font-semibold text-[var(--text-strong)]">Otras empresas</p>
+                <p className="muted-text mt-1 text-sm">
+                  Empresas visibles para tu perfil cuyo propietario es otro usuario.
+                </p>
+              </div>
+
+              <CompanyTable
+                companies={otherCompanies}
+                showOwner={showOwner}
+                canManageDemoPublication={canManageDemoPublication}
+                demoPublicationPendingId={publishingCompanyId}
+                onToggleDemoPublication={handleToggleDemoPublication}
+                onView={(c) => void navigate(`/companies/${c.id}`)}
+                onEdit={openEdit}
+                onDelete={(c) => setDeletingCompany(c)}
+              />
+            </section>
+          )}
+        </div>
       )}
 
       <CompanyForm isOpen={formOpen} onClose={closeForm} company={editingCompany ?? undefined} />

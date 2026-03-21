@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { act, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router'
 import { TeacherDashboardPage } from '@/features/teacher/pages/TeacherDashboardPage'
@@ -78,5 +78,18 @@ describe('TeacherDashboardPage', () => {
     expect(await screen.findByText(/pedro student/i)).toBeInTheDocument()
     expect(await screen.findByText(/lucia student/i)).toBeInTheDocument()
     expect(await screen.findByText(/micaela pérez/i)).toBeInTheDocument()
+  })
+
+  it('opens course demo visibility modal and renders published demos for the course', async () => {
+    renderTeacherDashboardPage()
+
+    expect(await screen.findByText('Contabilidad I')).toBeInTheDocument()
+    fireEvent.click(screen.getAllByRole('button', { name: 'Demos del curso' })[0])
+
+    expect(
+      await screen.findByRole('dialog', { name: /demos del curso · contabilidad i/i })
+    ).toBeInTheDocument()
+    expect(await screen.findByText('Demo Comercial Publicada')).toBeInTheDocument()
+    expect(screen.getByText('Visible en este curso')).toBeInTheDocument()
   })
 })

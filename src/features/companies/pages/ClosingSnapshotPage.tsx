@@ -1,13 +1,22 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useActiveCompany } from '@/features/companies/hooks/useActiveCompany'
+import {
+  useDownloadClosingSnapshot,
+  useDownloadLatestClosingSnapshot,
+} from '@/features/companies/hooks/useDownloadClosingSnapshots'
+import { getClosingDownloadErrorMessage } from '@/features/companies/lib/closingDownloadErrors'
 import { Alert } from '@/shared/ui/Alert'
 import { Button } from '@/shared/ui/Button'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Spinner } from '@/shared/ui/Spinner'
+import { buildDefaultXlsxFilename, saveBlobAsFile } from '@/shared/lib/fileDownload'
 import { formatARSAmount } from '@/shared/lib/currency'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 import { getAccountTypeLabel } from '@/shared/lib/accountingLabels'
+import { useToast } from '@/shared/ui/ToastProvider'
+import { DOWNLOAD_EXCEL_BUTTON_CLASSNAME } from '@/shared/ui/downloadButtonClassName'
+import { getNetResultSemanticTone, getSemanticCardClassName } from '@/shared/ui/semanticTones'
 import {
   useClosingSnapshot,
   useLatestClosingSnapshot,
@@ -15,8 +24,11 @@ import {
 
 export function ClosingSnapshotPage() {
   const navigate = useNavigate()
+  const { pushToast } = useToast()
   const { companyId, snapshotId } = useParams<{ companyId: string; snapshotId?: string }>()
   const { activeCompanyId } = useActiveCompany()
+  const downloadLatestSnapshotMutation = useDownloadLatestClosingSnapshot()
+  const downloadSnapshotMutation = useDownloadClosingSnapshot()
   const numericCompanyId =
     companyId && Number.isFinite(Number(companyId)) ? Number(companyId) : (activeCompanyId ?? 0)
   const numericSnapshotId = Number(snapshotId)
@@ -43,6 +55,34 @@ export function ClosingSnapshotPage() {
     [error]
   )
 
+  async function handleDownload() {
+    if (numericCompanyId <= 0) return
+
+    try {
+      const result = shouldLoadSpecific
+        ? await downloadSnapshotMutation.mutateAsync({
+            companyId: numericCompanyId,
+            snapshotId: numericSnapshotId,
+          })
+        : await downloadLatestSnapshotMutation.mutateAsync({
+            companyId: numericCompanyId,
+          })
+
+      saveBlobAsFile(
+        result.blob,
+        result.filename ??
+          buildDefaultXlsxFilename(
+            shouldLoadSpecific
+              ? `cierre-confirmado-${numericCompanyId}-${numericSnapshotId}`
+              : `cierre-confirmado-${numericCompanyId}`
+          )
+      )
+      pushToast('Descarga iniciada correctamente.', 'success')
+    } catch (downloadError) {
+      pushToast(getClosingDownloadErrorMessage(downloadError), 'error')
+    }
+  }
+
   return (
     <div className="page-shell">
       <PageHeader
@@ -50,9 +90,26 @@ export function ClosingSnapshotPage() {
         title="Cierre confirmado"
         subtitle="Documento contable de solo lectura generado al confirmar el cierre."
         actions={
-          <Button type="button" variant="secondary" onClick={() => navigate('/reports/closing')}>
-            Volver a cierres
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              className={DOWNLOAD_EXCEL_BUTTON_CLASSNAME}
+              isLoading={
+                shouldLoadSpecific
+                  ? downloadSnapshotMutation.isPending
+                  : downloadLatestSnapshotMutation.isPending
+              }
+              onClick={() => {
+                void handleDownload()
+              }}
+            >
+              Descargar Excel
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => navigate('/reports/closing')}>
+              Volver a cierres
+            </Button>
+          </div>
         }
       />
 
@@ -78,11 +135,13 @@ export function ClosingSnapshotPage() {
               <p className="summary-stat-label">Empresa</p>
               <p className="summary-stat-value text-[0.95rem]">{data.company}</p>
             </article>
-            <article className="summary-stat-card">
+            <article
+              className={['summary-stat-card', getSemanticCardClassName('closed')].join(' ')}
+            >
               <p className="summary-stat-label">Fecha de cierre</p>
               <p className="summary-stat-value text-[0.95rem]">{data.closing_date}</p>
             </article>
-            <article className="summary-stat-card">
+            <article className={['summary-stat-card', getSemanticCardClassName('open')].join(' ')}>
               <p className="summary-stat-label">Fecha de reapertura</p>
               <p className="summary-stat-value text-[0.95rem]">{data.reopening_date}</p>
             </article>
@@ -96,19 +155,36 @@ export function ClosingSnapshotPage() {
             <section className="page-section">
               <p className="font-semibold text-[var(--text-strong)]">Estado de resultados</p>
               <div className="mt-3 grid gap-3 md:grid-cols-3">
-                <article className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 text-sm">
+                <article
+                  className={[
+                    'rounded-xl border p-3 text-sm',
+                    getSemanticCardClassName('gain'),
+                  ].join(' ')}
+                >
                   <p className="font-semibold text-[var(--text-strong)]">Resultados positivos</p>
                   <p className="mt-2">
                     {formatARSAmount(data.income_statement.positive_results.total)}
                   </p>
                 </article>
-                <article className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 text-sm">
+                <article
+                  className={[
+                    'rounded-xl border p-3 text-sm',
+                    getSemanticCardClassName('loss'),
+                  ].join(' ')}
+                >
                   <p className="font-semibold text-[var(--text-strong)]">Resultados negativos</p>
                   <p className="mt-2">
                     {formatARSAmount(data.income_statement.negative_results.total)}
                   </p>
                 </article>
-                <article className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-subtle)] p-3 text-sm">
+                <article
+                  className={[
+                    'rounded-xl border p-3 text-sm',
+                    getSemanticCardClassName(
+                      getNetResultSemanticTone(data.income_statement.net_result.kind)
+                    ),
+                  ].join(' ')}
+                >
                   <p className="font-semibold text-[var(--text-strong)]">Resultado neto</p>
                   <p className="mt-2">{formatARSAmount(data.income_statement.net_result.amount)}</p>
                 </article>

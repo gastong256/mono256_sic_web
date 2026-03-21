@@ -4,6 +4,11 @@ import { Alert } from '@/shared/ui/Alert'
 import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
 import { Modal } from '@/shared/ui/Modal'
+import {
+  getAdjustmentStatusSemanticTone,
+  getNetResultSemanticTone,
+  getSemanticChipClassName,
+} from '@/shared/ui/semanticTones'
 import { useToast } from '@/shared/ui/ToastProvider'
 import { formatARSAmount } from '@/shared/lib/currency'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
@@ -523,7 +528,11 @@ export function ClosingWorkflowModal({
                       <p className="text-base font-semibold text-[var(--text-strong)]">
                         {formatARSAmount(preview.result_summary.net_result)}
                       </p>
-                      <span className="metric-chip">
+                      <span
+                        className={getSemanticChipClassName(
+                          getNetResultSemanticTone(preview.result_summary.net_result_kind)
+                        )}
+                      >
                         {getNetResultKindLabel(preview.result_summary.net_result_kind)}
                       </span>
                     </div>
@@ -548,7 +557,11 @@ export function ClosingWorkflowModal({
                     >
                       <div className="flex items-start justify-between gap-3">
                         <p className="font-semibold text-[var(--text-strong)]">{item.label}</p>
-                        <span className="metric-chip">
+                        <span
+                          className={getSemanticChipClassName(
+                            getAdjustmentStatusSemanticTone(item.value.status)
+                          )}
+                        >
                           {getAdjustmentStatusLabel(item.value.status)}
                         </span>
                       </div>
@@ -573,35 +586,6 @@ export function ClosingWorkflowModal({
                 </div>
               </article>
             </div>
-
-            {preview.previous_exercises.length > 0 && (
-              <article className="surface-card p-4 lg:p-5">
-                <p className="text-sm font-semibold text-[var(--text-strong)]">
-                  Ejercicios anteriores
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                  {preview.previous_exercises.map((exercise) => (
-                    <div key={exercise.exercise_id} className="flex flex-wrap gap-2">
-                      <span className="metric-chip">
-                        Ejercicio {exercise.exercise_index} · {exercise.start_date}
-                        {exercise.closing_date ? ` a ${exercise.closing_date}` : ''}
-                      </span>
-                      {exercise.snapshot_id !== null && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() =>
-                            void navigate(`/reports/closing/snapshots/${exercise.snapshot_id}`)
-                          }
-                        >
-                          Ver cierre confirmado
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </article>
-            )}
 
             {preview.income_statement && (
               <article className="surface-card p-4">
@@ -634,12 +618,9 @@ export function ClosingWorkflowModal({
                     Balance general ajustado
                   </p>
                   <span
-                    className={[
-                      'metric-chip',
-                      preview.balance_sheet.equation.is_balanced
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-amber-200 bg-amber-50 text-amber-700',
-                    ].join(' ')}
+                    className={getSemanticChipClassName(
+                      preview.balance_sheet.equation.is_balanced ? 'success' : 'warning'
+                    )}
                   >
                     {preview.balance_sheet.equation.is_balanced ? 'Balanceado' : 'Revisar ecuación'}
                   </span>

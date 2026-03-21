@@ -7,6 +7,7 @@ import type {
 } from '@/features/reports/types/reports.types'
 import { Alert } from '@/shared/ui/Alert'
 import { Button } from '@/shared/ui/Button'
+import { getExerciseSemanticTone, getSemanticBadgeClassName } from '@/shared/ui/semanticTones'
 
 function formatResolvedExerciseLine(
   activeExercise: LogicalExercise | null,
@@ -155,12 +156,9 @@ export function ReportExercisePanel({
                       Ejercicio {exercise.exercise_index}
                     </p>
                     <span
-                      className={[
-                        'rounded-full px-2 py-0.5 text-[0.7rem] font-semibold',
-                        exercise.status === 'open'
-                          ? 'border border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-700)]'
-                          : 'border border-[var(--border-soft)] bg-white text-[var(--text-muted)]',
-                      ].join(' ')}
+                      className={getSemanticBadgeClassName(
+                        getExerciseSemanticTone(exercise.status, exercise.status === 'open')
+                      )}
                     >
                       {exercise.status === 'open' ? 'Actual' : 'Cerrado'}
                     </span>

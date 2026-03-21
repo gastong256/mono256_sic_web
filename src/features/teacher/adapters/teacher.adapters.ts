@@ -3,6 +3,8 @@ import type {
   TeacherAvailableStudent,
   TeacherAvailableStudentsResponse,
   TeacherCompanyItem,
+  TeacherCourseDemoCompaniesResponse,
+  TeacherCourseDemoCompany,
   TeacherCourseCompaniesResponse,
   TeacherCourseOverviewItem,
   TeacherCourseOverviewStudent,
@@ -251,6 +253,42 @@ export function normalizeTeacherCoursesOverviewPayload(
       }
     })
     .filter((course): course is TeacherCourseOverviewItem => course !== null)
+}
+
+function normalizeTeacherCourseDemoCompany(raw: unknown): TeacherCourseDemoCompany | null {
+  if (!isRecord(raw)) return null
+  const companyId = toNumberValue(raw.company_id ?? raw.id)
+  if (companyId <= 0) return null
+
+  return {
+    company_id: companyId,
+    company_name: toStringValue(raw.company_name ?? raw.name),
+    is_demo: raw.is_demo === true,
+    is_read_only: raw.is_read_only === true,
+    is_published: raw.is_published === true,
+    demo_slug: toStringValue(raw.demo_slug) || null,
+    is_visible: raw.is_visible === true,
+    account_count: toNumberValue(raw.account_count),
+    journal_entry_count: toNumberValue(raw.journal_entry_count),
+  }
+}
+
+export function normalizeTeacherCourseDemoCompaniesPayload(
+  payload: unknown,
+  fallbackCourseId: number
+): TeacherCourseDemoCompaniesResponse {
+  const demoCompanies =
+    isRecord(payload) && Array.isArray(payload.demo_companies) ? payload.demo_companies : payload
+
+  return {
+    course_id: isRecord(payload)
+      ? toNumberValue(payload.course_id, fallbackCourseId)
+      : fallbackCourseId,
+    course_name: isRecord(payload) ? toStringValue(payload.course_name) : '',
+    demo_companies: extractListPayload<unknown>(demoCompanies)
+      .map(normalizeTeacherCourseDemoCompany)
+      .filter((company): company is TeacherCourseDemoCompany => company !== null),
+  }
 }
 
 export function normalizeTeacherStudentContextPayload(

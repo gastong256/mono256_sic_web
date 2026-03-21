@@ -1,4 +1,5 @@
 import { httpClient } from '@/shared/lib/http'
+import { extractFilenameFromContentDisposition } from '@/shared/lib/fileDownload'
 import {
   normalizeClosingSnapshotPayload,
   normalizeClosingExecutePayload,
@@ -16,6 +17,11 @@ import type {
   SimplifiedClosingRequest,
 } from '@/features/companies/types/closing.types'
 import type { LogicalExerciseListResponse } from '@/features/companies/types/logicalExercises.types'
+
+type DownloadResponse = {
+  blob: Blob
+  filename: string | null
+}
 
 export const companyClosingApi = {
   state: (companyId: number): Promise<ClosingState> =>
@@ -56,8 +62,36 @@ export const companyClosingApi = {
       .get<unknown>(`/companies/${companyId}/closing/latest-snapshot/`)
       .then((response) => normalizeClosingSnapshotPayload(response.data)),
 
+  downloadLatestSnapshotXlsx: (companyId: number): Promise<DownloadResponse> =>
+    httpClient
+      .get<Blob>(`/companies/${companyId}/closing/latest-snapshot.xlsx`, {
+        responseType: 'blob',
+      })
+      .then((response) => ({
+        blob: response.data,
+        filename: extractFilenameFromContentDisposition(
+          typeof response.headers['content-disposition'] === 'string'
+            ? response.headers['content-disposition']
+            : null
+        ),
+      })),
+
   snapshot: (companyId: number, snapshotId: number): Promise<ClosingSnapshot> =>
     httpClient
       .get<unknown>(`/companies/${companyId}/closing/snapshots/${snapshotId}/`)
       .then((response) => normalizeClosingSnapshotPayload(response.data)),
+
+  downloadSnapshotXlsx: (companyId: number, snapshotId: number): Promise<DownloadResponse> =>
+    httpClient
+      .get<Blob>(`/companies/${companyId}/closing/snapshots/${snapshotId}.xlsx`, {
+        responseType: 'blob',
+      })
+      .then((response) => ({
+        blob: response.data,
+        filename: extractFilenameFromContentDisposition(
+          typeof response.headers['content-disposition'] === 'string'
+            ? response.headers['content-disposition']
+            : null
+        ),
+      })),
 }
