@@ -1,3 +1,8 @@
+## 1.14.0 (2026-03-21)
+
+* feat: refactor closing flow and styles ([36b5cfb](https://github.com/gastong256/mono256_sic_web/commit/36b5cfb))
+* test(mocks): expand msw dataset with richer demo, history and report scenarios ([f1e1c98](https://github.com/gastong256/mono256_sic_web/commit/f1e1c98))
+
 ## <small>1.13.2 (2026-03-19)</small>
 
 * fix: refine page layouts and visual hierarchy across app ([7dfb398](https://github.com/gastong256/mono256_sic_web/commit/7dfb398))
