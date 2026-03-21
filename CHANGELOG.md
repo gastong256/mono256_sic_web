@@ -1,3 +1,7 @@
+## 1.15.0 (2026-03-21)
+
+* feat(ui): add teacher course demo visibility and refine closing and companies experiences ([06e7806](https://github.com/gastong256/mono256_sic_web/commit/06e7806))
+
 ## 1.14.0 (2026-03-21)
 
 * feat: refactor closing flow and styles ([36b5cfb](https://github.com/gastong256/mono256_sic_web/commit/36b5cfb))
