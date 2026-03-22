@@ -1,3 +1,7 @@
+## 1.16.0 (2026-03-22)
+
+* feat(teacher): add course visibility management for demos and shared companies ([85d3642](https://github.com/gastong256/mono256_sic_web/commit/85d3642))
+
 ## 1.15.0 (2026-03-21)
 
 * feat(ui): add teacher course demo visibility and refine closing and companies experiences ([06e7806](https://github.com/gastong256/mono256_sic_web/commit/06e7806))
