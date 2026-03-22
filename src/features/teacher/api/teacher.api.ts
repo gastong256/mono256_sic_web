@@ -4,6 +4,7 @@ import { httpClient } from '@/shared/lib/http'
 import {
   normalizeTeacherAvailableStudentsPayload,
   normalizeTeacherCourseDemoCompaniesPayload,
+  normalizeTeacherCourseSharedCompaniesPayload,
   normalizeTeacherCoursesOverviewPayload,
   normalizeTeacherCourseCompaniesPayload,
   normalizeTeacherCourseJournalEntriesPayload,
@@ -18,6 +19,8 @@ import type {
   TeacherCourseDemoCompaniesResponse,
   TeacherCourseCompaniesResponse,
   TeacherCourseDemoVisibilityPayload,
+  TeacherCourseSharedCompaniesResponse,
+  TeacherCourseVisibilityPayload,
   TeacherCourseOverviewItem,
   TeacherCourseJournalEntry,
   TeacherJournalFilters,
@@ -121,6 +124,11 @@ export const teacherApi = {
       .get<unknown>(`/courses/${courseId}/demo-companies/`)
       .then((response) => normalizeTeacherCourseDemoCompaniesPayload(response.data, courseId)),
 
+  courseSharedCompanies: (courseId: number): Promise<TeacherCourseSharedCompaniesResponse> =>
+    httpClient
+      .get<unknown>(`/courses/${courseId}/shared-companies/`)
+      .then((response) => normalizeTeacherCourseSharedCompaniesPayload(response.data, courseId)),
+
   setCourseDemoVisibility: (
     courseId: number,
     companyId: number,
@@ -136,6 +144,23 @@ export const teacherApi = {
           },
           courseId
         ).demo_companies[0]
+    ),
+
+  setCourseSharedVisibility: (
+    courseId: number,
+    companyId: number,
+    payload: TeacherCourseVisibilityPayload
+  ) =>
+    httpClient.patch<unknown>(`/courses/${courseId}/shared-companies/${companyId}/`, payload).then(
+      (response) =>
+        normalizeTeacherCourseSharedCompaniesPayload(
+          {
+            course_id: courseId,
+            course_name: '',
+            shared_companies: [response.data],
+          },
+          courseId
+        ).shared_companies[0]
     ),
 
   enrollStudent: (courseId: number, studentId: number): Promise<void> =>

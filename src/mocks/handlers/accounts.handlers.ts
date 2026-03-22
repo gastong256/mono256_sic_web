@@ -3,6 +3,7 @@ import { env } from '@/shared/config/env'
 import type { Account } from '@/features/accounts/types/account.types'
 import {
   canAccessCompany,
+  canWriteCompanyForUser,
   getAccountChartConfig,
   getCompanyById,
   listJournalEntryDetailsByCompany,
@@ -77,6 +78,7 @@ const companyLevel3Accounts: Record<number, Account[]> = {
     makeAccount(330, '1.01.01', 'Caja Demo', 'AS', 2),
     makeAccount(331, '4.01.01', 'Ventas Demo', 'IN', 2),
   ],
+  33: [makeAccount(430, '1.01.01', 'Caja Aula Docente', 'AS', 2)],
 }
 
 // Parent mapping: level3 account id → parent level2 id
@@ -87,6 +89,7 @@ const accountParents: Record<number, number> = {
   320: 11,
   330: 11,
   331: 41,
+  430: 11,
 }
 
 export function listCompanyMovementAccounts(companyId: number): Account[] {
@@ -199,6 +202,7 @@ export function resetAccountsMock() {
     makeAccount(330, '1.01.01', 'Caja Demo', 'AS', 2),
     makeAccount(331, '4.01.01', 'Ventas Demo', 'IN', 2),
   ]
+  companyLevel3Accounts[33] = [makeAccount(430, '1.01.01', 'Caja Aula Docente', 'AS', 2)]
 }
 
 function isAuthorized(request: Request): boolean {
@@ -252,9 +256,13 @@ export const accountsHandlers = [
     const cId = Number(params.companyId)
     const accessError = ensureCompanyAccess(request, cId)
     if (accessError) return accessError
+    const user = getRequestUser(request)
     const company = getCompanyById(cId)
-    if (company?.is_read_only) {
-      return HttpResponse.json({ detail: 'La empresa está en modo solo lectura.' }, { status: 409 })
+    if (user && company && !canWriteCompanyForUser(user, company)) {
+      return HttpResponse.json(
+        { detail: 'Esta empresa es de solo lectura para el usuario actual.' },
+        { status: 409 }
+      )
     }
     const body = (await request.json()) as {
       name?: string
@@ -300,9 +308,13 @@ export const accountsHandlers = [
     const cId = Number(params.companyId)
     const accessError = ensureCompanyAccess(request, cId)
     if (accessError) return accessError
+    const user = getRequestUser(request)
     const company = getCompanyById(cId)
-    if (company?.is_read_only) {
-      return HttpResponse.json({ detail: 'La empresa está en modo solo lectura.' }, { status: 409 })
+    if (user && company && !canWriteCompanyForUser(user, company)) {
+      return HttpResponse.json(
+        { detail: 'Esta empresa es de solo lectura para el usuario actual.' },
+        { status: 409 }
+      )
     }
     const aId = Number(params.accountId)
     const list = companyLevel3Accounts[cId] ?? []
@@ -331,9 +343,13 @@ export const accountsHandlers = [
     const cId = Number(params.companyId)
     const accessError = ensureCompanyAccess(request, cId)
     if (accessError) return accessError
+    const user = getRequestUser(request)
     const company = getCompanyById(cId)
-    if (company?.is_read_only) {
-      return HttpResponse.json({ detail: 'La empresa está en modo solo lectura.' }, { status: 409 })
+    if (user && company && !canWriteCompanyForUser(user, company)) {
+      return HttpResponse.json(
+        { detail: 'Esta empresa es de solo lectura para el usuario actual.' },
+        { status: 409 }
+      )
     }
     const aId = Number(params.accountId)
 

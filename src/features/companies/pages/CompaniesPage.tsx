@@ -16,6 +16,7 @@ import { useToast } from '@/shared/ui/ToastProvider'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasRole } from '@/shared/lib/authorization'
 import { getSemanticCardClassName } from '@/shared/ui/semanticTones'
+import { isViewerReadOnlyCompany } from '@/features/companies/lib/companyWriteAccess'
 
 export function CompaniesPage() {
   const { pushToast } = useToast()
@@ -120,7 +121,7 @@ export function CompaniesPage() {
   const showSummaryStats = hasRole(user, ['admin'])
   const demoCompaniesCount = orderedCompanies.filter((company) => company.is_demo).length
   const blockedCompaniesCount = orderedCompanies.filter(
-    (company) => company.accounting_ready === false || company.is_read_only === true
+    (company) => company.accounting_ready === false || isViewerReadOnlyCompany(company)
   ).length
 
   return (

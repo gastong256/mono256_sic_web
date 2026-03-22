@@ -22,6 +22,7 @@ import { getSemanticBadgeClassName, type SemanticTone } from '@/shared/ui/semant
 
 function getCompanyStatusTone(label: string): SemanticTone {
   if (label === 'Demo') return 'demo'
+  if (label === 'Compartida') return 'info'
   if (label === 'Publicada') return 'published'
   if (label === 'Oculta') return 'unpublished'
   if (label === 'Solo lectura') return 'readonly'
@@ -115,7 +116,7 @@ export function CompanyDetailPage() {
         )}
       </CompanyIdentitySummary>
 
-      {companyWriteBlockMessage && (
+      {company?.accounting_ready === false && companyWriteBlockMessage && (
         <Alert tone="warning">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -138,6 +139,10 @@ export function CompanyDetailPage() {
             )}
           </div>
         </Alert>
+      )}
+
+      {company?.accounting_ready !== false && companyWriteBlockMessage && !canWriteCompany && (
+        <Alert tone="info">{companyWriteBlockMessage}</Alert>
       )}
 
       {isLoading && (

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { Company } from '@/features/companies/types/company.types'
 import { getCompanyStatusLabels } from '@/features/companies/lib/companyAccounting'
+import { canViewerWriteCompany } from '@/features/companies/lib/companyWriteAccess'
 
 interface CompanyTableProps {
   companies: Company[]
@@ -118,7 +119,7 @@ export function CompanyTable({
           <tbody className="divide-y divide-[var(--border-soft)]">
             {companies.map((company) => {
               const statusLabels = getCompanyStatusLabels(company)
-              const canEditCompany = company.is_read_only !== true
+              const canEditCompany = canViewerWriteCompany(company)
 
               return (
                 <tr
@@ -298,7 +299,7 @@ export function CompanyTable({
                   onEdit(mobileActionsMenu.company)
                   setMobileActionsMenu(null)
                 }}
-                disabled={mobileActionsMenu.company.is_read_only === true}
+                disabled={!canViewerWriteCompany(mobileActionsMenu.company)}
                 className="menu-dropdown-item w-full text-left disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Editar
@@ -309,7 +310,7 @@ export function CompanyTable({
                   onDelete(mobileActionsMenu.company)
                   setMobileActionsMenu(null)
                 }}
-                disabled={mobileActionsMenu.company.is_read_only === true}
+                disabled={!canViewerWriteCompany(mobileActionsMenu.company)}
                 className="menu-dropdown-item w-full text-left disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Eliminar

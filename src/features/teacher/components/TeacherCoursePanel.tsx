@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { TeacherCourseDemoVisibilityModal } from '@/features/teacher/components/TeacherCourseDemoVisibilityModal'
+import { TeacherCourseVisibilityModal } from '@/features/teacher/components/TeacherCourseVisibilityModal'
 import type { TeacherCourseOverviewItem } from '@/features/teacher/types/teacher.types'
 import { Button } from '@/shared/ui/Button'
 
@@ -40,7 +40,7 @@ export function TeacherCoursePanel({
                 className="px-3 py-1.5 text-xs"
                 onClick={() => setIsDemoModalOpen(true)}
               >
-                Demos del curso
+                Visibilidad del curso
               </Button>
             )}
             <Button
@@ -104,7 +104,7 @@ export function TeacherCoursePanel({
         )}
       </section>
 
-      <TeacherCourseDemoVisibilityModal
+      <TeacherCourseVisibilityModal
         course={{ id: course.course_id, name: course.course_name }}
         isOpen={isDemoModalOpen}
         onClose={() => setIsDemoModalOpen(false)}

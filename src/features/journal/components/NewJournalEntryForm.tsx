@@ -12,6 +12,7 @@ import { Alert } from '@/shared/ui/Alert'
 import { useToast } from '@/shared/ui/ToastProvider'
 import type { Company } from '@/features/companies/types/company.types'
 import { getCompanyAccountingBlockMessage } from '@/features/companies/lib/companyAccounting'
+import { isViewerReadOnlyCompany } from '@/features/companies/lib/companyWriteAccess'
 import { formatARSAmount } from '@/shared/lib/currency'
 import { getHttpErrorMessage } from '@/shared/lib/httpErrors'
 
@@ -63,7 +64,7 @@ export function NewJournalEntryForm({
   const isPending = studentMutation.isPending
   const { data: accounts, isLoading: accountsLoading } = useJournalAccounts(companyId)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const isReadOnly = company?.is_read_only === true
+  const isReadOnly = isViewerReadOnlyCompany(company)
   const isAccountingReady = company?.accounting_ready !== false
   const minJournalDate = company?.books_closed_until
     ? new Date(new Date(`${company.books_closed_until}T00:00:00`).getTime() + 24 * 60 * 60 * 1000)
@@ -145,7 +146,7 @@ export function NewJournalEntryForm({
         forbiddenMessage: 'No tenés permisos para registrar asientos en esta empresa.',
         notFoundMessage: 'La empresa ya no existe o no está disponible.',
         conflictMessage:
-          company?.accounting_ready === false || company?.is_read_only
+          company?.accounting_ready === false || isReadOnly
             ? getCompanyAccountingBlockMessage(company)
             : undefined,
       })

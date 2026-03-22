@@ -4,6 +4,8 @@ import { teacherQueryKeys } from '@/features/teacher/hooks/teacherQueryKeys'
 import type {
   TeacherCourseDemoCompaniesResponse,
   TeacherCourseDemoVisibilityPayload,
+  TeacherCourseSharedCompaniesResponse,
+  TeacherCourseVisibilityPayload,
 } from '@/features/teacher/types/teacher.types'
 
 export function useTeacherCourseDemoCompanies(courseId: number, options?: { enabled?: boolean }) {
@@ -37,6 +39,59 @@ export function useSetTeacherCourseDemoVisibility() {
           return {
             ...current,
             demo_companies: current.demo_companies.map((company) =>
+              company.company_id === updatedCompany.company_id ? updatedCompany : company
+            ),
+          }
+        }
+      )
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: teacherQueryKeys.coursesOverview }),
+        queryClient.invalidateQueries({
+          queryKey: teacherQueryKeys.courseCompaniesSummary(variables.courseId),
+        }),
+        queryClient.invalidateQueries({
+          predicate: (query) =>
+            Array.isArray(query.queryKey) &&
+            query.queryKey[0] === 'teacher' &&
+            query.queryKey[1] === 'students',
+        }),
+      ])
+    },
+  })
+}
+
+export function useTeacherCourseSharedCompanies(courseId: number, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: teacherQueryKeys.courseSharedCompanies(courseId),
+    queryFn: () => teacherApi.courseSharedCompanies(courseId),
+    enabled: (options?.enabled ?? true) && courseId > 0,
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  })
+}
+
+export function useSetTeacherCourseSharedVisibility() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      courseId,
+      companyId,
+      payload,
+    }: {
+      courseId: number
+      companyId: number
+      payload: TeacherCourseVisibilityPayload
+    }) => teacherApi.setCourseSharedVisibility(courseId, companyId, payload),
+    onSuccess: async (updatedCompany, variables) => {
+      queryClient.setQueryData<TeacherCourseSharedCompaniesResponse | undefined>(
+        teacherQueryKeys.courseSharedCompanies(variables.courseId),
+        (current) => {
+          if (!current) return current
+          return {
+            ...current,
+            shared_companies: current.shared_companies.map((company) =>
               company.company_id === updatedCompany.company_id ? updatedCompany : company
             ),
           }

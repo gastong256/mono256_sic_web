@@ -6,6 +6,7 @@ export interface TeacherCompanyItem {
   tax_id: string | null
   is_demo?: boolean
   is_read_only?: boolean
+  viewer_can_write?: boolean
   is_published?: boolean
   demo_slug?: string | null
   has_opening_entry?: boolean
@@ -54,6 +55,26 @@ export interface TeacherCourseDemoCompaniesResponse {
   demo_companies: TeacherCourseDemoCompany[]
 }
 
+export interface TeacherCourseSharedCompany {
+  company_id: number
+  company_name: string
+  owner_id: number | null
+  owner_username: string
+  is_demo: boolean
+  is_read_only: boolean
+  is_published: boolean
+  demo_slug: string | null
+  is_visible: boolean
+  account_count: number
+  journal_entry_count: number
+}
+
+export interface TeacherCourseSharedCompaniesResponse {
+  course_id: number
+  course_name: string
+  shared_companies: TeacherCourseSharedCompany[]
+}
+
 export interface TeacherStudentCompanies {
   student_id: number
   student_username: string
@@ -100,6 +121,7 @@ export interface TeacherStudentContextCompany {
   last_entry_date: string | null
   is_demo?: boolean
   is_read_only?: boolean
+  viewer_can_write?: boolean
   is_published?: boolean
   demo_slug?: string | null
   has_opening_entry?: boolean
@@ -158,9 +180,11 @@ export interface CourseCreatePayload {
   teacher_id?: number
 }
 
-export interface TeacherCourseDemoVisibilityPayload {
+export interface TeacherCourseVisibilityPayload {
   is_visible: boolean
 }
+
+export type TeacherCourseDemoVisibilityPayload = TeacherCourseVisibilityPayload
 
 export interface CourseItem {
   id: number

@@ -3,7 +3,9 @@ import {
   clearSession,
   loginAs,
   navigateFromVisibleLink,
+  openAsientosMenu,
   openSupervisionMenu,
+  selectActiveCompany,
   uniqueName,
 } from './support/session'
 
@@ -76,18 +78,59 @@ test.describe('Teacher critical flows', () => {
 
     const coursePanel = page.locator('section', { hasText: 'Contabilidad I' }).first()
     await expect(coursePanel).toBeVisible()
-    await coursePanel.getByRole('button', { name: 'Demos del curso' }).click()
+    await coursePanel.getByRole('button', { name: 'Visibilidad del curso' }).click()
 
-    const dialog = page.getByRole('dialog', { name: /demos del curso · contabilidad i/i })
-    await expect(dialog.getByText('Demo Comercial Publicada')).toBeVisible()
-    await dialog.getByRole('button', { name: 'Ocultar en este curso' }).click()
+    const dialog = page.getByRole('dialog', { name: /visibilidad del curso · contabilidad i/i })
+    const demoCard = dialog.locator('article', { hasText: 'Demo Comercial Publicada' }).first()
+    await expect(demoCard).toBeVisible()
+    await demoCard.getByRole('button', { name: 'Ocultar en este curso' }).click()
     await expect(page.getByText('Demo oculta para este curso.')).toBeVisible()
-    await expect(dialog.getByText('Oculta en este curso')).toBeVisible()
-    await expect(dialog.getByRole('button', { name: 'Mostrar en este curso' })).toBeVisible()
+    await expect(demoCard.getByText('Oculta en este curso')).toBeVisible()
+    await expect(demoCard.getByRole('button', { name: 'Mostrar en este curso' })).toBeVisible()
 
-    await dialog.getByRole('button', { name: 'Mostrar en este curso' }).click()
+    await demoCard.getByRole('button', { name: 'Mostrar en este curso' }).click()
     await expect(page.getByText('Demo visible para este curso.')).toBeVisible()
-    await expect(dialog.getByText('Visible en este curso')).toBeVisible()
-    await expect(dialog.getByRole('button', { name: 'Ocultar en este curso' })).toBeVisible()
+    await expect(demoCard.getByText('Visible en este curso')).toBeVisible()
+    await expect(demoCard.getByRole('button', { name: 'Ocultar en este curso' })).toBeVisible()
+  })
+
+  test('teacher can hide and show a shared company and the student sees it read-only', async ({
+    page,
+  }) => {
+    await loginAs(page, 'teacher')
+    await openTeacherDashboard(page)
+
+    const coursePanel = page.locator('section', { hasText: 'Contabilidad I' }).first()
+    await expect(coursePanel).toBeVisible()
+    await coursePanel.getByRole('button', { name: 'Visibilidad del curso' }).click()
+
+    const dialog = page.getByRole('dialog', { name: /visibilidad del curso · contabilidad i/i })
+    await expect(dialog.getByText('Ferretería Aula Docente')).toBeVisible()
+    const sharedCard = dialog.locator('article', { hasText: 'Ferretería Aula Docente' }).first()
+
+    await sharedCard.getByRole('button', { name: 'Ocultar en este curso' }).click()
+    await expect(page.getByText('Empresa compartida oculta para este curso.')).toBeVisible()
+    await expect(sharedCard.getByText('Oculta en este curso')).toBeVisible()
+    await expect(sharedCard.getByRole('button', { name: 'Compartir con este curso' })).toBeVisible()
+
+    await sharedCard.getByRole('button', { name: 'Compartir con este curso' }).click()
+    await expect(page.getByText('Empresa compartida visible para este curso.')).toBeVisible()
+    await expect(sharedCard.getByText('Visible en este curso')).toBeVisible()
+    await page.keyboard.press('Escape')
+
+    await loginAs(page, 'student')
+    await selectActiveCompany(page, 'Ferretería Aula Docente')
+    await page.getByRole('button', { name: 'Empresas' }).click()
+    await expect(page).toHaveURL('/companies')
+    await expect(page.locator('table').getByText('Ferretería Aula Docente')).toBeVisible()
+
+    await openAsientosMenu(page)
+    await navigateFromVisibleLink(page, '/journal', /\/journal/)
+    await expect(
+      page.getByText(
+        'Esta empresa está en modo solo lectura. Podés consultar los asientos, pero no crear ni reversar operaciones.'
+      )
+    ).toBeVisible()
+    await expect(page.getByRole('button', { name: '+ Nuevo asiento' })).toBeDisabled()
   })
 })

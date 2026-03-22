@@ -5,6 +5,8 @@ import type {
   TeacherCompanyItem,
   TeacherCourseDemoCompaniesResponse,
   TeacherCourseDemoCompany,
+  TeacherCourseSharedCompaniesResponse,
+  TeacherCourseSharedCompany,
   TeacherCourseCompaniesResponse,
   TeacherCourseOverviewItem,
   TeacherCourseOverviewStudent,
@@ -51,6 +53,7 @@ function normalizeCompany(raw: unknown): TeacherCompanyItem | null {
     tax_id: typeof raw.tax_id === 'string' ? raw.tax_id : null,
     is_demo: typeof raw.is_demo === 'boolean' ? raw.is_demo : undefined,
     is_read_only: typeof raw.is_read_only === 'boolean' ? raw.is_read_only : undefined,
+    viewer_can_write: typeof raw.viewer_can_write === 'boolean' ? raw.viewer_can_write : undefined,
     is_published: typeof raw.is_published === 'boolean' ? raw.is_published : undefined,
     demo_slug: toStringValue(raw.demo_slug) || null,
     has_opening_entry:
@@ -273,6 +276,26 @@ function normalizeTeacherCourseDemoCompany(raw: unknown): TeacherCourseDemoCompa
   }
 }
 
+function normalizeTeacherCourseSharedCompany(raw: unknown): TeacherCourseSharedCompany | null {
+  if (!isRecord(raw)) return null
+  const companyId = toNumberValue(raw.company_id ?? raw.id)
+  if (companyId <= 0) return null
+
+  return {
+    company_id: companyId,
+    company_name: toStringValue(raw.company_name ?? raw.name),
+    owner_id: toNumberValue(raw.owner_id, 0) || null,
+    owner_username: toStringValue(raw.owner_username),
+    is_demo: raw.is_demo === true,
+    is_read_only: raw.is_read_only === true,
+    is_published: raw.is_published === true,
+    demo_slug: toStringValue(raw.demo_slug) || null,
+    is_visible: raw.is_visible === true,
+    account_count: toNumberValue(raw.account_count),
+    journal_entry_count: toNumberValue(raw.journal_entry_count),
+  }
+}
+
 export function normalizeTeacherCourseDemoCompaniesPayload(
   payload: unknown,
   fallbackCourseId: number
@@ -288,6 +311,26 @@ export function normalizeTeacherCourseDemoCompaniesPayload(
     demo_companies: extractListPayload<unknown>(demoCompanies)
       .map(normalizeTeacherCourseDemoCompany)
       .filter((company): company is TeacherCourseDemoCompany => company !== null),
+  }
+}
+
+export function normalizeTeacherCourseSharedCompaniesPayload(
+  payload: unknown,
+  fallbackCourseId: number
+): TeacherCourseSharedCompaniesResponse {
+  const sharedCompanies =
+    isRecord(payload) && Array.isArray(payload.shared_companies)
+      ? payload.shared_companies
+      : payload
+
+  return {
+    course_id: isRecord(payload)
+      ? toNumberValue(payload.course_id, fallbackCourseId)
+      : fallbackCourseId,
+    course_name: isRecord(payload) ? toStringValue(payload.course_name) : '',
+    shared_companies: extractListPayload<unknown>(sharedCompanies)
+      .map(normalizeTeacherCourseSharedCompany)
+      .filter((company): company is TeacherCourseSharedCompany => company !== null),
   }
 }
 
@@ -324,6 +367,8 @@ export function normalizeTeacherStudentContextPayload(
           is_demo: typeof company.is_demo === 'boolean' ? company.is_demo : undefined,
           is_read_only:
             typeof company.is_read_only === 'boolean' ? company.is_read_only : undefined,
+          viewer_can_write:
+            typeof company.viewer_can_write === 'boolean' ? company.viewer_can_write : undefined,
           is_published:
             typeof company.is_published === 'boolean' ? company.is_published : undefined,
           demo_slug: toStringValue(company.demo_slug) || null,

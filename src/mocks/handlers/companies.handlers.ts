@@ -2,6 +2,7 @@ import { http, HttpResponse, delay } from 'msw'
 import { env } from '@/shared/config/env'
 import {
   canAccessCompany,
+  canWriteCompanyForUser,
   createOpeningEntry,
   createCompany,
   deleteCompany,
@@ -48,6 +49,16 @@ export const companiesHandlers = [
             id: company.id,
             name: company.name,
             owner_username: company.owner_username,
+            books_closed_until: company.books_closed_until ?? null,
+            is_demo: company.is_demo ?? false,
+            is_read_only: company.is_read_only ?? false,
+            viewer_can_write:
+              typeof company.viewer_can_write === 'boolean' ? company.viewer_can_write : true,
+            is_published: company.is_published ?? false,
+            demo_slug: company.demo_slug ?? null,
+            has_opening_entry: company.has_opening_entry ?? false,
+            accounting_ready: company.accounting_ready ?? false,
+            opening_entry_id: company.opening_entry_id ?? null,
           }
         : company
     )
@@ -109,7 +120,10 @@ export const companiesHandlers = [
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
     }
 
-    return HttpResponse.json(company)
+    return HttpResponse.json({
+      ...company,
+      viewer_can_write: canWriteCompanyForUser(user, company),
+    })
   }),
 
   http.put(`${BASE}/companies/:id/`, async ({ request, params }) => {
@@ -123,8 +137,11 @@ export const companiesHandlers = [
     if (!current) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
     if (!canAccessCompany(user, current))
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
-    if (current.is_read_only) {
-      return HttpResponse.json({ detail: 'La empresa está en modo solo lectura.' }, { status: 409 })
+    if (!canWriteCompanyForUser(user, current)) {
+      return HttpResponse.json(
+        { detail: 'Esta empresa es de solo lectura para el usuario actual.' },
+        { status: 409 }
+      )
     }
 
     const body = (await request.json()) as { name?: string; description?: string; tax_id?: string }
@@ -179,8 +196,11 @@ export const companiesHandlers = [
     if (!current) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
     if (!canAccessCompany(user, current))
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
-    if (current.is_read_only) {
-      return HttpResponse.json({ detail: 'La empresa está en modo solo lectura.' }, { status: 409 })
+    if (!canWriteCompanyForUser(user, current)) {
+      return HttpResponse.json(
+        { detail: 'Esta empresa es de solo lectura para el usuario actual.' },
+        { status: 409 }
+      )
     }
     if (listJournalEntriesByCompany(companyId).length > 0) {
       return HttpResponse.json(
@@ -204,6 +224,12 @@ export const companiesHandlers = [
     if (!current) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 })
     if (!canAccessCompany(user, current)) {
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    }
+    if (!canWriteCompanyForUser(user, current)) {
+      return HttpResponse.json(
+        { detail: 'Esta empresa es de solo lectura para el usuario actual.' },
+        { status: 409 }
+      )
     }
 
     const body = (await request.json()) as Parameters<typeof createOpeningEntry>[1]

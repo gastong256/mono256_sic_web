@@ -4,6 +4,10 @@ import { useAuthenticatedBootstrap } from '@/features/auth/hooks/useAuthenticate
 import { useCompanies } from '@/features/companies/hooks/useCompanies'
 import { useActiveCompanyStore } from '@/features/companies/store/activeCompany.store'
 import { getCompanyAccountingBlockMessage } from '@/features/companies/lib/companyAccounting'
+import {
+  canViewerWriteCompany,
+  isViewerReadOnlyCompany,
+} from '@/features/companies/lib/companyWriteAccess'
 import type { Company } from '@/features/companies/types/company.types'
 
 function normalizeCompanySummary(company: Company | undefined): Company | null {
@@ -38,23 +42,22 @@ export function useActiveCompany(companyIdOverride?: number | null) {
 
   const canManageOpening = useMemo(() => {
     if (!activeCompany || !user) return false
-    if (activeCompany.is_read_only) return false
+    if (!canViewerWriteCompany(activeCompany)) return false
     return user.role === 'admin' || activeCompany.owner_username === user.username
   }, [activeCompany, user])
 
   const canManageClosing = useMemo(() => {
     if (!activeCompany || !user) return false
-    if (activeCompany.is_read_only) return false
+    if (!canViewerWriteCompany(activeCompany)) return false
     return user.role === 'admin' || activeCompany.owner_username === user.username
   }, [activeCompany, user])
 
   const canWriteCompany = useMemo(() => {
-    if (!activeCompany) return false
-    return activeCompany.is_read_only !== true
+    return canViewerWriteCompany(activeCompany)
   }, [activeCompany])
 
   const isAccountingReady = activeCompany?.accounting_ready !== false
-  const isReadOnly = activeCompany?.is_read_only === true
+  const isReadOnly = isViewerReadOnlyCompany(activeCompany)
   const booksClosedUntil = activeCompany?.books_closed_until ?? null
   const accountingBlockMessage =
     activeCompany && (!isAccountingReady || isReadOnly)

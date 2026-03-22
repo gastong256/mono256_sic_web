@@ -8,6 +8,7 @@ export interface Company {
   books_closed_until?: string | null
   is_demo?: boolean
   is_read_only?: boolean
+  viewer_can_write?: boolean
   is_published?: boolean
   demo_slug?: string | null
   has_opening_entry?: boolean

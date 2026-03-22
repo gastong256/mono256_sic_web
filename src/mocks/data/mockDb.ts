@@ -42,6 +42,12 @@ type CourseDemoCompanyVisibility = {
   is_visible: boolean
 }
 
+type CourseSharedCompanyVisibility = {
+  course_id: number
+  company_id: number
+  is_visible: boolean
+}
+
 type Session = {
   username: string
   refresh: string
@@ -143,6 +149,10 @@ const courseDemoCompanyVisibilities: CourseDemoCompanyVisibility[] = [
   { course_id: 3, company_id: 7, is_visible: false },
 ]
 
+const courseSharedCompanyVisibilities: CourseSharedCompanyVisibility[] = [
+  { course_id: 1, company_id: 33, is_visible: true },
+]
+
 let nextUserId = 6
 const REGISTER_RATE_LIMIT_MAX_ATTEMPTS = 5
 const REGISTER_RATE_LIMIT_WINDOW_MS = 60_000
@@ -156,7 +166,7 @@ let registrationCodeState = {
   valid_until: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
 }
 
-let nextCompanyId = 7
+let nextCompanyId = 8
 const companies: Company[] = [
   {
     id: 1,
@@ -265,6 +275,24 @@ const companies: Company[] = [
     opening_entry_id: null,
     created_at: '2024-04-28T09:00:00Z',
     updated_at: '2024-04-28T09:00:00Z',
+  },
+  {
+    id: 33,
+    name: 'Ferretería Aula Docente',
+    description: 'Empresa propia del docente compartida con el curso',
+    tax_id: '30-11111111-9',
+    owner_username: 'teacher1',
+    account_count: 1,
+    books_closed_until: null,
+    is_demo: false,
+    is_read_only: false,
+    is_published: false,
+    demo_slug: null,
+    has_opening_entry: true,
+    accounting_ready: true,
+    opening_entry_id: null,
+    created_at: '2024-04-29T09:00:00Z',
+    updated_at: '2024-04-29T09:00:00Z',
   },
 ]
 
@@ -1640,7 +1668,7 @@ function seedExpandedMockDataset() {
 
   nextUserId = Math.max(nextUserId, 31)
   nextCourseId = Math.max(nextCourseId, 4)
-  nextCompanyId = Math.max(nextCompanyId, 33)
+  nextCompanyId = Math.max(nextCompanyId, 34)
   nextJournalId = Math.max(nextJournalId, 31)
   nextSyntheticAccountId = Math.max(nextSyntheticAccountId, 403)
   nextClosingSnapshotId = Math.max(nextClosingSnapshotId, 3)
@@ -1653,6 +1681,7 @@ const sessionsByRefreshToken = new Map<string, Session>()
 const initialUsers = structuredClone(users)
 const initialCourses = structuredClone(courses)
 const initialCourseDemoCompanyVisibilities = structuredClone(courseDemoCompanyVisibilities)
+const initialCourseSharedCompanyVisibilities = structuredClone(courseSharedCompanyVisibilities)
 const initialCompanies = structuredClone(companies)
 const initialJournalEntries = structuredClone(journalEntries)
 const initialJournalCompanyMap = structuredClone(journalCompanyMap)
@@ -1785,6 +1814,8 @@ export function buildAuthMeResponse(
             books_closed_until: company.books_closed_until ?? null,
             is_demo: company.is_demo ?? false,
             is_read_only: company.is_read_only ?? false,
+            viewer_can_write:
+              typeof company.viewer_can_write === 'boolean' ? company.viewer_can_write : true,
             is_published: company.is_published ?? false,
             demo_slug: company.demo_slug ?? null,
             has_opening_entry: company.has_opening_entry ?? false,
@@ -1975,6 +2006,14 @@ function getDemoVisibilityForCourse(courseId: number, companyId: number): boolea
   )
 }
 
+function getSharedVisibilityForCourse(courseId: number, companyId: number): boolean {
+  return (
+    courseSharedCompanyVisibilities.find(
+      (visibility) => visibility.course_id === courseId && visibility.company_id === companyId
+    )?.is_visible ?? false
+  )
+}
+
 function isDemoVisibleForStudentCourse(
   company: Company,
   studentLike: Pick<User, 'role' | 'course_id'>
@@ -1985,6 +2024,16 @@ function isDemoVisibleForStudentCourse(
   return getDemoVisibilityForCourse(studentLike.course_id, company.id)
 }
 
+function isSharedCompanyVisibleForStudentCourse(
+  company: Company,
+  studentLike: Pick<User, 'role' | 'course_id'>
+): boolean {
+  if (studentLike.role !== 'student') return false
+  if (company.is_demo === true) return false
+  if (!studentLike.course_id) return false
+  return getSharedVisibilityForCourse(studentLike.course_id, company.id)
+}
+
 function listVisibleDemoCompaniesForCourse(courseId: number): Company[] {
   return companies.filter(
     (company) =>
@@ -1992,6 +2041,31 @@ function listVisibleDemoCompaniesForCourse(courseId: number): Company[] {
       company.is_published === true &&
       getDemoVisibilityForCourse(courseId, company.id)
   )
+}
+
+function listVisibleSharedCompaniesForCourse(courseId: number): Company[] {
+  return companies.filter(
+    (company) => company.is_demo !== true && getSharedVisibilityForCourse(courseId, company.id)
+  )
+}
+
+export function canWriteCompanyForUser(
+  user: Pick<User, 'role' | 'username'>,
+  company: Company
+): boolean {
+  if (company.is_read_only === true) return false
+  if (user.role === 'admin') return true
+  if (user.role === 'student') {
+    return company.owner_username === user.username && company.is_demo !== true
+  }
+  return true
+}
+
+function withViewerAccess(user: Pick<User, 'role' | 'username'>, company: Company): Company {
+  return {
+    ...company,
+    viewer_can_write: canWriteCompanyForUser(user, company),
+  }
 }
 
 function listCompaniesVisibleToStudent(
@@ -2005,10 +2079,15 @@ function listCompaniesVisibleToStudent(
   const visibleDemoCompanies = student.course_id
     ? listVisibleDemoCompaniesForCourse(student.course_id)
     : []
+  const visibleSharedCompanies = student.course_id
+    ? listVisibleSharedCompaniesForCourse(student.course_id)
+    : []
 
   return Array.from(
     new Map(
-      [...ownedNonDemoCompanies, ...visibleDemoCompanies].map((company) => [company.id, company])
+      [...ownedNonDemoCompanies, ...visibleDemoCompanies, ...visibleSharedCompanies].map(
+        (company) => [company.id, withViewerAccess(student, company)]
+      )
     ).values()
   )
 }
@@ -2017,6 +2096,7 @@ export function canAccessCompany(user: User, company: Company): boolean {
   if (user.role === 'admin') return true
   if (user.role === 'student') {
     if (company.owner_username === user.username && company.is_demo !== true) return true
+    if (isSharedCompanyVisibleForStudentCourse(company, user)) return true
     return isDemoVisibleForStudentCourse(company, user)
   }
   return company.owner_username === user.username
@@ -2036,9 +2116,9 @@ export function listCompaniesForUser(user: User): Company[] {
     return listCompaniesVisibleToStudent(user)
   }
 
-  return companies.filter(
-    (company) => canAccessCompany(user, company) && isVisibleCompanyInMock(company, user)
-  )
+  return companies
+    .filter((company) => canAccessCompany(user, company) && isVisibleCompanyInMock(company, user))
+    .map((company) => withViewerAccess(user, company))
 }
 
 export function canReviewCompany(user: User, company: Company): boolean {
@@ -3115,6 +3195,11 @@ export function resetMockDb() {
     courseDemoCompanyVisibilities.length,
     ...structuredClone(initialCourseDemoCompanyVisibilities)
   )
+  courseSharedCompanyVisibilities.splice(
+    0,
+    courseSharedCompanyVisibilities.length,
+    ...structuredClone(initialCourseSharedCompanyVisibilities)
+  )
   companies.splice(0, companies.length, ...structuredClone(initialCompanies))
   journalEntries.splice(0, journalEntries.length, ...structuredClone(initialJournalEntries))
 
@@ -3508,6 +3593,8 @@ export function listTeacherCourseCompanies(
           tax_id: company.tax_id ?? '',
           is_demo: company.is_demo ?? false,
           is_read_only: company.is_read_only ?? false,
+          viewer_can_write:
+            typeof company.viewer_can_write === 'boolean' ? company.viewer_can_write : true,
           is_published: company.is_published ?? false,
           demo_slug: company.demo_slug ?? null,
           has_opening_entry: company.has_opening_entry ?? false,
@@ -3553,9 +3640,14 @@ export function listTeacherCourseJournalEntries(
   if (!course) return null
 
   const courseStudentSet = new Set(course.student_usernames)
-  const allowedCompanies = companies
-    .filter((company) => courseStudentSet.has(company.owner_username))
-    .map((company) => company.id)
+  const allowedCompanies = Array.from(
+    new Set([
+      ...companies
+        .filter((company) => courseStudentSet.has(company.owner_username))
+        .map((company) => company.id),
+      ...listVisibleSharedCompaniesForCourse(course.id).map((company) => company.id),
+    ])
+  )
 
   let entries = journalEntries.filter((entry) =>
     allowedCompanies.includes(journalCompanyMap[entry.id])
@@ -3681,7 +3773,7 @@ export function getTeacherStudentContext(
   const visibleCompanies = listCompaniesVisibleToStudent(student)
   const visibleCompanyIds = new Set(visibleCompanies.map((company) => company.id))
 
-  const studentCompanies = companies
+  const studentCompanies = visibleCompanies
     .filter((company) => visibleCompanyIds.has(company.id))
     .map((company) => {
       const companyEntries = journalEntries
@@ -3696,6 +3788,8 @@ export function getTeacherStudentContext(
         last_entry_date: companyEntries[0]?.date ?? null,
         is_demo: company.is_demo ?? false,
         is_read_only: company.is_read_only ?? false,
+        viewer_can_write:
+          typeof company.viewer_can_write === 'boolean' ? company.viewer_can_write : true,
         is_published: company.is_published ?? false,
         demo_slug: company.demo_slug ?? null,
         has_opening_entry: company.has_opening_entry ?? false,
@@ -3764,6 +3858,19 @@ function listAvailableDemoCompaniesForCourse(user: User): Company[] {
   })
 }
 
+function listAvailableSharedCompaniesForCourse(user: User, courseId: number): Company[] {
+  const course = findAccessibleCourse(user, courseId)
+  if (!course) return []
+
+  if (user.role === 'admin') {
+    return companies.filter((company) => company.is_demo !== true)
+  }
+
+  return companies.filter(
+    (company) => company.is_demo !== true && company.owner_username === user.username
+  )
+}
+
 function buildCourseDemoCompanyVisibilityItem(courseId: number, company: Company) {
   const journalEntryCount = journalEntries.filter(
     (entry) => journalCompanyMap[entry.id] === company.id
@@ -3777,6 +3884,27 @@ function buildCourseDemoCompanyVisibilityItem(courseId: number, company: Company
     is_published: company.is_published === true,
     demo_slug: company.demo_slug ?? null,
     is_visible: getDemoVisibilityForCourse(courseId, company.id),
+    account_count: company.account_count,
+    journal_entry_count: journalEntryCount,
+  }
+}
+
+function buildCourseSharedCompanyVisibilityItem(courseId: number, company: Company) {
+  const journalEntryCount = journalEntries.filter(
+    (entry) => journalCompanyMap[entry.id] === company.id
+  ).length
+  const owner = users.find((candidate) => candidate.username === company.owner_username)
+
+  return {
+    company_id: company.id,
+    company_name: company.name,
+    owner_id: owner?.id ?? null,
+    owner_username: company.owner_username,
+    is_demo: false,
+    is_read_only: company.is_read_only === true,
+    is_published: company.is_published === true,
+    demo_slug: company.demo_slug ?? null,
+    is_visible: getSharedVisibilityForCourse(courseId, company.id),
     account_count: company.account_count,
     journal_entry_count: journalEntryCount,
   }
@@ -3798,6 +3926,26 @@ export function listCourseDemoCompanies(
     course_name: course.name,
     demo_companies: listAvailableDemoCompaniesForCourse(user).map((company) =>
       buildCourseDemoCompanyVisibilityItem(course.id, company)
+    ),
+  }
+}
+
+export function listCourseSharedCompanies(
+  user: User,
+  courseId: number
+): {
+  course_id: number
+  course_name: string
+  shared_companies: Array<ReturnType<typeof buildCourseSharedCompanyVisibilityItem>>
+} | null {
+  const course = findAccessibleCourse(user, courseId)
+  if (!course) return null
+
+  return {
+    course_id: course.id,
+    course_name: course.name,
+    shared_companies: listAvailableSharedCompaniesForCourse(user, course.id).map((company) =>
+      buildCourseSharedCompanyVisibilityItem(course.id, company)
     ),
   }
 }
@@ -3837,6 +3985,44 @@ export function setCourseDemoCompanyVisibility(
   }
 
   return { ok: true, item: buildCourseDemoCompanyVisibilityItem(course.id, company) }
+}
+
+export function setCourseSharedCompanyVisibility(
+  user: User,
+  courseId: number,
+  companyId: number,
+  isVisible: boolean
+):
+  | { ok: true; item: ReturnType<typeof buildCourseSharedCompanyVisibilityItem> }
+  | { ok: false; status: number; detail: string } {
+  const course = findAccessibleCourse(user, courseId)
+  if (!course) return { ok: false, status: 403, detail: 'Forbidden' }
+
+  const company = getCompanyById(companyId)
+  if (!company || company.is_demo === true) {
+    return { ok: false, status: 404, detail: 'Shared company not found' }
+  }
+
+  const allowedCompanies = listAvailableSharedCompaniesForCourse(user, course.id)
+  if (!allowedCompanies.some((candidate) => candidate.id === company.id)) {
+    return { ok: false, status: 404, detail: 'Shared company not found' }
+  }
+
+  const existing = courseSharedCompanyVisibilities.find(
+    (visibility) => visibility.course_id === course.id && visibility.company_id === company.id
+  )
+
+  if (existing) {
+    existing.is_visible = isVisible
+  } else {
+    courseSharedCompanyVisibilities.push({
+      course_id: course.id,
+      company_id: company.id,
+      is_visible: isVisible,
+    })
+  }
+
+  return { ok: true, item: buildCourseSharedCompanyVisibilityItem(course.id, company) }
 }
 
 export function listAvailableStudentsForCourse(

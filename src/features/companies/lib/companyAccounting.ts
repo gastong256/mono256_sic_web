@@ -7,6 +7,7 @@ import type { Account } from '@/features/accounts/types/account.types'
 type CompanyStateLike = {
   is_demo?: boolean
   is_read_only?: boolean
+  viewer_can_write?: boolean
   is_published?: boolean
   demo_slug?: string | null
   has_opening_entry?: boolean
@@ -180,6 +181,10 @@ export function getCompanyAccountingBlockMessage(
     return 'La empresa necesita registrarse con inventario inicial o general antes de operar contablemente.'
   }
 
+  if (company.viewer_can_write === false && company.is_read_only !== true) {
+    return 'Esta empresa está compartida con tu curso en modo solo lectura. Podés consultarla, pero no registrar cambios contables.'
+  }
+
   if (company.is_read_only) {
     return 'Esta empresa está en modo solo lectura y no permite registrar cambios contables.'
   }
@@ -195,6 +200,9 @@ export function getCompanyWriteBlockMessage(
   company: CompanyStateLike | null | undefined
 ): string | null {
   if (!company) return null
+  if (company.viewer_can_write === false && company.is_read_only !== true) {
+    return 'Esta empresa está compartida con tu curso en modo solo lectura.'
+  }
   if (company.is_read_only) {
     return company.is_demo
       ? 'Empresa demo en modo solo lectura. Podés explorarla, pero no modificarla.'
@@ -211,9 +219,10 @@ export function getCompanyStatusLabels(company: CompanyStateLike | null | undefi
 
   const labels: string[] = []
   if (company.is_demo) labels.push('Demo')
+  if (company.viewer_can_write === false && company.is_read_only !== true) labels.push('Compartida')
   if (company.is_demo && company.is_published === true) labels.push('Publicada')
   if (company.is_demo && company.is_published === false) labels.push('Oculta')
-  if (company.is_read_only) labels.push('Solo lectura')
+  if (company.is_read_only || company.viewer_can_write === false) labels.push('Solo lectura')
   if (company.accounting_ready === false) labels.push('Pendiente de apertura')
   if (company.books_closed_until) labels.push('Libros cerrados')
 

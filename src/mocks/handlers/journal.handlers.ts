@@ -2,6 +2,7 @@ import { http, HttpResponse, delay } from 'msw'
 import { env } from '@/shared/config/env'
 import {
   canAccessCompany,
+  canWriteCompanyForUser,
   createJournalEntry,
   getCompanyById,
   getJournalEntry,
@@ -98,6 +99,12 @@ export const journalHandlers = [
     if (!company) return HttpResponse.json({ detail: 'Company not found' }, { status: 404 })
     if (!canAccessCompany(user, company))
       return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+    if (!canWriteCompanyForUser(user, company)) {
+      return HttpResponse.json(
+        { detail: 'Esta empresa es de solo lectura para el usuario actual.' },
+        { status: 409 }
+      )
+    }
 
     const body = (await request.json()) as CreateJournalEntryPayload
     if (!body.date)
@@ -127,6 +134,12 @@ export const journalHandlers = [
       if (!company) return HttpResponse.json({ detail: 'Company not found' }, { status: 404 })
       if (!canAccessCompany(user, company))
         return HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })
+      if (!canWriteCompanyForUser(user, company)) {
+        return HttpResponse.json(
+          { detail: 'Esta empresa es de solo lectura para el usuario actual.' },
+          { status: 409 }
+        )
+      }
       if (company.accounting_ready === false) {
         return HttpResponse.json(
           {

@@ -80,16 +80,19 @@ describe('TeacherDashboardPage', () => {
     expect(await screen.findByText(/micaela pérez/i)).toBeInTheDocument()
   })
 
-  it('opens course demo visibility modal and renders published demos for the course', async () => {
+  it('opens course visibility modal and renders demos and shared companies for the course', async () => {
     renderTeacherDashboardPage()
 
     expect(await screen.findByText('Contabilidad I')).toBeInTheDocument()
-    fireEvent.click(screen.getAllByRole('button', { name: 'Demos del curso' })[0])
+    fireEvent.click(screen.getAllByRole('button', { name: 'Visibilidad del curso' })[0])
 
     expect(
-      await screen.findByRole('dialog', { name: /demos del curso · contabilidad i/i })
+      await screen.findByRole('dialog', { name: /visibilidad del curso · contabilidad i/i })
     ).toBeInTheDocument()
+    expect(await screen.findByText('Empresas demo')).toBeInTheDocument()
+    expect(await screen.findByText('Empresas compartidas')).toBeInTheDocument()
     expect(await screen.findByText('Demo Comercial Publicada')).toBeInTheDocument()
-    expect(screen.getByText('Visible en este curso')).toBeInTheDocument()
+    expect(await screen.findByText('Ferretería Aula Docente')).toBeInTheDocument()
+    expect(screen.getAllByText('Visible en este curso').length).toBeGreaterThan(0)
   })
 })
