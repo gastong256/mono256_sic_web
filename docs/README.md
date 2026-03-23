@@ -25,6 +25,7 @@ Esta carpeta reúne la documentación técnica y operativa del frontend.
   - setup local
   - convenciones
   - cómo agregar o cambiar features
+  - mantenimiento editorial del manual y sus screenshots
 - [testing.md](./testing.md)
   - estrategia de testing
   - qué cubre cada suite

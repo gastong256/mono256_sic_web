@@ -65,4 +65,29 @@ test.describe('Home, profile and glossary flows', () => {
     ).toBeVisible()
     await expect(page.getByText('Palabras clave')).toBeVisible()
   })
+
+  test('protects the manual and shows only student-relevant flows to students', async ({
+    page,
+  }) => {
+    await page.goto('/manual')
+    await expect(page).toHaveURL(/\/login\?returnTo=%2Fmanual/)
+
+    await loginAs(page, 'student')
+    await navigateFromVisibleLink(page, '/manual', /\/manual$/)
+    await expect(page.getByRole('heading', { name: 'Manual de Usuario' })).toBeVisible()
+    await page.getByLabel('Buscar flujo o paso').fill('cierre')
+
+    await expect(page.getByText('Cerrar ejercicio y ver Balance General')).toBeVisible()
+    await page.getByRole('button', { name: /Cerrar ejercicio y ver Balance General/i }).click()
+
+    await expect(
+      page.getByRole('heading', { name: 'Cerrar ejercicio y ver Balance General' })
+    ).toBeVisible()
+    await expect(page.getByText(/Usá Preparar cierre/i)).toBeVisible()
+
+    await page.getByLabel('Buscar flujo o paso').fill('')
+    await expect(page.getByRole('button', { name: 'Docente' })).toHaveCount(0)
+    await expect(page.getByText('Configurar plan de cuentas de mi empresa')).toBeVisible()
+    await expect(page.getByText('Crear curso, enrolar y supervisar alumnos')).toHaveCount(0)
+  })
 })

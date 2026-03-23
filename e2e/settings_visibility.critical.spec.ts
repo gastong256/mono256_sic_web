@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test'
-import { clearSession, loginAs, openSupervisionMenu } from './support/session'
+import {
+  clearSession,
+  loginAs,
+  navigateFromVisibleLink,
+  openSupervisionMenu,
+} from './support/session'
 
 test.describe('Settings visibility critical flow', () => {
   test.beforeEach(async ({ page }) => {
@@ -11,9 +16,11 @@ test.describe('Settings visibility critical flow', () => {
   }) => {
     await loginAs(page, 'teacher')
     await openSupervisionMenu(page)
-    const settingsLink = page.getByRole('link', { name: 'Plan de cuentas' })
-    await expect(settingsLink).toBeVisible()
-    await Promise.all([page.waitForURL('/settings/chart-visibility'), settingsLink.click()])
+    await navigateFromVisibleLink(
+      page,
+      '/settings/chart-visibility',
+      /\/settings\/chart-visibility/
+    )
 
     await expect(
       page.getByRole('heading', { name: 'Visibilidad del plan de cuentas' })
@@ -48,9 +55,11 @@ test.describe('Settings visibility critical flow', () => {
 
     await loginAs(page, 'teacher')
     await openSupervisionMenu(page)
-    const restoreSettingsLink = page.getByRole('link', { name: 'Plan de cuentas' })
-    await expect(restoreSettingsLink).toBeVisible()
-    await Promise.all([page.waitForURL('/settings/chart-visibility'), restoreSettingsLink.click()])
+    await navigateFromVisibleLink(
+      page,
+      '/settings/chart-visibility',
+      /\/settings\/chart-visibility/
+    )
     const restoredRow = page.locator('li', { hasText: '5.03' }).first()
     const restoreResponsePromise = page.waitForResponse(
       (response) =>

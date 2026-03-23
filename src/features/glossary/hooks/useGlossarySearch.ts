@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import MiniSearch from 'minisearch'
-import glossaryData from '@/features/glossary/data/glossary-sic1.json'
+import glossaryData from '@/features/glossary/data/glossary-sic1-v2.json'
 import type {
   GlossaryConcept,
   GlossaryData,
@@ -35,10 +35,10 @@ export function useGlossarySearch() {
 
   const miniSearch = useMemo(() => {
     const engine = new MiniSearch<GlossaryConcept>({
-      fields: ['term', 'definition', 'tags'],
+      fields: ['term', 'definition', 'details', 'example', 'contraExample', 'tags'],
       storeFields: ['id', 'term', 'category', 'difficulty'],
       searchOptions: {
-        boost: { term: 3, tags: 2 },
+        boost: { term: 4, tags: 2, definition: 2, details: 1.5, example: 1.25 },
         fuzzy: 0.2,
         prefix: true,
       },

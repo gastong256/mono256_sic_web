@@ -1,0 +1,280 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "title": "Manual de Usuario",
+    "description": "Guía paso a paso de los flujos principales del simulador contable educativo.",
+    "lastUpdated": "2026-03-23"
+  },
+  "roles": [
+    { "id": "alumno", "label": "Alumno", "color": "#2563EB", "icon": "GraduationCap" },
+    { "id": "docente", "label": "Docente", "color": "#7C3AED", "icon": "BookOpen" }
+  ],
+  "flows": [
+    {
+      "id": "crear-empresa-apertura",
+      "title": "Crear empresa y registrar asiento de apertura",
+      "description": "Cómo crear una empresa desde Empresas y dejarla operativa con el inventario inicial o general.",
+      "roles": ["alumno", "docente"],
+      "icon": "Building2",
+      "estimatedTime": "5 min",
+      "tags": ["empresa", "apertura", "inventario", "primer asiento"],
+      "steps": [
+        {
+          "id": "ce-01",
+          "title": "Entrar a Empresas",
+          "description": "Desde la barra principal, ingresá a **Empresas** para ver **Mis empresas**, **Otras empresas** y el acceso a **Nueva empresa**.",
+          "screenshot": "crear-empresa-apertura/01-lista-empresas.webp",
+          "tip": null
+        },
+        {
+          "id": "ce-02",
+          "title": "Crear una nueva empresa",
+          "description": "Hacé click en **Nueva empresa** y completá los campos **Nombre**, **Descripción** y **CUIT** si corresponde. Si querés dejarla lista para operar desde el alta, activá **Registrar apertura ahora**.",
+          "screenshot": "crear-empresa-apertura/02-formulario-empresa.webp",
+          "tip": "En el flujo actual del simulador, la apertura contable forma parte del alta de la empresa y aparece como el paso 2 solo si activás esa opción."
+        },
+        {
+          "id": "ce-03",
+          "title": "Completar la apertura contable",
+          "description": "En el paso de apertura, cargá los conceptos patrimoniales iniciales usando **Colectiva padre**, **Cuenta movimiento** e **Importe**, y verificá que el total del **Debe** y el total del **Haber** queden equilibrados.",
+          "screenshot": "crear-empresa-apertura/03-apertura-contable.webp",
+          "tip": "Mientras la empresa está pendiente de apertura, el plan de cuentas visible se restringe a las ramas válidas para registrar el inventario inicial o general."
+        },
+        {
+          "id": "ce-04",
+          "title": "Guardar y revisar la empresa operativa",
+          "description": "Al finalizar, la empresa queda lista para operar y podés revisar el detalle en **Plan de cuentas**, **Asientos > Registro manual** y **Libros**.",
+          "screenshot": "crear-empresa-apertura/04-empresa-operativa.webp",
+          "tip": "Si la apertura quedó registrada correctamente, ya no deberías ver el estado de pendiente de apertura."
+        }
+      ]
+    },
+    {
+      "id": "configurar-plan-cuentas",
+      "title": "Configurar plan de cuentas de mi empresa",
+      "description": "Cómo revisar el árbol de cuentas de la empresa y crear una cuenta de movimiento de nivel 2 para poder empezar a registrar operaciones.",
+      "roles": ["alumno", "docente"],
+      "icon": "ListTree",
+      "estimatedTime": "4 min",
+      "tags": ["plan de cuentas", "arbol", "empresa", "detalle"],
+      "steps": [
+        {
+          "id": "pc-01",
+          "title": "Abrir Plan de cuentas",
+          "description": "Desde **Empresas**, ingresá al detalle de tu empresa para ver su información general y el bloque de **Plan de cuentas**.",
+          "screenshot": "configurar-plan-cuentas/01-detalle-empresa.webp",
+          "tip": null
+        },
+        {
+          "id": "pc-02",
+          "title": "Explorar el árbol disponible",
+          "description": "Si la empresa todavía no tiene apertura, vas a ver solo el árbol válido para apertura. Si ya está operativa, vas a ver el árbol completo con rubros, colectivas y cuentas de movimiento que la empresa puede usar.",
+          "screenshot": "configurar-plan-cuentas/02-arbol-cuentas.webp",
+          "tip": "Esta diferencia evita crear cuentas en ramas que todavía no corresponden durante la etapa inicial."
+        },
+        {
+          "id": "pc-03",
+          "title": "Crear una cuenta de movimiento de nivel 2",
+          "description": "Para empezar a operar, primero necesitás una **cuenta de movimiento** debajo de una colectiva válida. En el árbol, ubicá la colectiva correspondiente y usá **+ Agregar cuenta**. El formulario abre **Nueva cuenta de movimiento** con la **Cuenta padre** ya seleccionada. Ahí completá **Nombre** y **Código** con el formato **X.XX.XX**, y después confirmá con **Crear cuenta**.",
+          "screenshot": "configurar-plan-cuentas/03-rubros-cuentas.webp",
+          "tip": "La cuenta de nivel 2 es la que después vas a poder seleccionar en la apertura contable, en Registro manual y en los distintos libros."
+        }
+      ]
+    },
+    {
+      "id": "registrar-asientos",
+      "title": "Registrar asientos manuales",
+      "description": "Cómo crear asientos manuales en el registro de una empresa operativa y revisar su impacto inmediato.",
+      "roles": ["alumno", "docente"],
+      "icon": "PenLine",
+      "estimatedTime": "5 min",
+      "tags": ["journal", "registro manual", "asientos", "debe", "haber"],
+      "steps": [
+        {
+          "id": "ra-01",
+          "title": "Ir a Registro manual",
+          "description": "Abrí **Asientos > Registro manual** o utilizá **+ Nuevo asiento** desde Inicio para empezar una carga nueva.",
+          "screenshot": "registrar-asientos/01-registro-manual.webp",
+          "tip": null
+        },
+        {
+          "id": "ra-02",
+          "title": "Completar fecha y descripción",
+          "description": "Ingresá la fecha del asiento y una descripción clara de la operación. Ese texto aparece luego en **Registro manual**, **Inicio** y **Libro Diario**.",
+          "screenshot": "registrar-asientos/02-fecha-descripcion.webp",
+          "tip": "Conviene que la descripción identifique el hecho económico y el comprobante o referencia usado."
+        },
+        {
+          "id": "ra-03",
+          "title": "Cargar las lineas del Debe y del Haber",
+          "description": "Seleccioná las cuentas de movimiento y distribuí los importes hasta que el asiento quede balanceado. El formulario valida en tiempo real que el **Debe** y el **Haber** coincidan antes de guardar.",
+          "screenshot": "registrar-asientos/03-lineas-balanceo.webp",
+          "tip": "La partida doble sigue siendo la regla central: el total debitado debe ser igual al total acreditado."
+        },
+        {
+          "id": "ra-04",
+          "title": "Guardar y verificar el asiento",
+          "description": "Guardá el asiento y revisalo en **Registro manual** o en **Libro Diario**. Desde ahí también podés expandirlo para ver sus líneas completas.",
+          "screenshot": "registrar-asientos/04-asiento-guardado.webp",
+          "tip": "Si necesitás corregir un asiento ya confirmado, el flujo correcto es usar su reversa y luego cargar el asiento correcto."
+        }
+      ]
+    },
+    {
+      "id": "ver-libros",
+      "title": "Ver y descargar libros",
+      "description": "Cómo consultar Libro Diario, Libro Mayor y Balance de Comprobacion, y exportarlos desde la interfaz actual.",
+      "roles": ["alumno", "docente"],
+      "icon": "BookOpen",
+      "estimatedTime": "4 min",
+      "tags": ["reportes", "libro diario", "libro mayor", "balance", "excel"],
+      "steps": [
+        {
+          "id": "vl-01",
+          "title": "Entrar al menú Libros",
+          "description": "Desde la navegación principal, abrí **Libros** para acceder a **Libro Diario**, **Libro Mayor**, **Balance de Comprobacion** y **Balance General y Cierres**.",
+          "screenshot": "ver-libros/01-menu-libros.webp",
+          "tip": null
+        },
+        {
+          "id": "vl-02",
+          "title": "Consultar Libro Diario",
+          "description": "En **Libro Diario** podés ver los asientos cronológicamente, cambiar de ejercicio, aplicar filtros de fecha, buscar por número o descripción y descargar el reporte en Excel.",
+          "screenshot": "ver-libros/02-libro-diario.webp",
+          "tip": "En el estado actual del producto, las descargas de reportes se realizan en **Excel**, no en PDF."
+        },
+        {
+          "id": "vl-03",
+          "title": "Consultar Libro Mayor",
+          "description": "En **Libro Mayor** podés revisar el movimiento y el saldo de cada cuenta dentro del ejercicio seleccionado, con un filtro opcional por cuenta.",
+          "screenshot": "ver-libros/03-libro-mayor.webp",
+          "tip": null
+        },
+        {
+          "id": "vl-04",
+          "title": "Consultar Balance de Comprobacion",
+          "description": "En **Balance de Comprobacion** podés verificar sumas y saldos del ejercicio visible, aplicar filtros de fecha y descargar el libro en Excel.",
+          "screenshot": "ver-libros/04-balance-comprobacion.webp",
+          "tip": "Si el Debe y el Haber no coinciden, conviene revisar primero **Libro Diario** y los asientos del período."
+        }
+      ]
+    },
+    {
+      "id": "cerrar-ejercicio",
+      "title": "Cerrar ejercicio y ver Balance General",
+      "description": "Cómo preparar un cierre, revisar su preview, confirmar el ejercicio cerrado y descargar el balance general confirmado.",
+      "roles": ["alumno", "docente"],
+      "icon": "CheckCircle",
+      "estimatedTime": "8 min",
+      "tags": ["cierre", "balance general", "preview", "reapertura", "snapshot"],
+      "steps": [
+        {
+          "id": "cx-01",
+          "title": "Ir a Balance General y Cierres",
+          "description": "Desde **Libros**, abrí **Balance General y Cierres** para revisar el estado del ejercicio activo y los cierres confirmados anteriores.",
+          "screenshot": "cerrar-ejercicio/01-balance-y-cierres.webp",
+          "tip": null
+        },
+        {
+          "id": "cx-02",
+          "title": "Preparar el cierre",
+          "description": "Usá **Preparar cierre** para definir la fecha de cierre y, si corresponde, cargar **Arqueo de caja real** e **Inventario real de mercaderías** antes de generar el preview.",
+          "screenshot": "cerrar-ejercicio/02-preparar-cierre.webp",
+          "tip": "El modal muestra desde cuándo está abierto el ejercicio actual y los saldos contables vigentes de caja y mercaderías antes del preview."
+        },
+        {
+          "id": "cx-03",
+          "title": "Revisar el preview contable",
+          "description": "El preview muestra **Fechas**, **Resultado**, **Ajustes**, **Balance general ajustado** y los asientos de cierre y reapertura que se generarían.",
+          "screenshot": "cerrar-ejercicio/03-preview-cierre.webp",
+          "tip": "Antes de confirmar, revisá especialmente la ecuación patrimonial y los asientos patrimoniales que se van a registrar."
+        },
+        {
+          "id": "cx-04",
+          "title": "Confirmar el cierre y descargar el balance",
+          "description": "Cuando el preview es correcto, confirmá el cierre. Luego podés abrir **Ver cierre confirmado** y usar **Descargar Excel** para obtener el balance general del cierre confirmado.",
+          "screenshot": "cerrar-ejercicio/04-cierre-confirmado.webp",
+          "tip": "Un ejercicio abierto no tiene snapshot exportable. La descarga aparece recién cuando el cierre ya fue confirmado."
+        }
+      ]
+    },
+    {
+      "id": "gestionar-curso-alumnos",
+      "title": "Crear curso, enrolar y supervisar alumnos",
+      "description": "Cómo un docente crea cursos, enrola alumnos disponibles y supervisa su actividad contable desde el panel docente.",
+      "roles": ["docente"],
+      "icon": "Users",
+      "estimatedTime": "6 min",
+      "tags": ["curso", "docente", "enrolamiento", "supervision", "alumnos"],
+      "steps": [
+        {
+          "id": "ga-01",
+          "title": "Abrir el panel docente",
+          "description": "Ingresá a **Supervision > Panel docente** para ver el resumen de cursos, alumnos enrolados y actividad general.",
+          "screenshot": "gestionar-curso-alumnos/01-panel-docente.webp",
+          "tip": null
+        },
+        {
+          "id": "ga-02",
+          "title": "Crear un curso",
+          "description": "Usá **+ Nuevo curso** para registrar un curso con su **Nombre del curso** y, si querés, un **Codigo (opcional)**. El curso queda listo para sumar alumnos.",
+          "screenshot": "gestionar-curso-alumnos/02-crear-curso.webp",
+          "tip": "Usar nombres claros y estables hace más fácil distinguir cursos de distintos años o divisiones."
+        },
+        {
+          "id": "ga-03",
+          "title": "Enrolar un alumno al curso",
+          "description": "Dentro del curso recién creado, usá **Enrolar alumno** para buscar estudiantes disponibles e inscribirlos al curso.",
+          "screenshot": "gestionar-curso-alumnos/03-enrolar-alumno.webp",
+          "tip": "Si no hay alumnos disponibles, primero necesitás contar con un estudiante registrado que todavía no pertenezca a ese curso."
+        },
+        {
+          "id": "ga-04",
+          "title": "Ver y supervisar alumnos",
+          "description": "Una vez enrolado el alumno, desde el curso podés usar **Ver detalle** para revisar sus empresas, sus asientos y su avance general.",
+          "screenshot": "gestionar-curso-alumnos/04-supervision-alumno.webp",
+          "tip": "La supervisión docente permite lectura y seguimiento, sin convertir esta vista en una vía de edición de empresas del alumno."
+        }
+      ]
+    },
+    {
+      "id": "definir-arbol-demos",
+      "title": "Definir visibilidad del plan de cuentas, demos y empresas compartidas",
+      "description": "Cómo un docente define visibilidad del plan de cuentas y administra las demos y empresas compartidas visibles para su curso.",
+      "roles": ["docente"],
+      "icon": "Settings",
+      "estimatedTime": "7 min",
+      "tags": ["visibilidad", "plan de cuentas", "demos", "empresas compartidas", "curso"],
+      "steps": [
+        {
+          "id": "da-01",
+          "title": "Configurar la visibilidad del plan de cuentas",
+          "description": "Desde **Supervision > Plan de cuentas**, abrí **Visibilidad del plan de cuentas** y configurá qué cuentas globales de nivel 0 y 1 quedan visibles para los alumnos.",
+          "screenshot": "definir-arbol-demos/01-visibilidad-arbol.webp",
+          "tip": "Esta configuración impacta la experiencia pedagógica del alumno y conviene definirla antes de que empiece a trabajar con nuevas empresas."
+        },
+        {
+          "id": "da-02",
+          "title": "Administrar demos del curso",
+          "description": "Desde el panel docente, dentro de cada curso, usá **Visibilidad del curso** para elegir qué **Empresas demo** publicadas querés mostrar a tus alumnos.",
+          "screenshot": "definir-arbol-demos/02-demos-del-curso.webp",
+          "tip": "Las demos siguen siendo de solo lectura para el alumno y sirven como referencia de operatoria."
+        },
+        {
+          "id": "da-03",
+          "title": "Compartir empresas propias con el curso",
+          "description": "En la misma gestión de visibilidad, dentro de **Empresas compartidas**, podés compartir **solo tus propias empresas** con el curso para que los alumnos las consulten.",
+          "screenshot": "definir-arbol-demos/03-empresas-compartidas.webp",
+          "tip": "La regla actual no permite compartir empresas de alumnos ni de otros docentes desde esta sección."
+        },
+        {
+          "id": "da-04",
+          "title": "Ver el efecto en la experiencia del alumno",
+          "description": "Las cuentas visibles, las demos habilitadas y las empresas compartidas impactan directamente en lo que el alumno puede ver desde **Empresas**, en el selector de empresa y en sus vistas de consulta.",
+          "screenshot": "definir-arbol-demos/04-resultado-alumno.webp",
+          "tip": "La idea de esta configuración es graduar el contenido visible por curso sin romper la coherencia general del simulador."
+        }
+      ]
+    }
+  ]
+}

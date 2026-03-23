@@ -114,13 +114,24 @@ export async function openAsientosMenu(page: Page) {
 }
 
 export async function openSupervisionMenu(page: Page) {
+  const mobileMenuButton = page.getByRole('button', { name: /toggle navigation menu|menu/i })
+  if (await mobileMenuButton.isVisible().catch(() => false)) {
+    const dashboardLink = page.getByRole('link', { name: 'Panel docente' })
+    if (!(await dashboardLink.isVisible().catch(() => false))) {
+      await mobileMenuButton.click()
+    }
+  }
+
   const button = page.getByRole('button', { name: 'Supervision' })
   const link = page.getByRole('link', { name: 'Panel docente' })
 
   if (await button.isVisible().catch(() => false)) {
-    await button.click()
-    if (!(await link.isVisible().catch(() => false))) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
       await button.click()
+      await page.waitForTimeout(120)
+      if (await link.isVisible().catch(() => false)) {
+        break
+      }
     }
   }
 

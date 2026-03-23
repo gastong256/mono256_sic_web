@@ -13,7 +13,7 @@ function renderGlossaryPage() {
 }
 
 describe('GlossaryPage', () => {
-  it('filters concepts by search term and opens the concept detail', async () => {
+  it('filters concepts by search term and opens the enriched concept detail', async () => {
     const user = userEvent.setup()
 
     renderGlossaryPage()
@@ -37,5 +37,20 @@ describe('GlossaryPage', () => {
     expect(
       within(detailPanel!).getByText(/surge de la diferencia entre el Activo y el Pasivo/i)
     ).toBeInTheDocument()
+    expect(within(detailPanel!).getByText('Ejemplo')).toBeInTheDocument()
+    expect(
+      within(detailPanel!).getByText(/si una empresa tiene un Activo de \$100\.000/i)
+    ).toBeInTheDocument()
+  })
+
+  it('finds concepts by extended detail content, not only by term', async () => {
+    const user = userEvent.setup()
+
+    renderGlossaryPage()
+
+    const searchInput = screen.getByLabelText('Buscar concepto o definición')
+    await user.type(searchInput, 'llave de negocio')
+
+    expect(await screen.findByText('Activo', { selector: 'h3' })).toBeInTheDocument()
   })
 })

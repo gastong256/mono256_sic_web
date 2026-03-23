@@ -22,6 +22,7 @@ const HomePage = lazy(() => import('@/pages/HomePage').then((m) => ({ default: m
 const GlossaryPage = lazy(() =>
   import('@/features/glossary').then((m) => ({ default: m.GlossaryPage }))
 )
+const ManualPage = lazy(() => import('@/features/manual').then((m) => ({ default: m.ManualPage })))
 
 const ProfilePage = lazy(() =>
   import('@/pages/ProfilePage').then((m) => ({ default: m.ProfilePage }))
@@ -119,6 +120,10 @@ export const router = createBrowserRouter([
       {
         element: <ProtectedRoute />,
         children: [
+          {
+            path: 'manual',
+            element: page(<ManualPage />),
+          },
           {
             path: 'companies',
             element: page(<CompaniesPage />),

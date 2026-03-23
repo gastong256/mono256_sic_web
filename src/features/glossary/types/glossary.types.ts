@@ -9,6 +9,9 @@ export interface GlossaryConcept {
   id: string
   term: string
   definition: string
+  details?: string | null
+  example?: string | null
+  contraExample?: string | null
   category: string
   tags: string[]
   relatedConcepts: string[]

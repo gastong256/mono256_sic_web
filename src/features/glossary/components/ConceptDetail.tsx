@@ -65,27 +65,69 @@ export function ConceptDetail({
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <span className="metric-chip">
-              Categoria: <span className="ml-1 font-semibold">{category.label}</span>
+          {(concept.details || concept.example || concept.contraExample) && (
+            <div className="grid gap-3 md:grid-cols-2">
+              {concept.details && (
+                <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-subtle)]/75 p-4 md:col-span-2">
+                  <p className="text-[0.72rem] font-semibold tracking-[0.08em] text-[var(--text-muted)] uppercase">
+                    Detalle importante
+                  </p>
+                  <p className="mt-2 text-[0.94rem] leading-7 text-[var(--text-strong)]/90">
+                    {concept.details}
+                  </p>
+                </div>
+              )}
+
+              {concept.example && (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/85 p-4">
+                  <p className="text-[0.72rem] font-semibold tracking-[0.08em] text-emerald-700 uppercase">
+                    Ejemplo
+                  </p>
+                  <p className="mt-2 text-[0.92rem] leading-7 text-emerald-950/85">
+                    {concept.example}
+                  </p>
+                </div>
+              )}
+
+              {concept.contraExample && (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/90 p-4">
+                  <p className="text-[0.72rem] font-semibold tracking-[0.08em] text-amber-700 uppercase">
+                    Contraejemplo
+                  </p>
+                  <p className="mt-2 text-[0.92rem] leading-7 text-amber-950/85">
+                    {concept.contraExample}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2.5">
+            <span className="inline-flex items-center rounded-full border border-[var(--border-soft)] bg-white px-2.5 py-1 text-[0.73rem] font-medium text-[var(--text-muted)]">
+              Categoria:{' '}
+              <span className="ml-1 font-semibold text-[var(--text-strong)]">{category.label}</span>
             </span>
-            <span className="metric-chip">
-              Unidad: <span className="ml-1 font-semibold">{category.unit}</span>
+            <span className="inline-flex items-center rounded-full border border-[var(--border-soft)] bg-white px-2.5 py-1 text-[0.73rem] font-medium text-[var(--text-muted)]">
+              Unidad:{' '}
+              <span className="ml-1 font-semibold text-[var(--text-strong)]">{category.unit}</span>
             </span>
-            <span className="metric-chip">
-              Pagina: <span className="ml-1 font-semibold">{concept.bookReference.page}</span>
+            <span className="inline-flex items-center rounded-full border border-[var(--border-soft)] bg-white px-2.5 py-1 text-[0.73rem] font-medium text-[var(--text-muted)]">
+              Pagina:{' '}
+              <span className="ml-1 font-semibold text-[var(--text-strong)]">
+                {concept.bookReference.page}
+              </span>
             </span>
           </div>
 
-          <div className="space-y-2">
-            <p className="text-[0.76rem] font-semibold tracking-[0.08em] text-[var(--text-muted)] uppercase">
+          <div className="space-y-2.5">
+            <p className="text-[0.72rem] font-semibold tracking-[0.08em] text-[var(--text-muted)] uppercase">
               Palabras clave
             </p>
             <div className="flex flex-wrap gap-2">
               {concept.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center rounded-full border border-[var(--border-soft)] bg-[var(--bg-subtle)] px-2.5 py-1 text-[0.76rem] font-medium text-[var(--text-muted)]"
+                  className="inline-flex items-center rounded-full border border-[var(--border-soft)] bg-[var(--bg-subtle)]/75 px-2.5 py-1 text-[0.73rem] font-medium text-[var(--text-muted)]"
                 >
                   {tag}
                 </span>
@@ -100,8 +142,8 @@ export function ConceptDetail({
       </div>
 
       {relatedConcepts.length > 0 && (
-        <div className="mt-5 space-y-2">
-          <p className="text-[0.76rem] font-semibold tracking-[0.08em] text-[var(--text-muted)] uppercase">
+        <div className="mt-5 space-y-2.5">
+          <p className="text-[0.72rem] font-semibold tracking-[0.08em] text-[var(--text-muted)] uppercase">
             Conceptos relacionados
           </p>
           <div className="flex flex-wrap gap-2">
@@ -110,7 +152,7 @@ export function ConceptDetail({
                 key={relatedConcept.id}
                 type="button"
                 onClick={() => onNavigate(relatedConcept.id)}
-                className="inline-flex items-center gap-2 rounded-full border border-[var(--border-soft)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--text-muted)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-strong)]"
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--border-soft)] bg-white px-3 py-1.5 text-[0.82rem] font-medium text-[var(--text-muted)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-strong)]"
               >
                 <span>{relatedConcept.term}</span>
                 <span className="text-[0.72rem] text-[var(--text-muted)]/90">

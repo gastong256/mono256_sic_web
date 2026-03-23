@@ -40,7 +40,7 @@ function shouldHideCompanySelector(pathname: string) {
 }
 
 export function Layout() {
-  const { accessToken, user } = useAuthStore()
+  const { accessToken, refreshToken, user } = useAuthStore()
   const navRef = useRef<HTMLElement | null>(null)
   const [asientosOpen, setAsientosOpen] = useState(false)
   const [librosOpen, setLibrosOpen] = useState(false)
@@ -55,7 +55,7 @@ export function Layout() {
   const canViewTeacher =
     bootstrap?.capabilities?.can_manage_courses ?? canViewTeacherDashboard(user)
   const canAssignRoles = bootstrap?.capabilities?.can_manage_roles ?? canManageRoles(user)
-  const isAuthenticated = Boolean(accessToken)
+  const isAuthenticated = Boolean(accessToken ?? refreshToken)
   const hideCompanySelector = shouldHideCompanySelector(pathname)
   const showCompanySelector =
     isAuthenticated && !hideCompanySelector && (bootstrap?.companies?.length ?? 0) > 0
@@ -512,13 +512,25 @@ export function Layout() {
 
       <footer className="mt-4 border-t border-[var(--border-soft)]/80 bg-white/45 px-4 py-4 backdrop-blur-[1px]">
         <div className="mx-auto flex w-full max-w-6xl items-start justify-between gap-4">
-          <Link
-            to="/glosario"
-            className="inline-flex items-center gap-1.5 pt-0.5 text-[0.78rem] font-medium text-[var(--brand-600)] transition-colors hover:text-[var(--brand-700)]"
-          >
-            <AppIcon name="book" className="size-3.5" />
-            <span>Glosario de Conceptos</span>
-          </Link>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-0.5">
+            <Link
+              to="/glosario"
+              className="inline-flex items-center gap-1.5 text-[0.78rem] font-medium text-[var(--brand-600)] transition-colors hover:text-[var(--brand-700)]"
+            >
+              <AppIcon name="book" className="size-3.5" />
+              <span>Glosario de Conceptos</span>
+            </Link>
+
+            {isAuthenticated && (
+              <Link
+                to="/manual"
+                className="inline-flex items-center gap-1.5 text-[0.78rem] font-medium text-[var(--brand-600)] transition-colors hover:text-[var(--brand-700)]"
+              >
+                <AppIcon name="journal" className="size-3.5" />
+                <span>Manual de Usuario</span>
+              </Link>
+            )}
+          </div>
 
           <div className="space-y-1 text-left text-xs text-[var(--text-muted)]">
             <p className="inline-flex items-center gap-1.5 text-xs text-[var(--text-muted)]/75">

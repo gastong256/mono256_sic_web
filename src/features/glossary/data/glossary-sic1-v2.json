@@ -1,0 +1,1637 @@
+{
+  "meta": {
+    "version": "2.0.0",
+    "author": "Damián Roberto Antonio Angrisani / Claudia Lorena López",
+    "book": "Sistemas de Información Contable 1 (SIC 1)",
+    "edition": "2019",
+    "isbn": "978-987-1854-27-1",
+    "publisher": "Angrisani Editores",
+    "lastUpdated": "2026-03-22"
+  },
+  "categories": [
+    {
+      "id": "info-systems",
+      "label": "Sistemas de Información",
+      "icon": "Monitor",
+      "color": "#3B82F6",
+      "unit": 1
+    },
+    {
+      "id": "organizations",
+      "label": "Organizaciones y Empresas",
+      "icon": "Building2",
+      "color": "#8B5CF6",
+      "unit": 1
+    },
+    {
+      "id": "documents",
+      "label": "Documentos Comerciales",
+      "icon": "FileText",
+      "color": "#F59E0B",
+      "unit": 2
+    },
+    {
+      "id": "payment",
+      "label": "Medios de Pago",
+      "icon": "CreditCard",
+      "color": "#10B981",
+      "unit": 2
+    },
+    {
+      "id": "patrimony",
+      "label": "Patrimonio y Resultados",
+      "icon": "Scale",
+      "color": "#EF4444",
+      "unit": 3
+    },
+    {
+      "id": "accounts",
+      "label": "Cuentas Contables",
+      "icon": "BookOpen",
+      "color": "#EC4899",
+      "unit": 3
+    },
+    {
+      "id": "double-entry",
+      "label": "Partida Doble",
+      "icon": "GitBranch",
+      "color": "#6366F1",
+      "unit": 3
+    },
+    {
+      "id": "books",
+      "label": "Registros Contables",
+      "icon": "Library",
+      "color": "#14B8A6",
+      "unit": 4
+    },
+    {
+      "id": "tax",
+      "label": "Impuestos (IVA)",
+      "icon": "Receipt",
+      "color": "#F97316",
+      "unit": 5
+    },
+    {
+      "id": "companies",
+      "label": "Sociedades",
+      "icon": "Users",
+      "color": "#06B6D4",
+      "unit": 6
+    },
+    {
+      "id": "financial-statements",
+      "label": "Estados Contables",
+      "icon": "BarChart3",
+      "color": "#84CC16",
+      "unit": 7
+    }
+  ],
+  "concepts": [
+    {
+      "id": "actividad-economica",
+      "term": "Actividad Económica",
+      "definition": "Conjunto de acciones que la persona lleva a cabo para obtener bienes y servicios necesarios que le permitan satisfacer sus necesidades.",
+      "category": "organizations",
+      "tags": ["economía", "bienes", "servicios", "necesidades"],
+      "relatedConcepts": ["empresa", "factores-produccion", "agentes-economicos"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 12
+      },
+      "difficulty": "basic",
+      "example": "Un agricultor cultiva trigo (naturaleza + trabajo), lo vende a un molino (comercio) y con el dinero compra ropa para su familia (satisfacción de necesidades).",
+      "contraExample": "Una persona que cocina para sí misma no realiza actividad económica en sentido estricto, ya que no hay intercambio con terceros.",
+      "details": "Históricamente, la actividad económica evolucionó desde la recolección y la caza, pasando por la agricultura y la ganadería, hasta el comercio y la industria. Cada etapa incorporó nuevos factores de producción."
+    },
+    {
+      "id": "contabilidad",
+      "term": "Contabilidad",
+      "definition": "Disciplina técnica integrante del sistema de información de la empresa que se ocupa del procesamiento de datos sobre el patrimonio y su evolución, con la finalidad de generar información adecuada para la toma de decisiones de administradores, usuarios externos y para el control de los recursos y de las obligaciones.",
+      "category": "info-systems",
+      "tags": ["disciplina", "información", "patrimonio", "decisiones", "registración"],
+      "relatedConcepts": ["sistema-informacion", "patrimonio", "sistema-informacion-contable"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 33
+      },
+      "difficulty": "basic",
+      "example": "Una librería registra diariamente sus compras de libros a editoriales, las ventas a clientes, los pagos de alquiler y sueldos. Al fin del mes, sabe exactamente cuánto ganó o perdió.",
+      "contraExample": "Anotar gastos personales en una libreta no es contabilidad en sentido técnico, ya que no sigue un método sistemático ni utiliza el principio de partida doble.",
+      "details": "La contabilidad no es solo registración: incluye la metodología de captación de datos (reconocimiento, clasificación, identificación), la teneduría de libros, y el análisis e interpretación de la información para planificar y controlar."
+    },
+    {
+      "id": "informacion",
+      "term": "Información",
+      "definition": "Conjunto organizado de datos que constituyen un mensaje sobre un determinado ente o fenómeno, que modifica el estado de conocimiento del sujeto o sistema que recibe dicho mensaje. Son datos procesados que facilitan la toma de decisiones y permiten el seguimiento de las metas propuestas.",
+      "category": "info-systems",
+      "tags": ["datos", "mensaje", "conocimiento", "decisiones"],
+      "relatedConcepts": ["sistema-informacion", "decisiones", "comunicacion"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 13
+      },
+      "difficulty": "basic",
+      "example": "Si queremos organizar ir al cine, consultamos qué películas se proyectan y en qué salas. Esos datos organizados constituyen información que nos permite decidir.",
+      "contraExample": "Un conjunto de números sueltos sin contexto (42, 78, 15) son datos, no información. Recién cuando se organizan y tienen significado ('ventas del lunes: $42.000') se convierten en información.",
+      "details": "Requisitos de la buena información según el autor: debe ser oportuna, cierta y aproximada a la realidad, útil según el nivel de la organización, completa, y generada por un sistema confiable."
+    },
+    {
+      "id": "organizaciones",
+      "term": "Organizaciones",
+      "definition": "Unidades coordinadas que trabajan para alcanzar un objetivo o conjunto de objetivos comunes, asignando funciones, autoridad, responsabilidades, jerarquías y estableciendo relaciones que en dichas unidades deben existir para llevar a cabo las políticas empresariales.",
+      "category": "organizations",
+      "tags": ["objetivos", "funciones", "jerarquía", "coordinación"],
+      "relatedConcepts": ["empresa", "contexto-externo", "administracion"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 15
+      },
+      "difficulty": "basic",
+      "example": "Un club de fútbol barrial es una organización: tiene objetivos (competir, formar deportistas), miembros con roles definidos (presidente, tesorero, entrenador) y un reglamento interno.",
+      "contraExample": "Un grupo de amigos que se junta a jugar al fútbol los domingos no es una organización en sentido formal, ya que carece de estructura jerárquica, objetivos formalizados y funciones asignadas.",
+      "details": "Los elementos de una organización incluyen: recursos materiales (materias primas, maquinarias, inmuebles, dinero), recursos humanos (propietarios, empleados), recursos tecnológicos, recursos naturales y energéticos, ideas y conocimientos, y marcas y prestigio."
+    },
+    {
+      "id": "empresa",
+      "term": "Empresa",
+      "definition": "Organizaciones económicas que coordinan los factores de la producción, cuya actividad está destinada a la elaboración de bienes y/o servicios que se destinan al intercambio, con la finalidad de obtener el mayor beneficio.",
+      "category": "organizations",
+      "tags": ["producción", "bienes", "servicios", "beneficio", "comercio"],
+      "relatedConcepts": ["organizaciones", "factores-produccion", "ciclo-operativo"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 22
+      },
+      "difficulty": "basic",
+      "example": "Un supermercado es una empresa comercial: compra mercaderías a proveedores, las vende a consumidores, y busca obtener una ganancia que le permita seguir operando.",
+      "contraExample": "Una fundación que brinda almuerzos gratuitos no es una empresa, ya que su fin no es obtener un beneficio económico sino cumplir un objetivo social.",
+      "details": "Las empresas se clasifican según su actividad en: productivas (extractivas, rurales, industriales), comerciales (supermercados, librerías) y de servicios (turismo, transporte, publicidad)."
+    },
+    {
+      "id": "sistema-informacion",
+      "term": "Sistema de Información",
+      "definition": "Conjunto de procedimientos, integrado por la captación, procesamiento, elaboración y comunicación de datos e informes según las demandas y necesidades de usuarios internos y externos.",
+      "category": "info-systems",
+      "tags": ["procedimientos", "captación", "procesamiento", "comunicación", "datos"],
+      "relatedConcepts": ["informacion", "sistema-informacion-contable", "comunicacion"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 29
+      },
+      "difficulty": "basic",
+      "example": "El sistema de información de un hospital procesa datos de pacientes (entrada), los organiza en historias clínicas (proceso), y produce informes médicos para los doctores (salida).",
+      "details": "Fases previas a la creación de un sistema de información: definición de necesidades de información, análisis de los datos a utilizar, procesamiento de los datos, y elaboración de informes. Componentes: captación, almacenamiento, procesamiento y producción de informes."
+    },
+    {
+      "id": "sistema-informacion-contable",
+      "term": "Sistema de Información Contable",
+      "definition": "Parte del sistema de información de la empresa que se ocupa del procesamiento de datos referidos al patrimonio. Comprende la captación de datos, la teneduría de libros, y el análisis e interpretación de la información para planificar la marcha de la empresa y controlar la ejecución de las decisiones.",
+      "category": "info-systems",
+      "tags": ["contabilidad", "patrimonio", "libros", "análisis", "planificación"],
+      "relatedConcepts": ["contabilidad", "sistema-informacion", "libros-comercio"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 32
+      },
+      "difficulty": "intermediate",
+      "example": "El sector contaduría de una empresa recibe facturas y recibos (entrada), los registra en los libros contables (proceso), y emite el Balance General y Estado de Resultados (salida).",
+      "details": "Entradas: datos de operaciones contenidos en documentos comerciales. Procesamiento: ordenar, reconocer, clasificar, identificar, seleccionar, registrar, comprobar, analizar y almacenar. Salidas: informes para usuarios internos y externos."
+    },
+    {
+      "id": "decisiones",
+      "term": "Decisiones",
+      "definition": "Medios para conseguir ciertos resultados o solucionar determinados problemas. El proceso de decisión implica: identificar el problema, establecer posibles soluciones, analizarlas y compararlas, y elegir la alternativa que mejor solucione la situación.",
+      "category": "info-systems",
+      "tags": ["proceso", "problemas", "soluciones", "alternativas"],
+      "relatedConcepts": ["informacion", "decisiones-programables", "decisiones-no-programables"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 26
+      },
+      "difficulty": "basic",
+      "example": "Un gerente de ventas nota que las ventas bajaron un 20%. Identifica el problema, analiza opciones (bajar precios, hacer publicidad, cambiar proveedor), compara costos y beneficios, y decide lanzar una campaña publicitaria.",
+      "details": "La decisión supera a la simple elección: constituye un proceso continuo de identificar el problema, establecer y analizar posibles soluciones, y elegir la mejor alternativa."
+    },
+    {
+      "id": "decisiones-programables",
+      "term": "Decisiones Programables",
+      "definition": "Decisiones que derivan de una situación rutinaria que se repite a menudo, creándose un procedimiento para su resolución. Son tomadas especialmente en el nivel operativo.",
+      "category": "info-systems",
+      "tags": ["rutina", "procedimiento", "nivel operativo"],
+      "relatedConcepts": ["decisiones", "decisiones-no-programables", "piramide-organizacional"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 26
+      },
+      "difficulty": "intermediate",
+      "example": "Un empleado de depósito sigue siempre el mismo procedimiento para reponer mercadería cuando el stock baja de 10 unidades: hacer una orden de compra al proveedor habitual.",
+      "contraExample": "Decidir si la empresa debe abrir una sucursal en otra ciudad no es programable: es una situación nueva, compleja y estratégica."
+    },
+    {
+      "id": "decisiones-no-programables",
+      "term": "Decisiones No Programables",
+      "definition": "Decisiones nuevas y no estructuradas. No existe un procedimiento para resolver el problema porque es nuevo, muy complejo o de gran importancia. Son tomadas por los niveles superiores y tácticos de la organización.",
+      "category": "info-systems",
+      "tags": ["estratégico", "complejo", "nivel superior"],
+      "relatedConcepts": ["decisiones", "decisiones-programables", "piramide-organizacional"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 26
+      },
+      "difficulty": "intermediate",
+      "example": "El directorio de una empresa decide fusionarse con un competidor ante una crisis del mercado. No hay procedimiento previo para esta situación: es nueva, compleja y afecta a toda la organización.",
+      "contraExample": "Decidir a qué proveedor comprarle insumos cada semana no es una decisión no programable: es rutinaria y repetitiva."
+    },
+    {
+      "id": "comunicacion",
+      "term": "Comunicación",
+      "definition": "Proceso cuyo objetivo es difundir la información. Involucra un emisor (quien busca transmitir la información), un mensaje (la información que se transmite) y un receptor (la persona que recibe y analiza el mensaje).",
+      "category": "info-systems",
+      "tags": ["emisor", "mensaje", "receptor", "difusión"],
+      "relatedConcepts": ["informacion", "retroalimentacion"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 30
+      },
+      "difficulty": "basic",
+      "example": "El gerente (emisor) envía un email (mensaje escrito) al jefe de ventas (receptor) indicando las metas del mes. El jefe de ventas responde confirmando que las recibió (retroalimentación).",
+      "details": "Las formas de registrar un mensaje son: escrita (medio de prueba indiscutible), verbal (más directa, permite aclarar dudas) y gestual (gestos y movimientos del cuerpo que pueden complementar o contradecir el mensaje verbal)."
+    },
+    {
+      "id": "retroalimentacion",
+      "term": "Retroalimentación",
+      "definition": "Función que compara los resultados obtenidos con los objetivos propuestos. Se verifica cuando quien recibe la comunicación informa a quien la emite cómo se ejecutó el mensaje, generando una nueva corriente de entrada en respuesta a los resultados.",
+      "category": "info-systems",
+      "tags": ["control", "resultados", "objetivos", "feedback"],
+      "relatedConcepts": ["comunicacion", "sistema-informacion"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 28
+      },
+      "difficulty": "intermediate",
+      "example": "Una fábrica produce 1.000 unidades mensuales (objetivo: 1.200). Al comparar, detecta la brecha y modifica su proceso productivo (más turnos) para alcanzar la meta al mes siguiente.",
+      "details": "Es el mecanismo que genera una nueva corriente de entrada en respuesta a los resultados obtenidos, permitiendo modificar entradas, procesos y controlar si las nuevas salidas se aproximan a los objetivos."
+    },
+    {
+      "id": "contexto-externo",
+      "term": "Contexto Externo",
+      "definition": "Factores ajenos a la organización que afectan su desenvolvimiento. Incluye fuerzas directas (consumidores, competidores, proveedores, organismos gubernamentales) y fuerzas indirectas (tecnológicas, económicas, políticas, legales, culturales, sociales, internacionales).",
+      "category": "organizations",
+      "tags": ["entorno", "fuerzas directas", "fuerzas indirectas", "mercado"],
+      "relatedConcepts": ["organizaciones", "contexto-interno"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 18
+      },
+      "difficulty": "intermediate",
+      "example": "Una panadería se ve afectada por el aumento del precio de la harina (fuerza económica), una nueva regulación de bromatología (fuerza legal) y la apertura de otra panadería en la misma cuadra (competidor).",
+      "details": "Un contexto favorable brinda condiciones propicias para el crecimiento. Un contexto desfavorable permite un escaso margen de crecimiento."
+    },
+    {
+      "id": "contexto-interno",
+      "term": "Contexto Interno",
+      "definition": "Involucra la estructura y los participantes de la organización. Constituye el marco donde se llevan a cabo los procesos decisorios y donde se relacionan los recursos materiales y humanos en forma coordinada.",
+      "category": "organizations",
+      "tags": ["estructura", "participantes", "recursos", "procesos"],
+      "relatedConcepts": ["organizaciones", "contexto-externo", "administracion"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 18
+      },
+      "difficulty": "intermediate",
+      "example": "La estructura interna de un comercio incluye al dueño (nivel superior), al encargado de local (nivel medio) y a los vendedores y cajeros (nivel operativo), cada uno con funciones específicas."
+    },
+    {
+      "id": "administracion",
+      "term": "Administración",
+      "definition": "Tiene como objetivo las organizaciones, su estudio, comprensión y gestión. Sus funciones son: planeamiento (establece metas y recursos), organización (establece reglas y relaciones jerárquicas), dirección (guía los componentes) y control (verifica tareas y eficacia de recursos).",
+      "category": "organizations",
+      "tags": ["planeamiento", "organización", "dirección", "control", "gestión"],
+      "relatedConcepts": ["organizaciones", "piramide-organizacional"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 19
+      },
+      "difficulty": "basic",
+      "example": "El dueño de un comercio planifica las compras de temporada (planeamiento), asigna tareas a cada empleado (organización), supervisa la atención al cliente (dirección) y revisa las ventas al cierre del día (control).",
+      "details": "Las cuatro funciones fundamentales: Planeamiento (establece metas y recursos), Organización (establece reglas y relaciones jerárquicas), Dirección (guía los componentes hacia los objetivos) y Control (verifica tareas y uso eficaz de recursos)."
+    },
+    {
+      "id": "piramide-organizacional",
+      "term": "Pirámide Organizacional",
+      "definition": "Estructura jerárquica de la organización según responsabilidades de decisión. Tiene tres niveles: Superior o Estratégico (decisiones que afectan a toda la organización), Medio o Táctico (decisiones de un área específica), e Inferior u Operativo (tareas rutinarias con escaso margen de decisión).",
+      "category": "organizations",
+      "tags": ["jerarquía", "niveles", "estratégico", "táctico", "operativo"],
+      "relatedConcepts": [
+        "administracion",
+        "decisiones-programables",
+        "decisiones-no-programables"
+      ],
+      "bookReference": {
+        "chapter": 1,
+        "page": 20
+      },
+      "difficulty": "intermediate",
+      "example": "En una empresa: el directorio decide expandirse a otra provincia (nivel estratégico), el gerente de ventas organiza el equipo comercial para la nueva zona (nivel táctico), y los vendedores visitan clientes según la hoja de ruta asignada (nivel operativo).",
+      "details": "Existen dos divisiones del trabajo: horizontal (divide en tareas: compras, ventas, etc.) y vertical (genera la estructura jerárquica según responsabilidades de decisión)."
+    },
+    {
+      "id": "factores-produccion",
+      "term": "Factores de la Producción",
+      "definition": "Elementos que intervienen en el proceso productivo de una empresa: Naturaleza (recursos naturales), Capital (bienes de producción), Trabajo (esfuerzo humano) y Actitud Empresarial (capacidad de organizar y dirigir).",
+      "category": "organizations",
+      "tags": ["naturaleza", "capital", "trabajo", "producción"],
+      "relatedConcepts": ["empresa", "agentes-economicos"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 22
+      },
+      "difficulty": "basic",
+      "example": "Para fabricar pan: la harina proviene de la naturaleza, el horno es capital, el panadero aporta el trabajo, y el dueño de la panadería aporta la actitud empresarial al organizar y dirigir el negocio.",
+      "details": "La retribución de cada factor: la naturaleza se retribuye con la renta, el capital con el interés, el trabajo con el salario, y la actitud empresarial con el beneficio."
+    },
+    {
+      "id": "agentes-economicos",
+      "term": "Agentes Económicos",
+      "definition": "Son los responsables de la actividad económica dentro de la economía de un país: las familias (consumidores que suministran factores productivos), las empresas (productoras de bienes y servicios) y el sector público.",
+      "category": "organizations",
+      "tags": ["familias", "empresas", "sector público", "economía"],
+      "relatedConcepts": ["empresa", "actividad-economica", "factores-produccion"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 22
+      },
+      "difficulty": "basic",
+      "example": "Las familias compran alimentos en el supermercado (consumo) y a cambio trabajan en empresas (ofrecen trabajo). Las empresas producen y venden. El Estado cobra impuestos y brinda servicios públicos."
+    },
+    {
+      "id": "ciclo-operativo",
+      "term": "Ciclo Operativo",
+      "definition": "Conjunto de actividades básicas que realiza cualquier empresa para alcanzar sus objetivos. En una empresa comercial: compras, pagos, ventas, cobros. En una empresa industrial, se agrega la fabricación o elaboración del producto.",
+      "category": "organizations",
+      "tags": ["compras", "pagos", "ventas", "cobros", "fabricación"],
+      "relatedConcepts": ["empresa", "documentos-comerciales"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 35
+      },
+      "difficulty": "basic",
+      "example": "Una zapatería: compra zapatillas a un proveedor (compra), le paga (pago), las exhibe y vende a clientes (venta), y cobra el dinero (cobro). Luego reinicia el ciclo con nuevas compras.",
+      "contraExample": "Una empresa industrial tiene un paso adicional: después de comprar materia prima y antes de vender, debe fabricar el producto terminado.",
+      "details": "La registración manual directa sigue la secuencia: Documentos Comerciales → Asiento en Libro Diario → Mayorización."
+    },
+    {
+      "id": "documentos-comerciales",
+      "term": "Documentos Comerciales",
+      "definition": "Todos los comprobantes extendidos por escrito en los que se deja constancia de las operaciones que se realizan en la actividad comercial, de acuerdo con los usos y costumbres generalizados y las disposiciones de la ley. Son de vital importancia para mantener un apropiado control de todas las acciones que se realizan en las empresas.",
+      "category": "documents",
+      "tags": ["comprobantes", "operaciones", "control", "registración", "fuente"],
+      "relatedConcepts": [
+        "factura",
+        "recibo",
+        "nota-debito",
+        "nota-credito",
+        "remito",
+        "orden-compra"
+      ],
+      "bookReference": {
+        "chapter": 2,
+        "page": 39
+      },
+      "difficulty": "basic",
+      "example": "Una factura de compra de mercaderías, un recibo por el pago del alquiler del local, un pagaré firmado a un proveedor: todos son documentos comerciales que respaldan operaciones y sirven como fuente de registración contable.",
+      "details": "Se clasifican en: de uso externo (emitidos fuera de la empresa, como facturas de compra) y de uso interno (emitidos por la empresa, como facturas de venta). Partes: encabezamiento, detalle y delimitación de responsabilidad."
+    },
+    {
+      "id": "orden-compra",
+      "term": "Orden de Compra o Nota de Pedido",
+      "definition": "Comprobante que emite el comprador para pedir mercaderías al vendedor, indicando cantidad, detalle, precio, condiciones de pago y forma de entrega. Este documento obliga a ambas partes a realizar la operación en los términos establecidos.",
+      "category": "documents",
+      "tags": ["comprador", "pedido", "mercaderías", "obligación"],
+      "relatedConcepts": ["documentos-comerciales", "remito", "factura"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 42
+      },
+      "difficulty": "basic",
+      "example": "Una librería envía una Nota de Pedido a una editorial solicitando 50 ejemplares de un libro, a $500 cada uno, con pago a 30 días y entrega en el local.",
+      "details": "Original para el vendedor, duplicado para el comprador. No es válida como factura y lleva la letra 'X'. Obliga a ambas partes a realizar la operación."
+    },
+    {
+      "id": "remito",
+      "term": "Remito",
+      "definition": "Documento que confecciona el vendedor y se utiliza para ejecutar la entrega o remisión de los bienes vendidos. La persona que recibe los bienes deja constancia de su conformidad, y con ello queda concretado el derecho del vendedor a cobrar y la obligación del comprador a pagar.",
+      "category": "documents",
+      "tags": ["vendedor", "entrega", "bienes", "conformidad"],
+      "relatedConcepts": ["documentos-comerciales", "factura", "orden-compra"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 43
+      },
+      "difficulty": "basic",
+      "example": "La editorial envía los 50 libros con un remito. El encargado de la librería los recibe, cuenta las unidades, verifica que coincidan con el pedido y firma el remito dejando constancia de su conformidad.",
+      "details": "Se emite en tres ejemplares: original (comprador), duplicado (vendedor, firmado por el comprador) y triplicado (transportista). Lleva la letra 'R' para responsables inscriptos o 'X' para exentos y monotributistas."
+    },
+    {
+      "id": "factura",
+      "term": "Factura",
+      "definition": "Documento que el vendedor le entrega al comprador, detallando las mercaderías vendidas (indicando cantidades, naturaleza, precio y demás condiciones de la venta) o prestación de servicios a crédito o al contado. Existen tipos A, B, C, E y M según la condición fiscal.",
+      "category": "documents",
+      "tags": ["venta", "compra", "IVA", "responsable inscripto", "consumidor final"],
+      "relatedConcepts": ["documentos-comerciales", "iva", "factura-electronica"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 44
+      },
+      "difficulty": "basic",
+      "example": "Un responsable inscripto vende 10 monederos a $65 c/u a otro responsable inscripto: emite Factura A por $650 + IVA 21% ($136,50) = Total $786,50. Si el comprador fuera consumidor final, emite Factura B por $786,50 sin discriminar el IVA.",
+      "details": "Factura A: entre responsables inscriptos, discrimina IVA. Factura B: a consumidor final, monotributista o exento, IVA incluido. Factura C: emitida por monotributistas o exentos. Factura E: exportaciones. Factura M: para nuevos responsables inscriptos que no cumplen ciertos requisitos patrimoniales."
+    },
+    {
+      "id": "factura-electronica",
+      "term": "Factura Electrónica",
+      "definition": "Comprobante electrónico obligatorio para responsables inscriptos en IVA y determinados monotributistas. Para su emisión se debe solicitar a la AFIP el Código de Autorización Electrónico (CAE). Reemplaza a los comprobantes preimpresos tradicionales.",
+      "category": "documents",
+      "tags": ["electrónica", "CAE", "AFIP", "digital"],
+      "relatedConcepts": ["factura", "iva", "afip"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 48
+      },
+      "difficulty": "intermediate",
+      "example": "Un comercio responsable inscripto emite sus facturas desde el portal de AFIP o un software autorizado. Para cada factura solicita un CAE (Código de Autorización Electrónico) que valida la operación.",
+      "details": "Obligatoria para responsables inscriptos en IVA y monotributistas de categorías H a L. Los sujetos que realizan operaciones a domicilio (plomeros, etc.) están exceptuados. Los que usan controlador fiscal están excluidos."
+    },
+    {
+      "id": "ticket",
+      "term": "Ticket",
+      "definition": "Comprobante que cumple la misma función que la factura y se utiliza generalmente en operaciones de pequeños importes. Lo emite el vendedor por medio de máquinas registradoras autorizadas por la AFIP. Debe contener la leyenda 'CF DGI' para tener validez fiscal.",
+      "category": "documents",
+      "tags": ["controlador fiscal", "consumidor final", "pequeños importes"],
+      "relatedConcepts": ["factura", "documentos-comerciales"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 53
+      },
+      "difficulty": "basic",
+      "example": "Un kiosco emite un ticket por la venta de golosinas a un consumidor final mediante su máquina registradora fiscal. El ticket lleva la leyenda 'CF DGI' al pie.",
+      "contraExample": "Un ticket emitido por una máquina registradora sin homologar por AFIP (sin leyenda 'CF DGI') NO tiene validez fiscal.",
+      "details": "Para operaciones de $1.000 o más, no pueden extenderse tickets y debe emitirse la factura correspondiente."
+    },
+    {
+      "id": "nota-debito",
+      "term": "Nota de Débito",
+      "definition": "Comprobante que envía el vendedor al comprador comunicándole que aumentó su deuda. Motivos: gastos a cargo del comprador abonados por el vendedor (fletes, comisiones), facturación de menos, o cobro de intereses.",
+      "category": "documents",
+      "tags": ["aumento deuda", "vendedor", "comprador", "intereses"],
+      "relatedConcepts": ["factura", "nota-credito", "documentos-comerciales"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 54
+      },
+      "difficulty": "basic",
+      "example": "Un proveedor envía una Nota de Débito a su cliente por $200 en concepto de flete que pagó por cuenta del comprador, referenciando la Factura N° 1204."
+    },
+    {
+      "id": "nota-credito",
+      "term": "Nota de Crédito",
+      "definition": "Comprobante que envía el vendedor al comprador comunicándole que disminuyó su deuda. Motivos: devolución de mercaderías, facturación de más, bonificaciones, quitas, descuentos o rescisiones de operaciones.",
+      "category": "documents",
+      "tags": ["disminución deuda", "devolución", "bonificación", "descuento"],
+      "relatedConcepts": ["factura", "nota-debito", "documentos-comerciales"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 55
+      },
+      "difficulty": "basic",
+      "example": "Un cliente devuelve 5 unidades defectuosas de un lote de mercaderías. El vendedor emite una Nota de Crédito disminuyendo la deuda del comprador por el valor de esas 5 unidades."
+    },
+    {
+      "id": "recibo",
+      "term": "Recibo",
+      "definition": "Comprobante que envía el vendedor al comprador como constancia de haber recibido dinero, cheques, pagarés u otros valores. Los recibos tipo 'X' respaldan el pago total o parcial de una operación documentada y llevan la leyenda 'documento no válido como factura'.",
+      "category": "documents",
+      "tags": ["constancia", "pago", "dinero", "cheques", "valores"],
+      "relatedConcepts": ["documentos-comerciales", "cheque", "pagare"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 56
+      },
+      "difficulty": "basic",
+      "example": "Una empresa cobra $5.000 en efectivo a un cliente. Le entrega un recibo como constancia del pago recibido, detallando el motivo (cancelación Factura N° 456) y el medio de pago (efectivo)."
+    },
+    {
+      "id": "resumen-cuenta",
+      "term": "Resumen de Cuenta",
+      "definition": "Documento que envía en forma periódica (mensualmente) el vendedor al comprador detallando las operaciones efectuadas en cuenta corriente: compras, pagos, notas de débito y crédito.",
+      "category": "documents",
+      "tags": ["cuenta corriente", "periódico", "detalle operaciones"],
+      "relatedConcepts": ["documentos-comerciales", "factura", "nota-debito", "nota-credito"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 57
+      },
+      "difficulty": "basic",
+      "example": "Una distribuidora envía un resumen mensual a su cliente mostrando: saldo anterior $10.000, Factura N° 100 $5.000 (Debe), Recibo N° 200 $8.000 (Haber), Saldo actual $7.000."
+    },
+    {
+      "id": "pagare",
+      "term": "Pagaré",
+      "definition": "Documento por el cual una persona (librador) se compromete a pagar a otra (beneficiario) una suma de dinero, en un plazo determinado. Puede vencer a la vista, a tantos días de la fecha, o a día fijo. Es transferible mediante endoso.",
+      "category": "payment",
+      "tags": ["librador", "beneficiario", "endoso", "vencimiento", "deuda"],
+      "relatedConcepts": ["documentos-comerciales", "endoso", "protesto", "documentos-cobrar"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 58
+      },
+      "difficulty": "basic",
+      "example": "Juan compra muebles por $15.000 y firma un pagaré a 60 días a favor del vendedor. El pagaré tiene un talón (queda con Juan como constancia de su deuda) y un cuerpo (queda con el vendedor como documento a cobrar).",
+      "details": "Vencimientos posibles: a la vista (se paga al presentar), a tantos días de la fecha (se cuenta desde la emisión), a día fijo (fecha exacta). El aval es cuando un tercero garantiza el pago."
+    },
+    {
+      "id": "endoso",
+      "term": "Endoso",
+      "definition": "Acto por el cual una persona transfiere a otra los derechos de cobro de un documento, firmando al dorso del mismo. Puede ser en blanco (solo firma) o completo (firma con fecha y datos del nuevo beneficiario).",
+      "category": "payment",
+      "tags": ["transferencia", "documento", "firma", "derechos de cobro"],
+      "relatedConcepts": ["pagare", "cheque"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 59
+      },
+      "difficulty": "intermediate",
+      "example": "Pedro recibe un cheque de $3.000 de un cliente. Como Pedro le debe $3.000 a un proveedor, endosa el cheque firmando al dorso y se lo entrega al proveedor en pago de su deuda.",
+      "details": "Para cheques comunes se admite un solo endoso; para cheques de pago diferido, hasta dos endosos (limitación del BCRA)."
+    },
+    {
+      "id": "protesto",
+      "term": "Protesto",
+      "definition": "Acto por el cual el beneficiario o tenedor de un documento deja constancia ante un escribano público que el pagaré no ha sido abonado a su vencimiento.",
+      "category": "payment",
+      "tags": ["impago", "escribano", "constancia legal"],
+      "relatedConcepts": ["pagare", "endoso"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 59
+      },
+      "difficulty": "intermediate",
+      "example": "Un pagaré venció el 15/03 y el librador no lo pagó. El beneficiario concurre con un escribano público, quien deja constancia formal del impago. Esto habilita al beneficiario a iniciar acciones legales."
+    },
+    {
+      "id": "boleta-deposito",
+      "term": "Boleta de Depósito",
+      "definition": "Documento que el banco entrega a sus clientes declarando haber recibido dinero, cheques, giros u otros valores en calidad de depósito en cuenta corriente o caja de ahorro.",
+      "category": "payment",
+      "tags": ["banco", "depósito", "cuenta corriente", "caja de ahorro"],
+      "relatedConcepts": ["cheque", "cuenta-corriente-bancaria"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 60
+      },
+      "difficulty": "basic",
+      "example": "Un comerciante deposita $20.000 en efectivo y un cheque de $5.000 en su cuenta corriente del Banco Nación. El banco le entrega una boleta de depósito que detalla los valores depositados y el total: $25.000.",
+      "details": "Los depósitos se clasifican: según el beneficiario (individual, conjunta, recíproca), según disponibilidad (plazo fijo, cuenta corriente, caja de ahorro), según los valores (pesos, dólares)."
+    },
+    {
+      "id": "cheque",
+      "term": "Cheque",
+      "definition": "Orden de pago que se libra contra un banco a favor de un beneficiario, quien puede canjearlo por dinero o depositarlo en su cuenta bancaria. Existen cheques comunes (pago inmediato) y de pago diferido (fecha futura, máximo 360 días). Intervienen: librador, banco, beneficiario y endosante.",
+      "category": "payment",
+      "tags": ["orden de pago", "banco", "librador", "beneficiario", "diferido"],
+      "relatedConcepts": ["cuenta-corriente-bancaria", "endoso", "boleta-deposito"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 62
+      },
+      "difficulty": "basic",
+      "example": "María emite un cheque común por $8.000 del Banco Provincia a favor de su proveedor para cancelar una factura. El proveedor puede cobrarlo de inmediato o depositarlo en su cuenta.",
+      "contraExample": "Un cheque de pago diferido con fecha de cobro a 90 días NO puede ser cobrado antes de esa fecha, a diferencia del cheque común.",
+      "details": "Modalidades: al portador, a la orden, no a la orden. Puede ser certificado (banco garantiza fondos por 5 días hábiles), cruzado (solo se puede depositar, no cobrar en efectivo), cheque viajero (travelers check) o cancelatorio."
+    },
+    {
+      "id": "tarjeta-plastica",
+      "term": "Tarjeta Plástica",
+      "definition": "Medio de pago personal e intransferible que puede ser utilizado de la misma forma que el dinero en efectivo en los comercios adheridos al servicio. Incluye tarjetas de compra, de crédito, de débito y cuentas integradas.",
+      "category": "payment",
+      "tags": ["medio de pago", "crédito", "débito", "comercios adheridos"],
+      "relatedConcepts": ["cheque", "debito-automatico"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 70
+      },
+      "difficulty": "basic",
+      "example": "Un empleado recibe su sueldo en una caja de ahorro y usa la tarjeta de débito (ej: Maestro) para pagar compras en el supermercado, debitándose automáticamente de su cuenta.",
+      "details": "Personas que intervienen: entidad propietaria (ej: Visa), entidad emisora (ej: un banco), entidad pagadora, socios (usuarios) y establecimientos adheridos."
+    },
+    {
+      "id": "debito-automatico",
+      "term": "Débito Automático",
+      "definition": "Operación que permite, previa autorización del cliente, que sus facturas sean debitadas (cobradas) automáticamente el día de su vencimiento de su cuenta corriente, caja de ahorro o tarjeta de crédito.",
+      "category": "payment",
+      "tags": ["automático", "vencimiento", "autorización", "servicios"],
+      "relatedConcepts": ["tarjeta-plastica", "cuenta-corriente-bancaria"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 74
+      },
+      "difficulty": "basic",
+      "example": "Un contribuyente autoriza a su banco a debitar automáticamente de su caja de ahorro el importe de las facturas de luz, gas y teléfono en cada vencimiento."
+    },
+    {
+      "id": "patrimonio",
+      "term": "Patrimonio",
+      "definition": "Conjunto de bienes económicos, los derechos contra terceros, como así también las obligaciones a pagar, expresados todos estos elementos en unidades monetarias. Sus partes son: Activo (recursos económicos), Pasivo (obligaciones) y Patrimonio Neto (diferencia entre Activo y Pasivo).",
+      "category": "patrimony",
+      "tags": ["bienes", "derechos", "obligaciones", "unidades monetarias"],
+      "relatedConcepts": ["activo", "pasivo", "patrimonio-neto", "ecuacion-patrimonial"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 78
+      },
+      "difficulty": "basic",
+      "example": "Una empresa tiene: dinero en caja $10.000, mercaderías $30.000, un local $200.000 (bienes = Activo $240.000), debe a un proveedor $15.000 (obligaciones = Pasivo $15.000). Su Patrimonio Neto es $225.000.",
+      "details": "El patrimonio incluye bienes económicos (materiales e inmateriales con valor económico), derechos contra terceros (créditos a favor) y obligaciones a pagar (deudas a favor de terceros), todos expresados en unidades monetarias."
+    },
+    {
+      "id": "activo",
+      "term": "Activo",
+      "definition": "Recursos económicos que posee la empresa. Se integra con dinero en caja y/o bancos, bienes (tangibles e intangibles, identificables y no identificables) y derechos a cobrar (de recibir sumas de dinero, bienes o servicios). Es sinónimo de recursos o inversión.",
+      "category": "patrimony",
+      "tags": ["bienes", "recursos", "inversión", "derechos", "tangibles", "intangibles"],
+      "relatedConcepts": ["patrimonio", "pasivo", "patrimonio-neto"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 78
+      },
+      "difficulty": "basic",
+      "example": "Activo de una empresa: Caja $5.000, Banco Nación c/c $20.000, Mercaderías $40.000, Muebles y Útiles $8.000, Deudores por Ventas $12.000. Total Activo: $85.000.",
+      "details": "Los bienes se clasifican en: identificables (tangibles como muebles o intangibles como patentes) y no identificables (intangibles que solo tienen valor con la empresa en marcha, como la Llave de Negocio). Según su incorporación: adquiridos o producidos por la empresa."
+    },
+    {
+      "id": "pasivo",
+      "term": "Pasivo",
+      "definition": "Total de las obligaciones de la empresa hacia terceros en un momento determinado y expresado en unidades monetarias. Puede clasificarse en obligaciones de dar (sumas de dinero o bienes), de hacer (servicios), y según su certeza en ciertas o contingentes.",
+      "category": "patrimony",
+      "tags": ["obligaciones", "deudas", "terceros", "contingentes"],
+      "relatedConcepts": ["patrimonio", "activo", "patrimonio-neto"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 80
+      },
+      "difficulty": "basic",
+      "example": "Pasivo de una empresa: Proveedores $8.000, Documentos a Pagar $15.000, Acreedores Varios $3.000. Total Pasivo: $26.000. Son todas las deudas que la empresa tiene con terceros.",
+      "details": "Se clasifica en obligaciones de dar (sumas de dinero o bienes) y de hacer (servicios). Según certeza: ciertas (la mayoría) o contingentes (dependen de un hecho futuro incierto)."
+    },
+    {
+      "id": "patrimonio-neto",
+      "term": "Patrimonio Neto",
+      "definition": "Surge de la diferencia entre el Activo y el Pasivo de una empresa, expresado en unidades monetarias. Se denomina 'neto' porque es una magnitud que surge por diferencia. Ecuación fundamental: Activo - Pasivo = Patrimonio Neto.",
+      "category": "patrimony",
+      "tags": ["diferencia", "activo", "pasivo", "capital", "ecuación"],
+      "relatedConcepts": ["activo", "pasivo", "ecuacion-patrimonial", "capital"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 81
+      },
+      "difficulty": "basic",
+      "example": "Si una empresa tiene un Activo de $100.000 y un Pasivo de $60.000, su Patrimonio Neto es $40.000. Esto representa la participación real de los dueños en la empresa."
+    },
+    {
+      "id": "ecuacion-patrimonial",
+      "term": "Ecuación Patrimonial",
+      "definition": "Relación fundamental de la contabilidad: Activo = Pasivo + Capital (Patrimonio Neto). También expresada como: Activo - Pasivo = Capital. Permite determinar cualquier componente conociendo los otros dos.",
+      "category": "patrimony",
+      "tags": ["ecuación", "igualdad", "balance"],
+      "relatedConcepts": ["activo", "pasivo", "patrimonio-neto"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 81
+      },
+      "difficulty": "basic",
+      "example": "Activo $80.000 = Pasivo $30.000 + Patrimonio Neto $50.000. Si conocemos dos de estos valores, siempre podemos calcular el tercero: P.N. = $80.000 - $30.000 = $50.000."
+    },
+    {
+      "id": "cuenta",
+      "term": "Cuenta",
+      "definition": "Agrupación de conceptos con características similares que integran el patrimonio y los resultados. Tiene cinco partes: Nombre (identifica el grupo), Debe (débitos o partidas ingresadas), Haber (créditos o partidas egresadas), Saldo (diferencia entre Debe y Haber).",
+      "category": "accounts",
+      "tags": ["agrupación", "debe", "haber", "saldo", "débito", "crédito"],
+      "relatedConcepts": ["plan-cuentas", "partida-doble", "saldo-deudor", "saldo-acreedor"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 82
+      },
+      "difficulty": "basic",
+      "example": "La cuenta 'Muebles y Útiles' agrupa sillas, escritorios, fotocopiadoras, teléfonos. La cuenta 'Inmuebles' agrupa casas, locales, terrenos. Cada una tiene su Debe, Haber y Saldo.",
+      "details": "Reglas de saldo: Activo y Resultado Negativo → saldo deudor. Pasivo, Patrimonio Neto y Resultado Positivo → saldo acreedor. Cuando Debe = Haber, la cuenta está saldada."
+    },
+    {
+      "id": "saldo-deudor",
+      "term": "Saldo Deudor",
+      "definition": "Se produce cuando los débitos (Debe) son mayores a los créditos (Haber) de una cuenta. Las cuentas de Activo y de Resultado Negativo (pérdidas) tienen saldo deudor.",
+      "category": "accounts",
+      "tags": ["debe", "mayor", "activo", "pérdida"],
+      "relatedConcepts": ["cuenta", "saldo-acreedor", "partida-doble"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 86
+      },
+      "difficulty": "basic",
+      "example": "La cuenta Caja recibió $20.000 (Debe) y se pagaron $12.000 + $1.000 (Haber). Saldo deudor: $20.000 - $13.000 = $7.000. Significa que quedan $7.000 en efectivo."
+    },
+    {
+      "id": "saldo-acreedor",
+      "term": "Saldo Acreedor",
+      "definition": "Se produce cuando los créditos (Haber) son mayores a los débitos (Debe) de una cuenta. Las cuentas de Pasivo, Patrimonio Neto y de Resultado Positivo (ganancias) tienen saldo acreedor.",
+      "category": "accounts",
+      "tags": ["haber", "mayor", "pasivo", "ganancia"],
+      "relatedConcepts": ["cuenta", "saldo-deudor", "partida-doble"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 86
+      },
+      "difficulty": "basic",
+      "example": "La cuenta Proveedores registró compras a crédito por $8.000 (Haber) y pagos por $3.000 (Debe). Saldo acreedor: $8.000 - $3.000 = $5.000. Significa que aún debemos $5.000."
+    },
+    {
+      "id": "cuentas-patrimoniales",
+      "term": "Cuentas Patrimoniales",
+      "definition": "Cuentas que representan el patrimonio del comerciante o empresa. Se dividen en: Activo (bienes y derechos a cobrar), Pasivo (obligaciones a pagar) y Patrimonio Neto (diferencia entre Activo y Pasivo).",
+      "category": "accounts",
+      "tags": ["activo", "pasivo", "patrimonio neto", "bienes", "obligaciones"],
+      "relatedConcepts": ["cuenta", "cuentas-resultado", "activo", "pasivo"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 85
+      },
+      "difficulty": "basic",
+      "example": "Cuentas de Activo: Caja, Banco X c/c, Mercaderías, Muebles y Útiles, Rodados, Inmuebles, Documentos a Cobrar. Cuentas de Pasivo: Proveedores, Documentos a Pagar, Acreedores Varios. Cuentas de P.N.: Capital, Resultado del Ejercicio."
+    },
+    {
+      "id": "cuentas-resultado",
+      "term": "Cuentas de Resultado",
+      "definition": "Cuentas que representan las pérdidas y ganancias del comerciante o empresa. Se dividen en Resultado Positivo (ganancias, beneficios, utilidades) y Resultado Negativo (gastos, pérdidas, quebrantos).",
+      "category": "accounts",
+      "tags": ["ganancias", "pérdidas", "resultados", "positivo", "negativo"],
+      "relatedConcepts": ["cuenta", "cuentas-patrimoniales"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 85
+      },
+      "difficulty": "basic",
+      "example": "Resultado Positivo (ganancias): Ventas, Intereses Ganados, Alquileres Ganados, Descuentos Obtenidos. Resultado Negativo (pérdidas): CMV, Alquileres Perdidos, Sueldos y Jornales, Gastos Generales, Intereses Perdidos."
+    },
+    {
+      "id": "plan-cuentas",
+      "term": "Plan de Cuentas",
+      "definition": "Detalle de todas las cuentas que presumiblemente se utilizarán para reflejar las operaciones que se produzcan en una empresa. Su finalidad es predeterminar y uniformar la denominación de las variaciones del patrimonio. Debe estar ordenado y codificado.",
+      "category": "accounts",
+      "tags": ["codificación", "ordenamiento", "denominación", "estructura"],
+      "relatedConcepts": ["cuenta", "cuentas-patrimoniales", "cuentas-resultado"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 88
+      },
+      "difficulty": "intermediate",
+      "example": "Ejemplo de codificación: 1=Activo (1.01=Caja, 1.02=Mercaderías), 2=Pasivo (2.01=Acreedores Varios), 3=P.N. (3.01=Capital), 4=R.Negativo (4.01=CMV), 5=R.Positivo (5.01=Ventas).",
+      "details": "No es posible elaborar un plan de cuentas común a todas las empresas, ya que cada una posee distintos elementos y efectúa diferentes actos económicos."
+    },
+    {
+      "id": "variaciones-patrimoniales",
+      "term": "Variaciones Patrimoniales",
+      "definition": "Distintas operaciones que realiza un comerciante o empresa y que producen cambios en la composición de su patrimonio. Se clasifican en permutativas (no modifican el capital) y modificativas (aumentan o disminuyen el capital por ganancias o pérdidas).",
+      "category": "patrimony",
+      "tags": ["cambios", "permutativas", "modificativas", "operaciones"],
+      "relatedConcepts": ["variaciones-permutativas", "variaciones-modificativas", "patrimonio"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 89
+      },
+      "difficulty": "intermediate",
+      "example": "Comprar mercaderías en efectivo es una variación permutativa (cambia un activo por otro). Pagar el alquiler del local es una variación modificativa negativa (disminuye el patrimonio neto por una pérdida)."
+    },
+    {
+      "id": "variaciones-permutativas",
+      "term": "Variaciones Permutativas",
+      "definition": "Operaciones comerciales que no aumentan ni disminuyen el capital del comerciante o empresa. Solo intervienen cuentas patrimoniales del Activo y/o Pasivo. Ejemplos: cambio de un activo por otro, aumento simultáneo de activo y pasivo.",
+      "category": "patrimony",
+      "tags": ["sin cambio capital", "patrimoniales", "intercambio"],
+      "relatedConcepts": ["variaciones-patrimoniales", "variaciones-modificativas"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 89
+      },
+      "difficulty": "intermediate",
+      "example": "Se compran muebles por $1.200 en efectivo: (+A) Muebles y Útiles $1.200 / (-A) Caja $1.200. El capital no cambió. Se compran mercaderías por $2.500 en cuenta corriente: (+A) Mercaderías $2.500 / (+P) Proveedores $2.500. El capital tampoco cambió.",
+      "details": "Cuatro casos posibles: cambio de Activo por Activo, cambio de Pasivo por Pasivo, aumento simultáneo de Activo y Pasivo, disminución simultánea de Activo y Pasivo."
+    },
+    {
+      "id": "variaciones-modificativas",
+      "term": "Variaciones Modificativas",
+      "definition": "Operaciones comerciales que aumentan o disminuyen el capital o patrimonio neto, originadas por una ganancia o una pérdida. Intervienen cuentas patrimoniales y de resultado. Pueden ser positivas (ganancias) o negativas (pérdidas).",
+      "category": "patrimony",
+      "tags": ["ganancia", "pérdida", "aumento capital", "disminución capital"],
+      "relatedConcepts": ["variaciones-patrimoniales", "variaciones-permutativas"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 90
+      },
+      "difficulty": "intermediate",
+      "example": "Positiva: se cobra una comisión de $350 en efectivo → (+A) Caja $350 / (+R.P.) Comisiones Ganadas $350 → el P.N. aumentó. Negativa: se paga alquiler de $900 → (+R.N.) Alquileres Perdidos $900 / (-A) Caja $900 → el P.N. disminuyó."
+    },
+    {
+      "id": "partida-doble",
+      "term": "Partida Doble",
+      "definition": "Método de registración contable donde el total del Debe (débitos) debe ser siempre igual al total del Haber (créditos). Se debitan: aumentos de Activo, disminuciones de Pasivo y pérdidas. Se acreditan: disminuciones de Activo, aumentos de Pasivo y ganancias.",
+      "category": "double-entry",
+      "tags": ["método", "debe", "haber", "igualdad", "débitos", "créditos"],
+      "relatedConcepts": ["cuenta", "libro-diario", "asiento-contable"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 91
+      },
+      "difficulty": "basic",
+      "example": "Se compran mercaderías por $30.000 en efectivo: Debe → Mercaderías $30.000 / Haber → Caja $30.000. La suma del Debe ($30.000) es igual a la suma del Haber ($30.000).",
+      "contraExample": "Un asiento donde el Debe suma $5.000 y el Haber suma $4.800 está MAL registrado: viola el principio fundamental de la partida doble.",
+      "details": "Principios: (a) Debe = Haber siempre. (b) Todo débito tiene su crédito correspondiente. (c) Se debitan: +Activo, -Pasivo, -P.N. (pérdidas). (d) Se acreditan: -Activo, +Pasivo, +P.N. (ganancias)."
+    },
+    {
+      "id": "libros-comercio",
+      "term": "Libros de Comercio",
+      "definition": "Libros con rayados especiales que utilizan los comerciantes o empresas para registrar sus operaciones comerciales, permitiéndoles llevar una contabilidad en forma uniforme y organizada. Los obligatorios son: Diario, Inventarios y Balances, y los que exige la naturaleza de la actividad.",
+      "category": "books",
+      "tags": ["obligatorios", "registración", "contabilidad", "legales"],
+      "relatedConcepts": ["libro-diario", "libro-mayor", "inventarios-balances"],
+      "bookReference": {
+        "chapter": 4,
+        "page": 102
+      },
+      "difficulty": "basic",
+      "example": "Una empresa tiene obligatoriamente: Libro Diario (registra operaciones cronológicamente) y Libro Inventarios y Balances (estados contables anuales). Optativamente usa: Libro Mayor, Libro de Compras, Libro de Ventas, Libro de Caja.",
+      "details": "Deben estar encuadernados, foliados (hojas numeradas) y rubricados (sellados por el Registro Público). Prohibiciones: alterar orden de asientos, dejar blancos, interlinear, raspar, arrancar hojas."
+    },
+    {
+      "id": "libro-diario",
+      "term": "Libro Diario",
+      "definition": "Libro obligatorio donde se registran todas las operaciones relativas a la actividad de la persona que tienen efecto sobre el patrimonio, individualmente o en registros resumidos que cubran períodos no superiores al mes.",
+      "category": "books",
+      "tags": ["obligatorio", "registración", "cronológico", "asientos"],
+      "relatedConcepts": ["libros-comercio", "asiento-contable", "libro-mayor"],
+      "bookReference": {
+        "chapter": 4,
+        "page": 105
+      },
+      "difficulty": "basic",
+      "example": "1/9: El Sr. Pérez inicia actividad con $1.000 en efectivo → Caja (D) $1.000 / a Capital (H) $1.000. 3/9: Compra mercaderías por $400 en efectivo → Mercaderías (D) $400 / a Caja (H) $400."
+    },
+    {
+      "id": "asiento-contable",
+      "term": "Asiento Contable",
+      "definition": "Registro de una operación comercial en el Libro Diario. Puede ser simple (intervienen dos cuentas, una debitada y otra acreditada) o compuesto (intervienen más de dos cuentas). Incluye fecha, cuentas, importes y leyenda explicativa.",
+      "category": "books",
+      "tags": ["registro", "simple", "compuesto", "operación"],
+      "relatedConcepts": ["libro-diario", "partida-doble", "cuenta"],
+      "bookReference": {
+        "chapter": 4,
+        "page": 106
+      },
+      "difficulty": "basic",
+      "example": "Asiento simple: Compra de mercaderías en efectivo → Mercaderías (D) / Caja (H). Asiento compuesto: Inicio de actividad con $15.000 en efectivo y muebles por $700 → Caja (D) $15.000 + Muebles y Útiles (D) $700 / Capital (H) $15.700."
+    },
+    {
+      "id": "libro-mayor",
+      "term": "Libro Mayor",
+      "definition": "Libro auxiliar donde se pasan los débitos, créditos y saldos de cada cuenta según los registros del Libro Diario. Brinda información complementaria que permite conocer el movimiento de cada una de las cuentas y su saldo. Existen dos modelos: tradicional (T) y americano (con columnas de saldo).",
+      "category": "books",
+      "tags": ["auxiliar", "cuentas", "saldos", "mayorización"],
+      "relatedConcepts": ["libro-diario", "cuenta", "balance-comprobacion"],
+      "bookReference": {
+        "chapter": 4,
+        "page": 109
+      },
+      "difficulty": "basic",
+      "example": "La cuenta Caja en el Mayor muestra: 2/8 aporte inicial $20.000 (D), 3/8 depósito en banco $12.000 (H), 5/8 pago alquiler $1.000 (H), 15/8 cobro de pagaré $9.000 (D), 20/8 pago intereses $1.400 (H). Saldo deudor: $14.600.",
+      "details": "Mayor tradicional: formato T con Debe y Haber separados, sin columna de saldo. Mayor americano: hojas movibles con columnas de Saldo Deudor y Saldo Acreedor permanente."
+    },
+    {
+      "id": "inventarios-balances",
+      "term": "Inventarios y Balances",
+      "definition": "Libro obligatorio donde se transcriben el inventario inicial, los estados contables anuales o de períodos intermedios, los informes del órgano de fiscalización y del contador, y los detalles analíticos de la composición de los rubros del activo y pasivo.",
+      "category": "books",
+      "tags": ["obligatorio", "inventario", "estados contables", "composición"],
+      "relatedConcepts": ["libros-comercio", "balance-general", "estados-contables"],
+      "bookReference": {
+        "chapter": 4,
+        "page": 105
+      },
+      "difficulty": "intermediate",
+      "example": "Al cierre del ejercicio, se transcribe en este libro: el inventario detallado de todos los activos y pasivos, el Estado de Situación Patrimonial y el Estado de Resultados, firmados por el titular y el contador."
+    },
+    {
+      "id": "balance-comprobacion",
+      "term": "Balance de Comprobación de Sumas y Saldos",
+      "definition": "Estado contable donde se pasan todas las cuentas del Libro Mayor, con la suma total de sus débitos, créditos y estableciendo los saldos correspondientes. Su finalidad es comprobar los pases del Diario al Mayor, verificar la igualdad de saldos deudores y acreedores, y servir como punto de partida para el Balance General.",
+      "category": "books",
+      "tags": ["comprobación", "sumas", "saldos", "verificación"],
+      "relatedConcepts": ["libro-mayor", "balance-general", "partida-doble"],
+      "bookReference": {
+        "chapter": 4,
+        "page": 111
+      },
+      "difficulty": "intermediate",
+      "example": "Balance de Comprobación: Caja (Debe $4.000, Haber $500, Saldo Deudor $3.500), Mercaderías (D $7.000, H $2.000, SD $5.000), Proveedores (D $1.000, H $4.000, SA $3.000), Ventas (D $0, H $20.000, SA $20.000). Total Debe = Total Haber."
+    },
+    {
+      "id": "mercaderias-desdoblada",
+      "term": "Mercaderías como Cuenta Desdoblada",
+      "definition": "Método de registración donde la cuenta Mercaderías se desdobla en tres cuentas: Mercaderías (existencias al costo), Ventas (precio de venta) y Costo de Mercaderías Vendidas (precio de costo de lo vendido). La ganancia bruta surge de la diferencia entre Ventas y CMV.",
+      "category": "books",
+      "tags": ["mercaderías", "ventas", "costo", "ganancia bruta", "desdoblamiento"],
+      "relatedConcepts": ["cuenta", "costo-mercaderias-vendidas", "ventas"],
+      "bookReference": {
+        "chapter": 4,
+        "page": 108
+      },
+      "difficulty": "intermediate",
+      "example": "Compra 10 TV a $3.000 c/u, vende 7 TV a $5.000 c/u. Mercaderías (D $30.000, H $21.000 = existencia $9.000). Ventas (H $35.000). CMV (D $21.000). Ganancia bruta = $35.000 - $21.000 = $14.000."
+    },
+    {
+      "id": "sistema-tributario",
+      "term": "Sistema Tributario",
+      "definition": "Conjunto de tributos establecidos en el país que responde a principios económicos y políticos en un contexto económico-social determinado y que contribuye a conseguir el óptimo bienestar social de la población. En Argentina existen tres niveles: Nacional, Provincial y Municipal.",
+      "category": "tax",
+      "tags": ["tributos", "impuestos", "nacional", "provincial", "municipal"],
+      "relatedConcepts": ["iva", "afip"],
+      "bookReference": {
+        "chapter": 5,
+        "page": 114
+      },
+      "difficulty": "basic",
+      "example": "Un comerciante paga: Impuesto a las Ganancias (nacional), Ingresos Brutos (provincial), Tasa de Seguridad e Higiene (municipal). Cada nivel de gobierno recauda según su jurisdicción."
+    },
+    {
+      "id": "afip",
+      "term": "AFIP (Administración Federal de Ingresos Públicos)",
+      "definition": "Responsable de la recaudación y administración de impuestos nacionales. Integrada por tres Direcciones Generales: la Dirección General Impositiva, la Dirección General de Aduanas y la Dirección General de los Recursos de la Seguridad Social.",
+      "category": "tax",
+      "tags": ["recaudación", "impuestos", "DGI", "aduanas", "seguridad social"],
+      "relatedConcepts": ["sistema-tributario", "iva"],
+      "bookReference": {
+        "chapter": 5,
+        "page": 114
+      },
+      "difficulty": "basic",
+      "example": "Un contribuyente se inscribe ante AFIP para obtener su CUIT, declara su condición frente al IVA, presenta declaraciones juradas mensuales del IVA y anuales de Ganancias."
+    },
+    {
+      "id": "iva",
+      "term": "IVA (Impuesto al Valor Agregado)",
+      "definition": "Impuesto nacional que grava los precios de venta de bienes muebles, obras, locaciones y prestaciones de servicios, así como las importaciones definitivas de cosas muebles. La alícuota general es del 21%. El importe cobrado se denomina Débito Fiscal y el pagado Crédito Fiscal.",
+      "category": "tax",
+      "tags": ["impuesto", "21%", "débito fiscal", "crédito fiscal", "ventas", "compras"],
+      "relatedConcepts": ["debito-fiscal", "credito-fiscal", "afip", "factura"],
+      "bookReference": {
+        "chapter": 5,
+        "page": 115
+      },
+      "difficulty": "basic",
+      "example": "Compra de mercaderías por $50.000 + IVA 21% = $10.500 (Crédito Fiscal). Venta por $80.000 + IVA 21% = $16.800 (Débito Fiscal). Posición mensual: $16.800 - $10.500 = $6.300 a depositar a favor de AFIP.",
+      "details": "Existen alícuotas diferenciadas: tasa general 21%, tasa reducida 10,5% (algunos alimentos, transporte), tasa incrementada 27% (servicios como gas, electricidad, telecomunicaciones para empresas). Algunos bienes y servicios están exentos."
+    },
+    {
+      "id": "debito-fiscal",
+      "term": "Débito Fiscal",
+      "definition": "Importe que se cobra en concepto del IVA al realizar ventas. Se registra en el Libro IVA Ventas. Es una cuenta patrimonial del Pasivo que se acredita cuando se factura IVA a los clientes.",
+      "category": "tax",
+      "tags": ["IVA", "ventas", "cobro", "pasivo"],
+      "relatedConcepts": ["iva", "credito-fiscal", "iva-saldo-pagar"],
+      "bookReference": {
+        "chapter": 5,
+        "page": 115
+      },
+      "difficulty": "intermediate",
+      "example": "Se venden mercaderías por $800 + IVA 21% ($168) a un responsable inscripto: el IVA Débito Fiscal se acredita por $168. Al fin del mes, se cancela contra el Crédito Fiscal para determinar la posición."
+    },
+    {
+      "id": "credito-fiscal",
+      "term": "Crédito Fiscal",
+      "definition": "Suma que se paga en concepto del IVA al realizar compras. Se registra en el Libro IVA Compras. Es una cuenta patrimonial del Activo que se debita cuando se registra el IVA de las facturas de proveedores.",
+      "category": "tax",
+      "tags": ["IVA", "compras", "pago", "activo"],
+      "relatedConcepts": ["iva", "debito-fiscal", "iva-saldo-pagar"],
+      "bookReference": {
+        "chapter": 5,
+        "page": 115
+      },
+      "difficulty": "intermediate",
+      "example": "Se compran mercaderías por $700 + IVA 21% ($147) a un proveedor responsable inscripto: el IVA Crédito Fiscal se debita por $147. Este importe se descuenta del Débito Fiscal al calcular la posición mensual.",
+      "contraExample": "Si se compra a un monotributista (Factura C), el IVA está incluido en el precio pero NO puede computarse como Crédito Fiscal."
+    },
+    {
+      "id": "iva-saldo-pagar",
+      "term": "IVA Saldo a Pagar",
+      "definition": "Diferencia resultante entre el Débito Fiscal y el Crédito Fiscal del mes, que se deposita mensualmente a favor de la AFIP. Cuando el Crédito Fiscal supera al Débito Fiscal, el saldo queda a favor del contribuyente para el mes siguiente.",
+      "category": "tax",
+      "tags": ["declaración jurada", "mensual", "AFIP", "posición"],
+      "relatedConcepts": ["debito-fiscal", "credito-fiscal", "iva"],
+      "bookReference": {
+        "chapter": 5,
+        "page": 119
+      },
+      "difficulty": "intermediate",
+      "example": "En septiembre: Débito Fiscal total $441, Crédito Fiscal total $252. Saldo a pagar a AFIP: $441 - $252 = $189. Se deposita el 18/10 con cheque: IVA Saldo a Pagar (D) $189 / Banco c/c (H) $189."
+    },
+    {
+      "id": "sociedad",
+      "term": "Sociedad",
+      "definition": "Existe sociedad si una o más personas, en forma organizada conforme a uno de los tipos previstos por la Ley General de Sociedades, se obligan a realizar aportes para aplicarlos a la producción o intercambio de bienes o servicios, participando de los beneficios y soportando las pérdidas.",
+      "category": "companies",
+      "tags": ["personas", "aportes", "producción", "beneficios", "pérdidas"],
+      "relatedConcepts": ["contrato-constitutivo", "aportes-societarios", "tipos-societarios"],
+      "bookReference": {
+        "chapter": 6,
+        "page": 124
+      },
+      "difficulty": "basic",
+      "example": "Dos personas acuerdan crear una empresa de venta de ropa: cada uno aporta $20.000 (capital total $40.000), se organizan como S.R.L., y acuerdan repartir ganancias según el capital aportado.",
+      "details": "Características: pueden ser una o más personas, deben realizar aportes, organizarse según un tipo legal, destinar aportes a producción/intercambio, y participar de ganancias o soportar pérdidas."
+    },
+    {
+      "id": "contrato-constitutivo",
+      "term": "Contrato Constitutivo",
+      "definition": "Documento donde quedan establecidos los detalles de identificación de los socios, aportes de capital y normas de funcionamiento de la sociedad. Puede ser por instrumento privado (solo entre socios) o público (con intervención de escribano). Debe inscribirse en el Registro Público.",
+      "category": "companies",
+      "tags": ["constitución", "socios", "capital", "registro público"],
+      "relatedConcepts": ["sociedad", "aportes-societarios"],
+      "bookReference": {
+        "chapter": 6,
+        "page": 124
+      },
+      "difficulty": "intermediate",
+      "example": "El contrato de una S.R.L. establece: socios (Juan Pérez y María López), razón social ('JM Indumentaria S.R.L.'), capital ($40.000), domicilio (Av. Corrientes 1234, CABA), objeto social (venta de indumentaria), plazo (99 años)."
+    },
+    {
+      "id": "aportes-societarios",
+      "term": "Aportes Societarios",
+      "definition": "Entregas que los socios realizan a la sociedad para formar su capital. Pueden ser: en efectivo (dinero o cheques), en especie (bienes materiales o inmateriales), activos o pasivos, totales o parciales.",
+      "category": "companies",
+      "tags": ["socios", "capital", "efectivo", "especie", "bienes"],
+      "relatedConcepts": ["sociedad", "capital", "contrato-constitutivo"],
+      "bookReference": {
+        "chapter": 6,
+        "page": 125
+      },
+      "difficulty": "basic",
+      "example": "El socio A aporta $20.000 en efectivo y mercaderías por $5.000 (aportes activos). El socio B aporta un rodado valuado en $15.000 (aporte en especie). Asiento: Caja (D) $20.000, Mercaderías (D) $5.000, Rodados (D) $15.000 / Capital Social (H) $40.000."
+    },
+    {
+      "id": "sociedad-colectiva",
+      "term": "Sociedad Colectiva (S.C.)",
+      "definition": "Sociedad formada por dos o más socios colectivos que contraen responsabilidad subsidiaria, ilimitada y solidaria por las obligaciones sociales. Se constituye generalmente por instrumento privado. Interesan más las personas que el capital.",
+      "category": "companies",
+      "tags": ["responsabilidad ilimitada", "solidaria", "socios colectivos"],
+      "relatedConcepts": ["sociedad", "sociedad-comandita-simple"],
+      "bookReference": {
+        "chapter": 6,
+        "page": 129
+      },
+      "difficulty": "intermediate",
+      "example": "'Mundo Feliz' S.C.: Socio A aporta $25.000 ($20.000 efectivo + $5.000 mercaderías), Socio B aporta $15.000 en efectivo. Si la sociedad tiene una deuda que no puede pagar, ambos socios responden con sus bienes personales (responsabilidad ilimitada y solidaria)."
+    },
+    {
+      "id": "sociedad-anonima",
+      "term": "Sociedad Anónima (S.A.)",
+      "definition": "Sociedad donde el capital se representa por acciones. Los socios tienen responsabilidad limitada por la parte de acciones suscriptas. Se constituye por instrumento público. La administración está a cargo del directorio, fiscalizado por el síndico. El capital mínimo es de $100.000.",
+      "category": "companies",
+      "tags": ["acciones", "responsabilidad limitada", "directorio", "capital mínimo"],
+      "relatedConcepts": ["sociedad", "sociedad-unipersonal", "acciones"],
+      "bookReference": {
+        "chapter": 6,
+        "page": 132
+      },
+      "difficulty": "intermediate",
+      "example": "Una S.A. con capital de $200.000 dividido en 200 acciones de $1.000 cada una. El accionista que tiene 50 acciones participó con $50.000 y su responsabilidad se limita a ese monto. No responde con sus bienes personales.",
+      "details": "Capital mínimo: $100.000. Integración mínima en efectivo: 25% de la suscripción. Los aportes no dinerarios deben integrarse totalmente. Administra el directorio, fiscaliza el síndico."
+    },
+    {
+      "id": "sociedad-unipersonal",
+      "term": "Sociedad Anónima Unipersonal (S.A.U.)",
+      "definition": "Sociedad que puede ser constituida por una sola persona, únicamente bajo la forma de sociedad anónima. Se constituye por instrumento público y por acto único. El capital debe ser integrado al 100% al momento de su constitución.",
+      "category": "companies",
+      "tags": ["una persona", "instrumento público", "100% capital"],
+      "relatedConcepts": ["sociedad-anonima", "sociedad"],
+      "bookReference": {
+        "chapter": 6,
+        "page": 133
+      },
+      "difficulty": "intermediate",
+      "example": "Un emprendedor quiere abrir un restaurante limitando su responsabilidad personal. Constituye una S.A.U. con un capital de $100.000 integrado al 100% al momento de la constitución.",
+      "details": "Encuadra en el art. 299 LGS: requiere directorio mínimo de 3 directores, sindicatura de 3 miembros, presentar balance anual en IGJ."
+    },
+    {
+      "id": "srl",
+      "term": "Sociedad de Responsabilidad Limitada (S.R.L.)",
+      "definition": "Sociedad donde el capital se divide en cuotas sociales. Los socios limitan su responsabilidad a la integración de las cuotas que suscriban o adquieran. El número de socios no excederá de cincuenta.",
+      "category": "companies",
+      "tags": ["cuotas sociales", "responsabilidad limitada", "máximo 50 socios"],
+      "relatedConcepts": ["sociedad", "sociedad-anonima"],
+      "bookReference": {
+        "chapter": 6,
+        "page": 134
+      },
+      "difficulty": "intermediate",
+      "example": "Tres socios crean 'Tech Solutions S.R.L.' con un capital de $90.000 dividido en 90 cuotas de $1.000 cada una. Cada socio responde solo hasta el monto de sus cuotas suscriptas."
+    },
+    {
+      "id": "disolucion-sociedad",
+      "term": "Disolución de Sociedad",
+      "definition": "Puede ser parcial (separación de un socio por incumplimiento, quiebra, incapacidad o muerte) o total (decisión de los socios, finalización del plazo, quiebra, cumplimiento del objetivo, fusión o pérdida del capital). La reducción a un socio no es causal de disolución.",
+      "category": "companies",
+      "tags": ["separación", "quiebra", "fusión", "liquidación"],
+      "relatedConcepts": ["sociedad", "liquidacion-sociedad"],
+      "bookReference": {
+        "chapter": 6,
+        "page": 127
+      },
+      "difficulty": "intermediate",
+      "example": "Disolución parcial: uno de los tres socios de una S.C. fallece; los otros dos pueden continuar con los herederos. Disolución total: los socios de una S.R.L. deciden que el negocio ya no es viable y votan por unanimidad disolver la sociedad.",
+      "details": "La reducción a un solo socio ya no es causal de disolución (reforma del Código Civil y Comercial). Las S.A., en comandita y de capital e industria se transforman de pleno derecho en S.A.U. si no se decide otra solución en 3 meses."
+    },
+    {
+      "id": "liquidacion-sociedad",
+      "term": "Liquidación de Sociedad",
+      "definition": "Proceso posterior a la disolución total que consiste en concluir todas las operaciones pendientes sin iniciar otras. Se debe realizar el activo (vender bienes, cobrar créditos) para extinguir el pasivo (pagar deudas). Durante este período se agrega 'en liquidación' al nombre social.",
+      "category": "companies",
+      "tags": ["realizar activo", "extinguir pasivo", "en liquidación"],
+      "relatedConcepts": ["disolucion-sociedad", "sociedad"],
+      "bookReference": {
+        "chapter": 6,
+        "page": 128
+      },
+      "difficulty": "intermediate",
+      "example": "La sociedad 'ABC S.C.' en liquidación vende su local por $100.000 (realizar el activo), cobra $20.000 que le debían clientes, paga $50.000 a proveedores (extinguir el pasivo), y distribuye el remanente de $70.000 entre los socios."
+    },
+    {
+      "id": "estados-contables",
+      "term": "Estados Contables",
+      "definition": "Informes contables básicos que muestran la situación patrimonial y los resultados de la empresa. Incluyen: Estado de Situación Patrimonial, Estado de Resultados, Estado de Evolución del Patrimonio Neto, y Estado de Origen y Aplicación de Fondos.",
+      "category": "financial-statements",
+      "tags": ["informes", "balance", "resultados", "patrimonio", "fondos"],
+      "relatedConcepts": ["balance-general", "estado-resultados"],
+      "bookReference": {
+        "chapter": 7,
+        "page": 145
+      },
+      "difficulty": "intermediate",
+      "example": "Al cierre del ejercicio, una empresa presenta: Estado de Situación Patrimonial (Activo $500.000, Pasivo $200.000, P.N. $300.000), Estado de Resultados (Ventas $400.000, CMV $250.000, Gastos $80.000, Resultado Neto $70.000)."
+    },
+    {
+      "id": "balance-general",
+      "term": "Balance General",
+      "definition": "Estado contable que muestra la situación patrimonial y los resultados de una empresa al cierre del ejercicio económico. Requiere operaciones previas: balance de comprobación, inventario general, ajustes al balance, planilla de trabajo de 12 columnas, y cierre de cuentas.",
+      "category": "financial-statements",
+      "tags": ["situación patrimonial", "ejercicio económico", "cierre"],
+      "relatedConcepts": ["estados-contables", "ejercicio-economico", "balance-comprobacion"],
+      "bookReference": {
+        "chapter": 7,
+        "page": 146
+      },
+      "difficulty": "intermediate",
+      "example": "Proceso completo de cierre: (1) Balance de comprobación, (2) Inventario general, (3) Ajustes, (4) Planilla de 12 columnas, (5) Asiento de cierre de cuentas de resultado, (6) Asiento de cierre de patrimoniales, (7) Estados contables finales."
+    },
+    {
+      "id": "ejercicio-economico",
+      "term": "Ejercicio Económico",
+      "definition": "Período de tiempo (generalmente un año) al final del cual la empresa realiza el balance general para conocer su situación patrimonial y los resultados obtenidos.",
+      "category": "financial-statements",
+      "tags": ["período", "anual", "balance", "cierre"],
+      "relatedConcepts": ["balance-general", "estados-contables"],
+      "bookReference": {
+        "chapter": 7,
+        "page": 147
+      },
+      "difficulty": "basic",
+      "example": "Una empresa que inició actividades el 1/1/2024 cierra su primer ejercicio el 31/12/2024 (12 meses). Al cierre realiza el balance general y determina si tuvo utilidad o quebranto."
+    },
+    {
+      "id": "estado-resultados",
+      "term": "Estado de Resultados",
+      "definition": "Estado contable que muestra las ganancias y pérdidas obtenidas durante un ejercicio económico, determinando el resultado neto (utilidad o quebranto).",
+      "category": "financial-statements",
+      "tags": ["ganancias", "pérdidas", "resultado neto", "utilidad", "quebranto"],
+      "relatedConcepts": ["estados-contables", "balance-general", "cuentas-resultado"],
+      "bookReference": {
+        "chapter": 7,
+        "page": 145
+      },
+      "difficulty": "intermediate",
+      "example": "Ventas $100.000 - CMV $60.000 = Ganancia Bruta $40.000 - Sueldos $15.000 - Alquileres $6.000 - Gastos Generales $4.000 + Intereses Ganados $1.000 = Resultado Neto (Utilidad) $16.000."
+    },
+    {
+      "id": "ajustes-balance",
+      "term": "Ajustes al Balance",
+      "definition": "Correcciones que se realizan antes del cierre del ejercicio para que las cuentas reflejen la realidad económica. Incluyen: depreciaciones, devengamientos, previsiones, y regularización de cuentas.",
+      "category": "financial-statements",
+      "tags": ["correcciones", "depreciación", "devengamiento", "previsión"],
+      "relatedConcepts": ["balance-general", "ejercicio-economico"],
+      "bookReference": {
+        "chapter": 7,
+        "page": 148
+      },
+      "difficulty": "advanced",
+      "example": "Al cierre se detecta que un mueble que costó $10.000 sufrió un desgaste (depreciación) de $2.000 durante el ejercicio. Se registra un ajuste: Depreciación Muebles (D) $2.000 / Depreciación Acumulada Muebles (H) $2.000."
+    },
+    {
+      "id": "cierre-cuentas",
+      "term": "Cierre de Cuentas",
+      "definition": "Proceso contable de fin de ejercicio donde se saldan las cuentas de resultado transfiriendo sus saldos a la cuenta Pérdidas y Ganancias, y luego se cierran las cuentas patrimoniales registrando el asiento de cierre.",
+      "category": "financial-statements",
+      "tags": ["fin de ejercicio", "saldos", "pérdidas y ganancias", "asiento de cierre"],
+      "relatedConcepts": ["balance-general", "apertura-cuentas", "ejercicio-economico"],
+      "bookReference": {
+        "chapter": 7,
+        "page": 158
+      },
+      "difficulty": "advanced",
+      "example": "Al cierre: Ventas tiene saldo acreedor $50.000, CMV saldo deudor $30.000, Alquileres Perdidos saldo deudor $5.000. Se refunden: Ventas (D) $50.000, CMV (H) $30.000, Alq. Perdidos (H) $5.000, Resultado del Ejercicio (H) $15.000 (ganancia)."
+    },
+    {
+      "id": "apertura-cuentas",
+      "term": "Apertura de Cuentas",
+      "definition": "Primer asiento del nuevo ejercicio económico que restablece los saldos de las cuentas patrimoniales según el balance del ejercicio anterior.",
+      "category": "financial-statements",
+      "tags": ["nuevo ejercicio", "saldos iniciales", "primer asiento"],
+      "relatedConcepts": ["cierre-cuentas", "balance-general", "ejercicio-economico"],
+      "bookReference": {
+        "chapter": 7,
+        "page": 159
+      },
+      "difficulty": "advanced",
+      "example": "Nuevo ejercicio: Caja (D) $14.600, Mercaderías (D) $9.000, Muebles (D) $1.200 / Proveedores (H) $300, Capital (H) $24.500. Se restablecen los saldos patrimoniales del balance anterior."
+    },
+    {
+      "id": "capital",
+      "term": "Capital",
+      "definition": "Cuenta patrimonial del Patrimonio Neto que representa el aporte inicial del comerciante o empresa. Se origina de la diferencia entre el Activo y el Pasivo. Se acredita al constituirse o aumentar, y se debita por disminución o pérdidas.",
+      "category": "accounts",
+      "tags": ["aporte", "patrimonio neto", "constitución"],
+      "relatedConcepts": ["patrimonio-neto", "aportes-societarios", "cuenta"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 96
+      },
+      "difficulty": "basic",
+      "example": "El Sr. Pérez inicia un comercio aportando $30.000 en efectivo y mercaderías por $10.000. Asiento: Caja (D) $30.000, Mercaderías (D) $10.000 / Capital (H) $40.000. El Capital representa el patrimonio neto inicial."
+    },
+    {
+      "id": "costo-mercaderias-vendidas",
+      "term": "Costo de Mercaderías Vendidas (CMV)",
+      "definition": "Cuenta de resultado negativo que representa el precio que le costó al comerciante la mercadería que compró o fabricó y luego vendió. Se debita por el precio de costo de las mercaderías vendidas.",
+      "category": "accounts",
+      "tags": ["costo", "mercaderías", "resultado negativo", "precio de compra"],
+      "relatedConcepts": ["mercaderias-desdoblada", "ventas", "cuentas-resultado"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 98
+      },
+      "difficulty": "intermediate",
+      "example": "Se compraron 10 camisas a $500 c/u ($5.000) y se vendieron 7 a $800 c/u. El CMV es 7 × $500 = $3.500 (precio de costo, no de venta). Ganancia bruta: Ventas $5.600 - CMV $3.500 = $2.100.",
+      "contraExample": "El CMV NO es el precio de venta de las mercaderías. Es lo que le costaron al comerciante. Si las compró a $500 y las vendió a $800, el CMV es $500 por unidad, no $800."
+    },
+    {
+      "id": "ventas",
+      "term": "Ventas",
+      "definition": "Cuenta de resultado positivo que representa el importe de las mercaderías vendidas o servicios prestados. Se acredita por las ventas efectuadas y se debita por devoluciones y al refundirse en Pérdidas y Ganancias al fin del ejercicio.",
+      "category": "accounts",
+      "tags": ["resultado positivo", "mercaderías", "servicios", "ingresos"],
+      "relatedConcepts": [
+        "costo-mercaderias-vendidas",
+        "mercaderias-desdoblada",
+        "cuentas-resultado"
+      ],
+      "bookReference": {
+        "chapter": 3,
+        "page": 97
+      },
+      "difficulty": "basic",
+      "example": "Se venden mercaderías a un cliente en cuenta corriente por $35.000: Deudores por Ventas (D) $35.000 / Ventas (H) $35.000. La cuenta Ventas se acredita porque representa una ganancia (resultado positivo)."
+    },
+    {
+      "id": "cuenta-caja",
+      "term": "Caja",
+      "definition": "Cuenta patrimonial del Activo que representa el dinero en efectivo. Se debita cuando ingresa dinero y se acredita cuando egresa. Nunca puede tener saldo acreedor, pues no puede egresar más dinero del que ha ingresado.",
+      "category": "accounts",
+      "tags": ["efectivo", "dinero", "activo", "ingreso", "egreso"],
+      "relatedConcepts": ["cuenta", "cuenta-banco"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 93
+      },
+      "difficulty": "basic",
+      "example": "Se cobra un alquiler de $2.000 en efectivo: Caja (D) $2.000. Se paga un flete de $500 en efectivo: Caja (H) $500. Saldo deudor: $1.500 en dinero efectivo disponible.",
+      "contraExample": "Si Caja tiene saldo deudor de $1.000 y se intenta registrar un pago de $1.500, la cuenta quedaría con saldo acreedor, lo cual es imposible: no se puede pagar más efectivo del que se tiene."
+    },
+    {
+      "id": "cuenta-banco",
+      "term": "Banco X Cuenta Corriente",
+      "definition": "Cuenta patrimonial del Activo que representa dinero, cheques u otros valores depositados en cuenta corriente bancaria. Se debita al depositar y se acredita al librar cheques, hacer extracciones, débitos automáticos o pagos electrónicos.",
+      "category": "accounts",
+      "tags": ["banco", "cuenta corriente", "depósito", "cheque", "extracción"],
+      "relatedConcepts": ["cuenta", "cuenta-caja", "cheque"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 93
+      },
+      "difficulty": "basic",
+      "example": "Se depositan $15.000 en el Banco Nación c/c: Banco Nación c/c (D) $15.000. Se libra un cheque por $8.000 para pagar a un proveedor: Banco Nación c/c (H) $8.000. Saldo deudor: $7.000 disponibles.",
+      "details": "También se acredita por notas de débito bancarias (comisiones, gastos bancarios), débitos automáticos, y pagos electrónicos."
+    },
+    {
+      "id": "documentos-cobrar",
+      "term": "Documentos a Cobrar",
+      "definition": "Cuenta patrimonial del Activo que representa pagarés recibidos de terceros aún no cobrados. Se debita cuando se recibe un pagaré y se acredita cuando se cobra, endosa o renueva.",
+      "category": "accounts",
+      "tags": ["pagarés", "cobro", "activo", "terceros"],
+      "relatedConcepts": ["pagare", "documentos-pagar", "cuenta"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 93
+      },
+      "difficulty": "basic",
+      "example": "Se venden instalaciones en desuso por $4.000 y el comprador firma un pagaré a 30 días con interés de $70: Documentos a Cobrar (D) $4.070 / Instalaciones (H) $4.000, Intereses Ganados (H) $70."
+    },
+    {
+      "id": "documentos-pagar",
+      "term": "Documentos a Pagar",
+      "definition": "Cuenta patrimonial del Pasivo que representa pagarés de nuestra firma entregados a terceros que debemos pagar al vencimiento. Se acredita al firmar un pagaré y se debita al pagarlo o renovarlo.",
+      "category": "accounts",
+      "tags": ["pagarés", "deuda", "pasivo", "vencimiento"],
+      "relatedConcepts": ["pagare", "documentos-cobrar", "cuenta"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 96
+      },
+      "difficulty": "basic",
+      "example": "Se compra un camión por $23.000 firmando un pagaré a 30 días: Rodados (D) $23.000 / Documentos a Pagar (H) $23.000. Cuando se paga al vencimiento: Documentos a Pagar (D) $23.000 / Caja (H) $23.000."
+    },
+    {
+      "id": "deudores-ventas",
+      "term": "Deudores por Ventas",
+      "definition": "Cuenta patrimonial del Activo que representa a las personas que nos deben dinero de palabra (sin documentar) por ventas a plazo en cuenta corriente de mercaderías o servicios.",
+      "category": "accounts",
+      "tags": ["clientes", "cuenta corriente", "fiado", "crédito"],
+      "relatedConcepts": ["proveedores", "cuenta", "ventas"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 93
+      },
+      "difficulty": "basic",
+      "example": "Se venden mercaderías por $5.000 en cuenta corriente (fiado, sin documentar): Deudores por Ventas (D) $5.000 / Ventas (H) $5.000. Cuando el cliente paga: Caja (D) $5.000 / Deudores por Ventas (H) $5.000."
+    },
+    {
+      "id": "proveedores",
+      "term": "Proveedores",
+      "definition": "Cuenta patrimonial del Pasivo que representa a las personas a quienes debemos dinero en cuenta corriente por haberles comprado mercaderías. Se acredita por compras en cuenta corriente y se debita al pagar o documentar la deuda.",
+      "category": "accounts",
+      "tags": ["deuda", "cuenta corriente", "compra", "mercaderías"],
+      "relatedConcepts": ["deudores-ventas", "cuenta", "documentos-pagar"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 96
+      },
+      "difficulty": "basic",
+      "example": "Se compran mercaderías por $2.500 en cuenta corriente: Mercaderías (D) $2.500 / Proveedores (H) $2.500. Al pagar la deuda: Proveedores (D) $2.500 / Caja (H) $2.500."
+    },
+    {
+      "id": "valores-depositar",
+      "term": "Valores a Depositar",
+      "definition": "Cuenta patrimonial del Activo que representa los cheques comunes recibidos de terceros aún no depositados para su cobro. Se debita cuando ingresan cheques y se acredita cuando se endosan o depositan.",
+      "category": "accounts",
+      "tags": ["cheques", "terceros", "depósito", "activo"],
+      "relatedConcepts": ["cheque", "cuenta-banco", "cuenta"],
+      "bookReference": {
+        "chapter": 3,
+        "page": 95
+      },
+      "difficulty": "basic",
+      "example": "Un cliente nos paga con un cheque del Banco Galicia por $10.000: Valores a Depositar (D) $10.000 / Deudores por Ventas (H) $10.000. Al depositar en nuestro banco: Banco X c/c (D) $10.000 / Valores a Depositar (H) $10.000."
+    },
+    {
+      "id": "organizaciones-sin-fines-lucro",
+      "term": "Organizaciones sin Fines de Lucro",
+      "definition": "Entidades cuyo fin no es la obtención de un beneficio económico. Trabajan para mejorar la calidad de vida de la sociedad, con fines culturales, educativos, deportivos, etc.",
+      "category": "organizations",
+      "tags": ["fundaciones", "ONGs", "clubes", "asociaciones"],
+      "relatedConcepts": ["organizaciones", "empresa"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 17
+      },
+      "difficulty": "basic",
+      "example": "La Fundación Favaloro, clubes de fútbol como Club San Miguel, ONGs como Greenpeace, sociedades de fomento.",
+      "contraExample": "Un supermercado no es una organización sin fines de lucro, ya que su objetivo principal es obtener una ganancia económica."
+    },
+    {
+      "id": "organizaciones-con-fines-lucro",
+      "term": "Organizaciones con Fines de Lucro (Empresas)",
+      "definition": "Organizaciones, instituciones o industrias dedicadas a actividades cuyo fin es la obtención de un beneficio económico (ganancia), para satisfacer necesidades de bienes y/o servicios y asegurar la continuidad.",
+      "category": "organizations",
+      "tags": ["ganancia", "beneficio económico", "continuidad"],
+      "relatedConcepts": ["empresa", "organizaciones-sin-fines-lucro"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 17
+      },
+      "difficulty": "basic",
+      "example": "Un supermercado, una fábrica de electrodomésticos, una empresa de transporte."
+    },
+    {
+      "id": "sectores-economia",
+      "term": "Sectores de la Economía",
+      "definition": "Tres sectores representativos de las diferentes actividades económicas: primario (extractivas), secundario (industria y construcción) y terciario (servicios, comercio, sector financiero).",
+      "category": "organizations",
+      "tags": ["primario", "secundario", "terciario", "actividades"],
+      "relatedConcepts": ["empresa", "actividad-economica"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 23
+      },
+      "difficulty": "basic",
+      "example": "Primario: agricultura, pesca, minería. Secundario: fábricas, constructoras. Terciario: bancos, supermercados, empresas de turismo."
+    },
+    {
+      "id": "sistema",
+      "term": "Sistema",
+      "definition": "Conjunto organizado de partes diferentes entre sí, que cumpliendo una función determinada e interactuando con las demás, permiten alcanzar el objetivo fijado. Se caracteriza por tener entradas, procesos y salidas.",
+      "category": "info-systems",
+      "tags": ["entradas", "procesos", "salidas", "organizado"],
+      "relatedConcepts": ["sistema-informacion", "retroalimentacion"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 27
+      },
+      "difficulty": "basic",
+      "example": "El sistema circulatorio del cuerpo humano: la sangre (entrada) es bombeada por el corazón (proceso) y distribuye oxígeno a los órganos (salida).",
+      "details": "Características de los sistemas: confiabilidad, aceptabilidad, economía, flexibilidad y oportunidad. La organización como sistema es: abierto, dinámico, autónomo y cambiante."
+    },
+    {
+      "id": "dato",
+      "term": "Dato",
+      "definition": "Hecho no procesado. Es el elemento fundamental para el sistema de información. Los datos se perciben, se integran y generan la información necesaria para producir conocimiento.",
+      "category": "info-systems",
+      "tags": ["hecho", "no procesado", "elemento fundamental"],
+      "relatedConcepts": ["informacion", "sistema-informacion"],
+      "bookReference": {
+        "chapter": 1,
+        "page": 29
+      },
+      "difficulty": "basic",
+      "example": "El número '15.000' es un dato. Cuando se lo procesa en contexto — '$15.000 de ventas del martes' — se convierte en información.",
+      "contraExample": "Un informe de ventas mensual con análisis y conclusiones ya no es un dato: es información procesada y lista para la toma de decisiones."
+    },
+    {
+      "id": "aval",
+      "term": "Aval",
+      "definition": "Obligación que toma un tercero (avalista) de garantizar el pago de un documento (pagaré). Si el librador no paga, el avalista debe hacerlo en su lugar.",
+      "category": "payment",
+      "tags": ["garantía", "avalista", "pagaré", "tercero"],
+      "relatedConcepts": ["pagare"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 59
+      },
+      "difficulty": "intermediate",
+      "example": "Juan firma un pagaré por $50.000 y su padre actúa como avalista. Si Juan no paga al vencimiento, el acreedor puede exigirle el pago al padre."
+    },
+    {
+      "id": "impuesto-sellos",
+      "term": "Impuesto a los Sellos",
+      "definition": "Tributo de alcance local (provincial) que grava los actos, contratos y operaciones de carácter oneroso formalizados dentro de la jurisdicción provincial. Usualmente del 1% al 5% del valor negociado.",
+      "category": "tax",
+      "tags": ["provincial", "tributo local", "contratos", "oneroso"],
+      "relatedConcepts": ["pagare", "sistema-tributario"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 59
+      },
+      "difficulty": "intermediate",
+      "example": "Un pagaré por $100.000 firmado en la Provincia de Buenos Aires paga un impuesto de sellos del 1%: $1.000. Debe liquidarse dentro de los 15 días desde la emisión.",
+      "details": "Características para estar alcanzado: onerosidad (debe existir un precio o contraprestación), instrumentación (formalizado en instrumentos públicos o privados), territorialidad (tributo local)."
+    },
+    {
+      "id": "giro-descubierto",
+      "term": "Giro en Descubierto",
+      "definition": "Emisión de cheques sin tener fondos suficientes en la cuenta corriente, pero con autorización previa del banco. Reviste el carácter de un verdadero préstamo.",
+      "category": "payment",
+      "tags": ["cheque", "préstamo", "adelanto", "cuenta corriente"],
+      "relatedConcepts": ["cheque"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 67
+      },
+      "difficulty": "intermediate",
+      "example": "Un comerciante tiene $5.000 en su cuenta corriente pero el banco le autorizó un descubierto de hasta $20.000. Puede emitir un cheque por $15.000 y el banco lo pagará, cobrándole intereses por los $10.000 girados en descubierto."
+    },
+    {
+      "id": "impuesto-cheque",
+      "term": "Impuesto al Cheque",
+      "definition": "Impuesto a las transacciones de débitos y créditos bancarios (Ley 25.413). Grava los depósitos y retiros en cuentas bancarias con una alícuota del 0,6%.",
+      "category": "tax",
+      "tags": ["débitos", "créditos", "bancarios", "0.6%"],
+      "relatedConcepts": ["cheque", "sistema-tributario"],
+      "bookReference": {
+        "chapter": 2,
+        "page": 67
+      },
+      "difficulty": "intermediate",
+      "example": "Un depósito de $10.000 en cuenta corriente tributa 0,6%: $60. Una extracción de $5.000 tributa otro 0,6%: $30. Para monotributistas y fundaciones la alícuota es menor (0,25%)."
+    },
+    {
+      "id": "sociedad-comandita-simple",
+      "term": "Sociedad en Comandita Simple (S.C.S.)",
+      "definition": "Sociedad formada por socios comanditados (responsabilidad ilimitada y solidaria) y socios comanditarios (responsabilidad limitada al capital aportado). El comanditario no puede participar en la administración.",
+      "category": "companies",
+      "tags": ["comanditado", "comanditario", "responsabilidad mixta"],
+      "relatedConcepts": ["sociedad", "sociedad-colectiva"],
+      "bookReference": {
+        "chapter": 6,
+        "page": 130
+      },
+      "difficulty": "intermediate",
+      "example": "S.C.S. 'ABC': Socio X (comanditado) aporta $9.000 con responsabilidad ilimitada, Socio Z (comanditario) aporta una camioneta de $6.000 y $4.000 en efectivo con responsabilidad limitada a ese aporte."
+    },
+    {
+      "id": "sociedad-capital-industria",
+      "term": "Sociedad de Capital e Industria (S.C.I.)",
+      "definition": "Sociedad integrada por socios capitalistas (aportan capital, responsabilidad solidaria e ilimitada) y socios industriales (aportan trabajo, responsabilidad limitada a utilidades no percibidas).",
+      "category": "companies",
+      "tags": ["capitalista", "industrial", "trabajo", "capital"],
+      "relatedConcepts": ["sociedad", "sociedad-colectiva"],
+      "bookReference": {
+        "chapter": 6,
+        "page": 131
+      },
+      "difficulty": "intermediate",
+      "example": "S.C.I. 'ESTILO': Socio J (capitalista) aporta maquinaria $5.000, mercaderías $2.000 y efectivo $5.000. Socio R (industrial) aporta su trabajo sin capital. En la denominación solo figura el nombre del socio capitalista."
+    },
+    {
+      "id": "sas",
+      "term": "Sociedad por Acciones Simplificada (S.A.S.)",
+      "definition": "Tipo societario simplificado que puede constituirse e inscribirse digitalmente en 24 horas. El capital se divide en acciones y puede transformarse en otro tipo societario.",
+      "category": "companies",
+      "tags": ["simplificada", "digital", "acciones", "rápida"],
+      "relatedConcepts": ["sociedad-anonima", "srl"],
+      "bookReference": {
+        "chapter": 6,
+        "page": 135
+      },
+      "difficulty": "intermediate",
+      "example": "Dos emprendedores crean una S.A.S. para una app de delivery. Constituyen la sociedad 100% online en un día, con un capital mínimo de 2 salarios mínimos.",
+      "details": "Constitución e inscripción por medios digitales con firma digital. El instrumento constitutivo puede ser instrumento público o privado. La denominación social debe incluir 'SAS'."
+    },
+    {
+      "id": "distribucion-resultados",
+      "term": "Distribución de Utilidades y Pérdidas",
+      "definition": "Las ganancias o pérdidas anuales de una sociedad se distribuyen entre los socios según la proporción de capital aportado o según el porcentaje prefijado en el contrato.",
+      "category": "companies",
+      "tags": ["ganancias", "pérdidas", "proporción", "socios"],
+      "relatedConcepts": ["sociedad", "estado-resultados"],
+      "bookReference": {
+        "chapter": 6,
+        "page": 126
+      },
+      "difficulty": "intermediate",
+      "example": "Capital $18.000 (Socio A: $12.000, Socio B: $6.000). Ganancia neta $6.000. Distribución proporcional: Socio A = $6.000 × $12.000 / $18.000 = $4.000. Socio B = $6.000 × $6.000 / $18.000 = $2.000."
+    },
+    {
+      "id": "planilla-12-columnas",
+      "term": "Planilla de Trabajo de 12 Columnas",
+      "definition": "Herramienta contable previa al balance general que organiza en columnas: Balance de Comprobación (Debe/Haber), Ajustes (Debe/Haber), Balance Ajustado, Estado de Resultados y Estado Patrimonial.",
+      "category": "financial-statements",
+      "tags": ["planilla", "columnas", "balance", "ajustes"],
+      "relatedConcepts": ["balance-general", "ajustes-balance", "balance-comprobacion"],
+      "bookReference": {
+        "chapter": 7,
+        "page": 157
+      },
+      "difficulty": "advanced",
+      "example": "Se vuelcan las cuentas del Balance de Comprobación, se registran los ajustes, se determinan los saldos ajustados, y se separan las cuentas patrimoniales de las de resultado para armar los estados contables."
+    },
+    {
+      "id": "inventario-general",
+      "term": "Inventario General",
+      "definition": "Recuento y valuación detallada de todos los bienes, derechos y obligaciones que posee la empresa a la fecha de cierre del ejercicio. Es una operación previa al balance general.",
+      "category": "financial-statements",
+      "tags": ["recuento", "valuación", "bienes", "cierre"],
+      "relatedConcepts": ["balance-general", "inventarios-balances"],
+      "bookReference": {
+        "chapter": 7,
+        "page": 147
+      },
+      "difficulty": "intermediate",
+      "example": "Al 31/12 se verifica físicamente: mercaderías en depósito ($45.000), dinero en caja ($3.200), saldo en banco según extracto ($18.500), deudas con proveedores ($12.000). Cada rubro se detalla y valúa."
+    }
+  ]
+}
