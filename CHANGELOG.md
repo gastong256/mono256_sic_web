@@ -1,3 +1,7 @@
+## 1.17.0 (2026-03-23)
+
+* feat(glossary): add public accounting glossary with search and footer access ([12c94a7](https://github.com/gastong256/mono256_sic_web/commit/12c94a7))
+
 ## 1.16.0 (2026-03-22)
 
 * feat(teacher): add course visibility management for demos and shared companies ([85d3642](https://github.com/gastong256/mono256_sic_web/commit/85d3642))
