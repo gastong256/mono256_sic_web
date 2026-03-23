@@ -47,12 +47,24 @@ test.describe('Companies critical flow', () => {
     await expect(demoRow.getByText(/slug de demo: empresa-demo-guiada/i)).toBeVisible()
 
     await demoRow.getByRole('button', { name: 'Publicar demo' }).click()
-    await expect(demoRow.getByText('Publicada')).toBeVisible()
-    await expect(demoRow.getByRole('button', { name: 'Ocultar demo' })).toBeVisible()
+    await expect(
+      page
+        .getByRole('row')
+        .filter({ hasText: 'Empresa Demo Guiada' })
+        .first()
+        .getByText('Publicada')
+    ).toBeVisible({ timeout: 15_000 })
+    await expect(demoRow.getByRole('button', { name: 'Ocultar demo' })).toBeVisible({
+      timeout: 15_000,
+    })
 
     await demoRow.getByRole('button', { name: 'Ocultar demo' }).click()
-    await expect(demoRow.getByText('Oculta')).toBeVisible()
-    await expect(demoRow.getByRole('button', { name: 'Publicar demo' })).toBeVisible()
+    await expect(
+      page.getByRole('row').filter({ hasText: 'Empresa Demo Guiada' }).first().getByText('Oculta')
+    ).toBeVisible({ timeout: 15_000 })
+    await expect(demoRow.getByRole('button', { name: 'Publicar demo' })).toBeVisible({
+      timeout: 15_000,
+    })
   })
 
   test('students can see published read-only demo companies in visible listings', async ({

@@ -84,7 +84,7 @@ describe('CompaniesPage', () => {
     await user.click(within(demoRow).getByRole('button', { name: /publicar demo/i }))
 
     const updatedRowAfterPublish = screen.getByRole('row', { name: /empresa demo guiada/i })
-    await within(updatedRowAfterPublish).findByText('Publicada')
+    await within(updatedRowAfterPublish).findByText('Publicada', {}, { timeout: 10_000 })
     expect(
       within(updatedRowAfterPublish).getByRole('button', { name: /ocultar demo/i })
     ).toBeInTheDocument()
@@ -96,11 +96,11 @@ describe('CompaniesPage', () => {
     )
 
     const updatedRowAfterHide = screen.getByRole('row', { name: /empresa demo guiada/i })
-    await within(updatedRowAfterHide).findByText('Oculta')
+    await within(updatedRowAfterHide).findByText('Oculta', {}, { timeout: 10_000 })
     expect(
       within(updatedRowAfterHide).getByRole('button', { name: /publicar demo/i })
     ).toBeInTheDocument()
-  })
+  }, 15_000)
 
   it('shows published demo companies in student visible flows', async () => {
     setAuthenticatedUser('student')

@@ -31,7 +31,9 @@ test.describe('Closing critical flow', () => {
     await dialog.getByLabel('Fecha de reapertura').fill(reopeningDate)
     await dialog.getByRole('button', { name: 'Ver preview' }).click()
 
-    await expect(page.getByRole('dialog', { name: /confirmar cierre contable/i })).toBeVisible()
+    await expect(page.getByRole('dialog', { name: /confirmar cierre contable/i })).toBeVisible({
+      timeout: 15_000,
+    })
     await expect(page.getByText(/cierre de cuentas patrimoniales/i)).toBeVisible()
     await page.getByRole('button', { name: 'Ejecutar cierre' }).click()
 

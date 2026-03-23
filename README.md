@@ -1,230 +1,311 @@
 # ASIENTA
 
-> Accounting system that implements SIC (Angrisani) concepts. Web application.
+Frontend web para simulación contable basada en conceptos de SIC (Angrisani), orientado a uso educativo para estudiantes, docentes y administradores.
 
-A production-ready React application bootstrapped from [react-vite-ts-tailwind-base](https://github.com/gastong256/react-vite-ts-tailwind-base).
+El proyecto está construido como una SPA en React con rutas protegidas por rol, soporte de demo completa sobre MSW y una suite de validación que cubre testing unitario, integración y e2e.
 
----
+## TL;DR
+
+- Stack principal: `React 19`, `Vite 6`, `TypeScript 5`, `Tailwind CSS 4`, `React Router 7`, `TanStack Query 5`, `Zustand 5`.
+- Modo de desarrollo por defecto: `MSW` activo, sin backend real.
+- Calidad esperada antes de mergear:
+  - `pnpm typecheck`
+  - `pnpm lint`
+  - `pnpm test`
+  - `pnpm test:e2e`
+
+## Tabla de contenidos
+
+- [Visión general](#visión-general)
+- [Stack](#stack)
+- [Primer arranque](#primer-arranque)
+- [Variables de entorno](#variables-de-entorno)
+- [Scripts](#scripts)
+- [Arquitectura](#arquitectura)
+- [Rutas y roles](#rutas-y-roles)
+- [Testing y calidad](#testing-y-calidad)
+- [Mock API y modo demo](#mock-api-y-modo-demo)
+- [Documentación adicional](#documentación-adicional)
+
+## Visión general
+
+La aplicación cubre estos dominios principales:
+
+- `Auth`: login, registro, bootstrap autenticado y perfil.
+- `Companies`: listado de empresas, selector activo, alta/edición/baja, demos, shared companies y cierres.
+- `Accounts`: plan de cuentas por empresa y restricciones de edición según contexto.
+- `Journal`: registro manual, actividad reciente y reversión de asientos.
+- `Reports`: libro diario, mayor, balance de comprobación, balance general y cierres.
+- `Teacher`: cursos, enrolamiento, supervisión de alumnos, visibilidad de demos y empresas compartidas.
+- `Settings`: visibilidad del plan de cuentas para alumnos.
+- `Admin`: administración de roles.
+- `Glossary`: glosario público navegable y filtrable.
 
 ## Stack
 
-| Layer        | Technology                        |
-| ------------ | --------------------------------- |
-| UI           | React 19                          |
-| Build        | Vite 6                            |
-| Language     | TypeScript 5 (strict)             |
-| Styling      | Tailwind CSS v4 (CSS-first)       |
-| Routing      | React Router 7                    |
-| State        | Zustand 5                         |
-| Server state | TanStack Query 5                  |
-| Forms        | React Hook Form + Zod             |
-| HTTP         | Axios (via `shared/lib/http`)     |
-| Mocking      | MSW v2                            |
-| Unit tests   | Vitest + React Testing Library    |
-| E2E tests    | Playwright                        |
-| Linting      | ESLint v9 flat config             |
-| Formatting   | Prettier                          |
-| Commits      | Conventional Commits + commitlint |
-| Releases     | semantic-release                  |
+| Capa                     | Tecnología               |
+| ------------------------ | ------------------------ |
+| UI                       | React 19                 |
+| Build                    | Vite 6                   |
+| Lenguaje                 | TypeScript 5 (`strict`)  |
+| Estilos                  | Tailwind CSS 4           |
+| Routing                  | React Router 7           |
+| Estado cliente           | Zustand 5                |
+| Server state             | TanStack Query 5         |
+| Formularios              | React Hook Form + Zod    |
+| HTTP                     | Axios                    |
+| Búsqueda local           | MiniSearch               |
+| Mocking                  | MSW 2                    |
+| Unit / integration tests | Vitest + Testing Library |
+| E2E                      | Playwright               |
+| Lint                     | ESLint 9 flat config     |
+| Format                   | Prettier                 |
+| Releases                 | semantic-release         |
 
----
+## Primer arranque
 
-## Getting Started
+### Requisitos
 
-### Prerequisites
+- `Node.js >= 20`
+- `pnpm >= 9`
 
-- **Node.js 20 LTS** (`nvm use` — uses `.nvmrc`)
-- **pnpm 9+** (`npm i -g pnpm`)
-
-### 1. Initialize the template
-
-```bash
-pnpm run init
-```
-
-This replaces all `__PLACEHOLDER__` values with your project-specific values and copies `.env.example` to `.env`.
-
-### 2. Install dependencies
+### Instalación
 
 ```bash
 pnpm install
 ```
 
-### 3. Start development server
+### Desarrollo local
 
 ```bash
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+La app queda disponible en `http://localhost:3000`.
 
-> By default, `VITE_USE_MOCK_API=true` — the app runs entirely against MSW mocks. No backend required.
+Por defecto corre con:
 
----
+- `VITE_USE_MOCK_API=true`
+- `VITE_API_BASE_URL=/api/v1`
 
-## Environment Variables
+Eso significa que el frontend funciona completamente contra MSW, sin necesidad de un backend real para desarrollo o demo.
 
-Copy `.env.example` to `.env` (done automatically by `pnpm run init`):
+## Variables de entorno
 
-| Variable              | Default   | Description                              |
-| --------------------- | --------- | ---------------------------------------- |
-| `VITE_APP_NAME`       | `ASIENTA` | Application display name                 |
-| `VITE_API_BASE_URL`   | `/api/v1` | API base URL (use relative in demo mode) |
-| `VITE_USE_MOCK_API`   | `true`    | Use MSW mocks instead of real API        |
-| `VITE_SENTRY_ENABLED` | `false`   | Enable Sentry error tracking             |
-| `VITE_SENTRY_DSN`     | —         | Sentry DSN (required if enabled)         |
+Partí de `.env.example`.
 
----
+| Variable              | Default                 | Propósito                |
+| --------------------- | ----------------------- | ------------------------ |
+| `VITE_APP_NAME`       | `ASIENTA`               | Nombre visible de la app |
+| `VITE_ENV`            | `production` en example | Entorno lógico de la app |
+| `VITE_API_BASE_URL`   | `/api/v1`               | Base URL de la API       |
+| `VITE_USE_MOCK_API`   | `true`                  | Activa MSW en runtime    |
+| `VITE_MOCK_SCENARIO`  | `demo`                  | Dataset mock a usar      |
+| `VITE_SENTRY_ENABLED` | `false`                 | Activa Sentry            |
+| `VITE_SENTRY_DSN`     | vacío                   | DSN de Sentry            |
 
-## Deploy Demo In Vercel
+La validación de entorno está centralizada en [env.ts](/home/gastong256/projects/mono256_sic_web/src/shared/config/env.ts).
 
-This project can be deployed as a fully frontend demo (no backend) using MSW.
+## Scripts
 
-1. Import the repository into Vercel.
+| Script               | Descripción                               |
+| -------------------- | ----------------------------------------- |
+| `pnpm dev`           | Levanta Vite en desarrollo                |
+| `pnpm build`         | Build de producción                       |
+| `pnpm preview`       | Preview del build                         |
+| `pnpm typecheck`     | Type-check con TypeScript                 |
+| `pnpm lint`          | ESLint                                    |
+| `pnpm lint:fix`      | ESLint con autofix                        |
+| `pnpm test`          | Suite Vitest                              |
+| `pnpm test:watch`    | Vitest en watch                           |
+| `pnpm test:coverage` | Cobertura Vitest                          |
+| `pnpm test:e2e`      | Suite Playwright                          |
+| `pnpm test:e2e:ui`   | Playwright UI mode                        |
+| `pnpm format`        | Formatea con Prettier                     |
+| `pnpm format:check`  | Verifica formateo                         |
+| `pnpm init`          | Inicializa placeholders del template base |
+| `pnpm release`       | Release automatizado                      |
+
+## Arquitectura
+
+El repo sigue una organización **feature-based**, con dos capas transversales:
+
+- `src/app`: composición de aplicación, layout, providers y router.
+- `src/shared`: utilidades, tipos, configuración y componentes reutilizables.
+
+La lógica de dominio vive en `src/features/*`.
+
+```text
+src/
+├── app/
+│   ├── components/
+│   ├── providers/
+│   ├── App.tsx
+│   └── router.tsx
+├── features/
+│   ├── accounts/
+│   ├── admin/
+│   ├── auth/
+│   ├── companies/
+│   ├── glossary/
+│   ├── journal/
+│   ├── reports/
+│   ├── settings/
+│   └── teacher/
+├── mocks/
+├── pages/
+├── shared/
+├── index.css
+└── vite-env.d.ts
+```
+
+### Reglas de dependencia
+
+```text
+app      -> features, shared
+pages    -> features, shared
+features -> shared
+shared   -> sin dependencias hacia features
+```
+
+### Patrón técnico predominante
+
+Dentro de cada feature se reutiliza, cuando aplica, esta secuencia:
+
+```text
+api -> adapters -> hooks -> pages/components
+```
+
+Eso permite:
+
+- aislar contratos backend en `api/`
+- normalizar payloads en `adapters/`
+- encapsular fetch/cache en `hooks/`
+- mantener componentes más declarativos
+
+### Ruteo
+
+El ruteo está centralizado en [router.tsx](/home/gastong256/projects/mono256_sic_web/src/app/router.tsx) y usa:
+
+- `Layout` como shell general
+- `ProtectedRoute` para autenticación
+- `RequireRole` para restricciones por rol
+- `lazy()` + `Suspense` para code splitting por página
+
+## Rutas y roles
+
+### Públicas
+
+| Ruta        | Descripción                                                       |
+| ----------- | ----------------------------------------------------------------- |
+| `/`         | Inicio. Si hay sesión muestra Home; sin sesión invita a loguearse |
+| `/login`    | Inicio de sesión                                                  |
+| `/register` | Registro                                                          |
+| `/glosario` | Glosario público                                                  |
+
+### Protegidas para cualquier usuario autenticado
+
+| Ruta                                                  | Descripción                          |
+| ----------------------------------------------------- | ------------------------------------ |
+| `/companies`                                          | Listado de empresas                  |
+| `/companies/:companyId`                               | Detalle de empresa / plan de cuentas |
+| `/profile`                                            | Perfil                               |
+| `/journal`                                            | Registro manual                      |
+| `/reports/journal-book`                               | Libro Diario                         |
+| `/reports/ledger`                                     | Libro Mayor                          |
+| `/reports/trial-balance`                              | Balance de comprobación              |
+| `/reports/closing`                                    | Balance General y Cierres            |
+| `/reports/closing/latest-snapshot`                    | Último cierre confirmado             |
+| `/reports/closing/snapshots/:snapshotId`              | Snapshot histórico                   |
+| `/companies/:companyId/closing/latest-snapshot`       | Ruta legacy/alternativa a snapshot   |
+| `/companies/:companyId/closing/snapshots/:snapshotId` | Ruta legacy/alternativa a snapshot   |
+
+### Teacher / Admin
+
+| Ruta                           | Descripción                                  |
+| ------------------------------ | -------------------------------------------- |
+| `/teacher/dashboard`           | Dashboard docente                            |
+| `/teacher/students/:studentId` | Detalle de alumno                            |
+| `/settings/chart-visibility`   | Visibilidad del plan de cuentas para alumnos |
+
+### Admin
+
+| Ruta           | Descripción      |
+| -------------- | ---------------- |
+| `/admin/roles` | Gestión de roles |
+
+## Testing y calidad
+
+La estrategia actual combina tres niveles:
+
+- **Unit / integration** con Vitest
+  - hooks
+  - adapters
+  - pages/componentes con Testing Library
+- **E2E** con Playwright
+  - flujos críticos cross-feature
+  - navegación real de la aplicación
+- **Análisis estático**
+  - TypeScript estricto
+  - ESLint flat config
+
+Estado actual esperado:
+
+- `pnpm test` -> `44 passed`
+- `pnpm test:e2e` -> `28 passed`
+
+### Convención práctica para cambios
+
+Antes de dar por cerrado un cambio relevante:
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm test:e2e
+```
+
+## Mock API y modo demo
+
+El proyecto tiene soporte completo de MSW en desarrollo y demo.
+
+Entradas principales:
+
+- [browser.ts](/home/gastong256/projects/mono256_sic_web/src/mocks/browser.ts)
+- [server.ts](/home/gastong256/projects/mono256_sic_web/src/mocks/server.ts)
+- `src/mocks/handlers/*`
+- [mockDb.ts](/home/gastong256/projects/mono256_sic_web/src/mocks/data/mockDb.ts)
+
+MSW hoy no cubre solo auth/companies/journal: también modela teacher, reports, closings, settings, admin, glossary y permisos de lectura/escritura por contexto.
+
+## Documentación adicional
+
+La documentación detallada del repo vive en `docs/`:
+
+- [Índice de documentación](/home/gastong256/projects/mono256_sic_web/docs/README.md)
+- [Arquitectura](/home/gastong256/projects/mono256_sic_web/docs/architecture.md)
+- [Features, roles y rutas](/home/gastong256/projects/mono256_sic_web/docs/features-and-routes.md)
+- [Workflow de desarrollo](/home/gastong256/projects/mono256_sic_web/docs/development-workflow.md)
+- [Testing y calidad](/home/gastong256/projects/mono256_sic_web/docs/testing.md)
+
+## Deploy demo
+
+Para una demo frontend-only en Vercel:
+
+1. Importar el repo en Vercel.
 2. Framework preset: `Vite`.
 3. Build command: `pnpm build`.
 4. Output directory: `dist`.
-5. Configure these Production env vars in Vercel:
+5. Variables:
    - `VITE_APP_NAME=ASIENTA`
    - `VITE_ENV=production`
    - `VITE_API_BASE_URL=/api/v1`
    - `VITE_USE_MOCK_API=true`
    - `VITE_MOCK_SCENARIO=demo`
    - `VITE_SENTRY_ENABLED=false`
-6. Deploy.
 
-`vercel.json` already includes SPA rewrites so deep links like `/teacher/dashboard` load correctly.
+`vercel.json` ya contiene rewrites para deep links de SPA.
 
----
-
-## Scripts
-
-| Command              | Description                        |
-| -------------------- | ---------------------------------- |
-| `pnpm dev`           | Start dev server (port 3000)       |
-| `pnpm build`         | Production build                   |
-| `pnpm preview`       | Preview production build           |
-| `pnpm lint`          | Run ESLint                         |
-| `pnpm lint:fix`      | Run ESLint with auto-fix           |
-| `pnpm typecheck`     | TypeScript type-check              |
-| `pnpm test`          | Run unit tests (single run)        |
-| `pnpm test:watch`    | Run unit tests in watch mode       |
-| `pnpm test:coverage` | Run unit tests with coverage       |
-| `pnpm test:e2e`      | Run Playwright e2e tests           |
-| `pnpm test:e2e:ui`   | Run Playwright in interactive mode |
-| `pnpm format`        | Format all files with Prettier     |
-| `pnpm format:check`  | Check formatting                   |
-| `pnpm init`          | Initialize template (idempotent)   |
-
----
-
-## Architecture
-
-```
-src/
-├── app/                   # App wiring only (providers, router)
-│   ├── App.tsx
-│   ├── router.tsx
-│   └── providers/
-├── shared/                # Cross-cutting, feature-agnostic code
-│   ├── config/env.ts      # Typed env config (Zod-parsed)
-│   ├── lib/
-│   │   ├── http.ts        # Axios instance (only HTTP entrypoint)
-│   │   ├── logger.ts      # Structured logger
-│   │   ├── tracing.ts     # Request ID generation
-│   │   └── sentry.ts      # Sentry integration
-│   ├── ui/                # Shared UI components
-│   └── types/             # Global TypeScript types
-├── features/              # Feature modules (self-contained)
-│   ├── auth/              # Authentication (login, tokens, store)
-│   ├── companies/         # Company management
-│   ├── accounts/          # Company chart of accounts
-│   └── journal/           # Journal entries
-├── pages/                 # Route-level page components
-└── mocks/                 # MSW handlers (dev only)
-    ├── browser.ts
-    ├── server.ts
-    └── handlers/
-```
-
-### Import rules
-
-```
-app      → features, shared
-features → shared
-pages    → features, shared
-shared   → (nothing internal)
-```
-
-`shared` must never import from `features`. Enforced by convention and ESLint.
-
----
-
-## Authentication
-
-The auth flow uses a dual-token model:
-
-- **Access token** — stored in Zustand (memory only, never persisted)
-- **Refresh token** — stored in `localStorage` (template purpose; use `HttpOnly` cookie in production)
-
-The Axios interceptor (`shared/lib/http.ts`) automatically:
-
-1. Attaches `Authorization: Bearer <token>` header
-2. Attaches `X-Request-ID` header (session-scoped UUID)
-3. On `401` — attempts a single token refresh
-4. Queues concurrent requests while refreshing
-5. Retries queued requests after a successful refresh
-6. Logs out and redirects to `/login` on refresh failure
-
-### Routes
-
-| Path                    | Access                                     |
-| ----------------------- | ------------------------------------------ |
-| `/`                     | Protected                                  |
-| `/login`                | Public (redirects to `/` if authenticated) |
-| `/companies`            | Protected                                  |
-| `/companies/:companyId` | Protected                                  |
-| `/profile`              | Protected                                  |
-
----
-
-## Mock API
-
-MSW handlers are located in `src/mocks/handlers/`. Active when `VITE_USE_MOCK_API=true`.
-
-| Method     | Path                             | Description                     |
-| ---------- | -------------------------------- | ------------------------------- |
-| `POST`     | `/auth/token/`                   | Returns access + refresh tokens |
-| `POST`     | `/auth/token/refresh/`           | Refreshes tokens                |
-| `GET`      | `/auth/me/`                      | Returns current user            |
-| `GET`      | `/companies/`                    | Returns companies list          |
-| `GET/POST` | `/companies/:companyId/journal/` | List/create journal entries     |
-
-**Default credentials (mock):** `admin` / `password`
-
----
-
-## Observability
-
-- Every session generates a unique `request_id` (UUID v4) via `shared/lib/tracing.ts`
-- All HTTP requests carry `X-Request-ID: <request_id>`
-- All log messages include the `request_id`
-- The `ErrorBoundary` displays the `request_id` to aid support/debugging
-- Sentry is initialized but **disabled by default** (`VITE_SENTRY_ENABLED=false`)
-
----
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feat/my-feature`
-3. Commit using Conventional Commits: `git commit -m "feat: add my feature"`
-4. Push and open a PR
-
-All commits are linted by `commitlint`. The `pre-commit` hook runs `lint-staged`.
-
----
-
-## License
+## Licencia
 
 MIT © gastong256

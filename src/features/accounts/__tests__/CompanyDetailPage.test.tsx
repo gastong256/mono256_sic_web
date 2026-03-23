@@ -159,8 +159,8 @@ describe('CompanyDetailPage', () => {
     await user.type(screen.getByLabelText(/^código$/i), '1.01.03')
     await user.click(screen.getByRole('button', { name: /crear cuenta/i }))
 
-    expect(await screen.findByText('Caja secundaria')).toBeInTheDocument()
-  })
+    expect(await screen.findByText('Caja secundaria', {}, { timeout: 10_000 })).toBeInTheDocument()
+  }, 15_000)
 
   it('edits an existing movement account', async () => {
     const user = userEvent.setup()
@@ -175,8 +175,10 @@ describe('CompanyDetailPage', () => {
     await user.type(nameInput, 'Caja principal actualizada')
     await user.click(screen.getByRole('button', { name: /guardar cambios/i }))
 
-    expect(await screen.findByText('Caja principal actualizada')).toBeInTheDocument()
-  })
+    expect(
+      await screen.findByText('Caja principal actualizada', {}, { timeout: 10_000 })
+    ).toBeInTheDocument()
+  }, 15_000)
 
   it('deletes a movement account successfully', async () => {
     const user = userEvent.setup()

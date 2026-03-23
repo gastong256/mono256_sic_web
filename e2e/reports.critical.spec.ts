@@ -64,4 +64,23 @@ test.describe('Reports critical flows', () => {
       page.getByText(/La empresa necesita registrarse con inventario inicial o general/i).first()
     ).toBeVisible()
   })
+
+  test('shows confirmed closings and allows viewing and downloading the balance snapshot', async ({
+    page,
+  }) => {
+    await loginAs(page, 'student')
+    await selectActiveCompany(page, 'Ferretería Los Andes')
+
+    await openReport(page, '/reports/closing')
+    await expect(page.getByRole('heading', { name: 'Balance General y Cierres' })).toBeVisible()
+    await expect(page.getByText(/^Ejercicios$/i)).toBeVisible()
+
+    await page.getByRole('button', { name: 'Ver cierre confirmado' }).first().click()
+    await expect(page.getByRole('heading', { name: /cierre confirmado/i })).toBeVisible()
+
+    const downloadPromise = page.waitForEvent('download')
+    await page.getByRole('button', { name: 'Descargar Excel' }).click()
+    const download = await downloadPromise
+    expect(download.suggestedFilename()).toContain('cierre_contable')
+  })
 })

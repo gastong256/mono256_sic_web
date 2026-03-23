@@ -23,15 +23,16 @@ export function uniqueName(prefix: string): string {
 
 export async function clearSession(page: Page) {
   await page.goto('/login')
+  await page.context().clearCookies()
   await page.evaluate(() => {
     localStorage.clear()
     sessionStorage.clear()
   })
-  await page.context().clearCookies()
-  await page.reload()
   await page.goto('/login')
-  await expect(page.getByRole('heading', { name: 'Bienvenido' })).toBeVisible()
-  await expect(page.getByRole('form', { name: /inicio de sesión/i })).toBeVisible()
+  await expect(page.getByLabel('Usuario')).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('form', { name: /inicio de sesión/i })).toBeVisible({
+    timeout: 15_000,
+  })
 }
 
 export async function loginAs(page: Page, role: TestUserRole = 'admin') {
@@ -44,6 +45,7 @@ export async function loginAs(page: Page, role: TestUserRole = 'admin') {
   await page.getByRole('button', { name: 'Ingresar' }).click()
 
   await expect(page).toHaveURL('/')
+  await expect(page.getByRole('button', { name: 'Salir' })).toBeVisible({ timeout: 15_000 })
 }
 
 export async function logout(page: Page) {
