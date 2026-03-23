@@ -511,7 +511,15 @@ export function Layout() {
       </main>
 
       <footer className="mt-4 border-t border-[var(--border-soft)]/80 bg-white/45 px-4 py-4 backdrop-blur-[1px]">
-        <div className="mx-auto flex w-full max-w-6xl justify-end">
+        <div className="mx-auto flex w-full max-w-6xl items-start justify-between gap-4">
+          <Link
+            to="/glosario"
+            className="inline-flex items-center gap-1.5 pt-0.5 text-[0.78rem] font-medium text-[var(--brand-600)] transition-colors hover:text-[var(--brand-700)]"
+          >
+            <AppIcon name="book" className="size-3.5" />
+            <span>Glosario de Conceptos</span>
+          </Link>
+
           <div className="space-y-1 text-left text-xs text-[var(--text-muted)]">
             <p className="inline-flex items-center gap-1.5 text-xs text-[var(--text-muted)]/75">
               <svg className="size-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

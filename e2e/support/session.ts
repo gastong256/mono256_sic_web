@@ -129,8 +129,11 @@ export async function selectActiveCompany(page: Page, companyName: string) {
   const selector = page.locator('nav select:visible').first()
   await expect(selector).toBeVisible()
   await selector.selectOption({ label: companyName })
-  await expect(selector.locator('option:checked')).toContainText(companyName)
-  const selectedValue = await selector.inputValue()
+
+  const currentSelector = page.locator('nav select:visible').first()
+  await expect(currentSelector.locator('option:checked')).toContainText(companyName)
+
+  const selectedValue = await currentSelector.inputValue()
   await page.waitForFunction((expectedCompanyId) => {
     const raw = globalThis.localStorage.getItem('active-company-storage')
     if (!raw) return false

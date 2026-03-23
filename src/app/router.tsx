@@ -19,6 +19,9 @@ const RegisterPage = lazy(() =>
   import('@/features/auth/pages/RegisterPage').then((m) => ({ default: m.RegisterPage }))
 )
 const HomePage = lazy(() => import('@/pages/HomePage').then((m) => ({ default: m.HomePage })))
+const GlossaryPage = lazy(() =>
+  import('@/features/glossary').then((m) => ({ default: m.GlossaryPage }))
+)
 
 const ProfilePage = lazy(() =>
   import('@/pages/ProfilePage').then((m) => ({ default: m.ProfilePage }))
@@ -106,6 +109,10 @@ export const router = createBrowserRouter([
       {
         path: 'register',
         element: page(<RegisterPage />),
+      },
+      {
+        path: 'glosario',
+        element: page(<GlossaryPage />),
       },
 
       // ── Protected routes — wrapped by ProtectedRoute ───────
